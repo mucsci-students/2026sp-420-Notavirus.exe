@@ -1,7 +1,9 @@
 import scheduler
+from scheduler import Day, TimeRange
 
 #Global Variables
-MAX_CREDITS = 12
+FULL_TIME_MAX_CREDITS = 12
+ADJUNCT_MAX_CREDITS = 4
 MIN_CREDITS = 3
 MIN_DAYS = 1
 MAX_DAYS = 5
@@ -17,16 +19,18 @@ def addFaculty():
     
     while(True):
         position = input("Does the new faculty have a full-time position? [y/n]: ")
-        if position.lower() == "y" or position.lower() == 'n':
+        if position.lower() == 'y' or position.lower() == 'n':
             break
 
     #course limit is two or one depending on position
-    if position.lower == 'y':
+    if position.lower() == 'y':
         position = "Full-time"
         unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
+        max_credits = FULL_TIME_MAX_CREDITS
     else:
         position = "Adjunct"
         unique_course_limit = ADJUNCT_UNIQUE_COUSE_LIMIT
+        max_credits = ADJUNCT_MAX_CREDITS
 
     # Add dates/Times to new faculty info
     while(True):
@@ -35,41 +39,65 @@ def addFaculty():
             break
 
     # match char dates to substitute for normal spelling, get availability for each day
+    datesTimes = {}
     for day in dates:
-        match day:
+        match day.upper():
             case 'M':
-                day = "Monday"
+                day = "MON"
             case 'T':
-                day = "Tuesday"
+                day = "TUE"
             case 'W':
-                day = "Wednesday"
+                day = "WED"
             case 'R':
-                day = "Thursday"
+                day = "THU"
             case 'F':
-                day = "Friday"
+                day = "FRI"
             case _: # any letters not matched are skipped
                 continue
-        
-        while(True):
-            datesTimes = { day : input("Enter available time(s) for " + day + ": ")}
+
+        while(True): #Times should be in TimeRange format (i.e. using military time and assigning start/end times seperately)
+            timerange = TimeRange(start='09:00', end='17:00')
+            datesTimes[day] = [str(timerange)]
             if datesTimes[day] != "":
                 break
 
-    #Get preferred courses and their weights
+    #Courses should be of type course, preferences should be of type preference (an int from 1-10)
     courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
-    for course in str.split(courses, "; "):
-        coursesPref = {course : input("Enter a weight for " + course + ". (Higher integer = Higher preference): ")}
+    coursesPref = {}
+    if courses != "":
+        for course in str.split(courses, "; "):
+            coursesPref[course.upper()] = int(input("Enter a weight for " + course + ". (0 - 10): "))
 
-    print("Name: " + name + "\nPosition Type:" + position + "\nAvailability: ")
+    #output entered data
+    print("\nNew Faculty Summary:")
+    print("Name: " + name + "\nPosition Type: " + position + "\nAvailability: ")
     print(datesTimes)
     print("Preferred courses:")
     print(coursesPref)
-    return scheduler.FacultyConfig(name=name, maximum_credits=MAX_DAYS, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, mandatory_days=1, maximum_days=5)
+
+    #Confirm entered data
+    while(True):
+        confirm = input("\nIs this information correct? [y/n]: ")
+        if confirm.lower() == 'y' or confirm.lower() == 'n':
+            break
+    
+    if confirm.lower == 'y':
+        print("New faculty information saved!")
+        return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=coursesPref, 
+                                    maximum_days=5, times=datesTimes)
+    else: #If 
+        while(True):
+            confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
+            if confirm.lower() == 'y' or confirm.lower() == 'n':
+                break
+        if confirm.lower == 'y':
+            return addFaculty()
+        else:
+            return
     
 
-def main():
-    print("Hello from 2026sp-420-notavirus-exe!") #debug
-    scheduler.SchedulerConfig(faculty=addFaculty) 
+def main(): #Mainly part of display/run scheduler
+    scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[addFaculty()]) #until courses are added, don't specify course preferences
 
 if __name__ == "__main__":
     main()

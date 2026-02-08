@@ -68,7 +68,6 @@ def addFaculty():
             if datesTimes[day] != "":
                 break
 
-    `#Courses` should be of type course, preferences should be of type preference (an int from 1-10)
     courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
     coursesPref = {}
     if courses != "":

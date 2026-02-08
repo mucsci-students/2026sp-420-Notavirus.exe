@@ -35,10 +35,15 @@ def addFaculty():
         max_credits = ADJUNCT_MAX_CREDITS
 
     # Add dates/Times to new faculty info
-    while(True):
-        dates = input("Enter available dates (MTWRF): ")
-        if len(dates) >= MIN_DAYS and len(dates) <= MAX_DAYS:
+    while True:
+        raw_dates = input("Enter available dates (MTWRF): ")
+        dates = []
+        for ch in raw_dates.upper():
+            if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
+                dates.append(ch)
+        if MIN_DAYS <= len(dates) <= MAX_DAYS:
             break
+        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
 
     # match char dates to substitute for normal spelling, get availability for each day
     datesTimes = {}

@@ -35,10 +35,15 @@ def addFaculty():
         max_credits = ADJUNCT_MAX_CREDITS
 
     # Add dates/Times to new faculty info
-    while(True):
-        dates = input("Enter available dates (MTWRF): ")
-        if len(dates) >= MIN_DAYS and len(dates) <= MAX_DAYS:
+    while True:
+        raw_dates = input("Enter available dates (MTWRF): ")
+        dates = []
+        for ch in raw_dates.upper():
+            if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
+                dates.append(ch)
+        if MIN_DAYS <= len(dates) <= MAX_DAYS:
             break
+        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
 
     # match char dates to substitute for normal spelling, get availability for each day
     datesTimes = {}
@@ -63,12 +68,21 @@ def addFaculty():
             if datesTimes[day] != "":
                 break
 
-    #Courses should be of type course, preferences should be of type preference (an int from 1-10)
+    `#Courses` should be of type course, preferences should be of type preference (an int from 1-10)
     courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
     coursesPref = {}
     if courses != "":
         for course in str.split(courses, ";"):
-            coursesPref[course.upper().strip()] = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
+            while True:
+                try:
+                    weight = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
+                except ValueError:
+                    print("Please enter a whole number between 0 and 10.")
+                    continue
+                if 0 <= weight <= 10:
+                    break
+                print("Please enter a whole number between 0 and 10.")
+            coursesPref[course.upper().strip()] = weight
 
     #output entered data
     print("\nNew Faculty Summary:")

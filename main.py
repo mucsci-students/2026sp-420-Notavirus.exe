@@ -11,6 +11,8 @@ FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COUSE_LIMIT = 1
 
 # Add a new faculty to the scheduler.
+# Preconditions: Preferred Courses Exist
+# Postconditon: Returns FacultyConfig or Nothing
 def addFaculty():
     while(True):
         name = input("Enter the new faculty's name: ")
@@ -52,7 +54,7 @@ def addFaculty():
                 day = "THU"
             case 'F':
                 day = "FRI"
-            case _: # any letters not matched are skipped
+            case _: # any letters/characters not matched are skipped
                 continue
 
         while(True): #Times should be in TimeRange format (i.e. using military time and assigning start/end times seperately)
@@ -65,8 +67,8 @@ def addFaculty():
     courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
     coursesPref = {}
     if courses != "":
-        for course in str.split(courses, "; "):
-            coursesPref[course.upper()] = int(input("Enter a weight for " + course + ". (0 - 10): "))
+        for course in str.split(courses, ";"):
+            coursesPref[course.upper().strip()] = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
 
     #output entered data
     print("\nNew Faculty Summary:")
@@ -81,23 +83,28 @@ def addFaculty():
         if confirm.lower() == 'y' or confirm.lower() == 'n':
             break
     
-    if confirm.lower == 'y':
-        print("New faculty information saved!")
+    if confirm.lower() == 'y':
         return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=coursesPref, 
                                     maximum_days=5, times=datesTimes)
-    else: #If 
+    else:
         while(True):
             confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
             if confirm.lower() == 'y' or confirm.lower() == 'n':
                 break
-        if confirm.lower == 'y':
+        if confirm.lower() == 'y':
             return addFaculty()
         else:
             return
+        #Check if name and preferred courses are the same
     
 
 def main(): #Mainly part of display/run scheduler
-    scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[addFaculty()]) #until courses are added, don't specify course preferences
+    try:
+        scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[addFaculty()]) #until courses are added, don't specify course preferences
+        print("New faculty information saved!")
+
+    except:
+        print("An exception occured.")
 
 if __name__ == "__main__":
     main()

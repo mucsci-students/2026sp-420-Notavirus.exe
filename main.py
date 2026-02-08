@@ -8,7 +8,7 @@ MIN_CREDITS = 3
 MIN_DAYS = 1
 MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
-ADJUNCT_UNIQUE_COUSE_LIMIT = 1
+ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
 # Add a new faculty to the scheduler.
 # Preconditions: Preferred Courses Exist
@@ -31,7 +31,7 @@ def addFaculty():
         max_credits = FULL_TIME_MAX_CREDITS
     else:
         position = "Adjunct"
-        unique_course_limit = ADJUNCT_UNIQUE_COUSE_LIMIT
+        unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
         max_credits = ADJUNCT_MAX_CREDITS
 
     # Add dates/Times to new faculty info
@@ -94,17 +94,21 @@ def addFaculty():
         if confirm.lower() == 'y':
             return addFaculty()
         else:
-            return
+            return None
         #Check if name and preferred courses are the same
     
 
 def main(): #Mainly part of display/run scheduler
     try:
-        scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[addFaculty()]) #until courses are added, don't specify course preferences
+        faculty = addFaculty()
+        if faculty is None:
+            print("No faculty information saved.")
+            return
+        scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[faculty])
         print("New faculty information saved!")
+    except Exception as exc:
+        print(f"Failed to save faculty: {exc}")
 
-    except:
-        print("An exception occured.")
 
 if __name__ == "__main__":
     main()

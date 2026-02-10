@@ -1,0 +1,614 @@
+TheLegend27
+thelegend270211
+Invisible
+
+Luke Leopold
+
+ — Yesterday at 8:30 AM
+As for the branches, it's one feature per branch. So if it all ends up in main, we continue to add one feature per branch into main.
+https://learngitbranching.js.org/
+Learn Git Branching
+An interactive Git visualization tool to educate and challenge!
+Image
+Hailey H
+
+ — Yesterday at 12:04 PM
+Okay, thank you for explaining that. I'll have to look into it more, and we'll need to decide how we're organizing code soon.
+Keller E — Yesterday at 12:30 PM
+need to grab my headphones and i will be in vc in just a minite @Luke Leopold
+Luke Leopold
+
+ — Yesterday at 12:31 PM
+No worries, take your time!
+Luke Leopold
+
+ — Yesterday at 12:47 PM
+https://desktop.github.com/download/
+GitHub Desktop
+Download GitHub Desktop
+Simple collaboration from your desktop
+Keller E — Yesterday at 1:28 PM
+we merged Luke's branch with develop, so now everyone can create their own branch for their feature and build off what he started. for now we can keep everything in main.py, if we need to separate something later we can do that.
+TheLegend27 — Yesterday at 1:29 PM
+Sounds good
+LaurynG — Yesterday at 1:45 PM
+Don't forget peer reviews are due tomorrow. And anyone is welcome to come to the mac lab tomorrow 11-12 so we can get everyone set up with the project and git
+Hailey H
+
+ — Yesterday at 6:10 PM
+Sounds good! I can be there for a bit on Monday
+TheLegend27 — 11:17 AM
+here is an example.json file so we can test.
+
+{
+  "config": {
+    "rooms": ["Roddy 136", "Roddy 140", "Roddy 147"],
+    "labs": ["Linux", "Mac"],
+    "courses": [
+        {"course_id": "CMSC 140", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": [], "conflicts": ["CMSC 161", "CMSC 162"], "faculty": []},
+        {"course_id": "CMSC 140", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": [], "conflicts": ["CMSC 161", "CMSC 162"], "faculty": []},
+        {"course_id": "CMSC 152", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": [], "faculty": []},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": ["Zoppetti"]},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux"], "conflicts": [], "faculty": []},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": []},
+        {"course_id": "CMSC 162", "credits": 4, "room": ["Roddy 140"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": []},
+        {"course_id": "CMSC 330", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 362", "CMSC 366"], "faculty": []},
+        {"course_id": "CMSC 340", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 340", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 362", "CMSC 366", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 362", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 330", "CMSC 366"], "faculty": []},
+        {"course_id": "CMSC 366", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 340", "CMSC 362", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 366", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 362", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 380", "credits": 4, "room": ["Roddy 140"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 420", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 420", "credits": 4, "room": ["Roddy 140"], "lab": ["Mac"], "conflicts": ["CMSC 380", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 453", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 476", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 453"], "faculty": []}
+    ],
+    "faculty": [
+        {
+            "name": "Zoppetti",
+            "maximum_credits": 12,
+            "minimum_credits": 12,
+            "unique_course_limit": 3,
+            "maximum_days": 4,
+            "times": {
+                "MON": ["11:00-16:00"],
+                "TUE": [],
+                "WED": ["10:00-15:00"],
+                "THU": ["10:00-17:00"],
+                "FRI": ["11:00-16:00"]
+            },
+            "course_preferences": {
+                "CMSC 362": 5,
+                "CMSC 476": 5,
+                "CMSC 161": 4
+            },
+            "room_preferences": {
+                "Roddy 136": 5,
+                "Roddy 140": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Linux": 5,
+                "Mac": 1
+            }
+        },
+        {
+            "name": "Hardy",
+            "maximum_credits": 14,
+            "minimum_credits": 12,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["MON", "WED", "FRI"],
+            "times": {
+                "MON": ["09:00-15:00"],
+                "TUE": ["09:00-15:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-15:00"],
+                "FRI": ["09:00-15:00"]
+            },
+            "course_preferences": {
+                "CMSC 140": 5,
+                "CMSC 152": 4
+            },
+            "room_preferences": {
+                "Roddy 147": 10,
+                "Roddy 140": 1,
+                "Roddy 136": 1
+            },
+            "lab_preferences": {
+                "Linux": 3,
+                "Mac": 3
+            }
+        },
+        {
+            "name": "Hogg",
+            "maximum_credits": 8,
+            "minimum_credits": 8,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["MON", "WED"],
+            "times": {
+                "MON": ["09:00-13:00"],
+                "TUE": ["09:00-15:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-15:00"],
+                "FRI": ["09:00-15:00"]
+            },
+            "course_preferences": {
+                "CMSC 162": 5,
+                "CMSC 380": 5
+            },
+            "room_preferences": {
+... (324 lines left)
+
+message.txt
+15 KB
+LaurynG — 12:03 PM
+Git is back up
+LaurynG — 1:56 PM
+figured out that "git reset --hard origin/develop" gets rid of your current untracked changes and makes your files match exactly whats currently on git. I used that so I was able to pull Luke's and branch. * Ideally you want to branch before making any changes to files/code at all because if you don't it makes it hard to commit/save your changes. Branch basically just says "hey -> here i made some changes"
+but that command is destructive and can get rid of commits I just used that because I was trying to get started and I haven't  added anything yet for it to get rid of
+LaurynG — 3:47 PM
+@Luke Leopold I think the reason u needed someone to approve your request was because you were merging with developed. We are supposed to stay on the feature branch until the feature is done and merge to developed when done with the feature. Putting something back on the developed branch is our main, if you would have pushed it to the “origin” instead you wouldn’t have needed approval from anyone.
+@Notavirus.exe When pushing do not push onto developed until completely done with the feature (done with testing). To push onto the feature branch to update partial changes with the feature just push to “origin”. He’s a list of command lines to help you guys. Verified with Hobbs this is what is supposed to be done.
+Image
+LaurynG — 3:53 PM
+In the add I am just saying putting the file names is optional you don’t need brackets or “opt” tho
+Luke Leopold
+
+ — 3:54 PM
+I merged with develop so you guys had a starting point with main. I wasn't sure how far along you guys were over the weekend
+LaurynG — 3:54 PM
+Yeah but we aren’t supposed to do that if you push to your branch we can still see it
+I just was in Hobbs office and he said communicate this with the group!
+TheLegend27 — 3:56 PM
+We just talked to Hobbs bro we’re not supposed to touch that branch unless the feature is done and told us to let everyone know not to do that any more
+Luke Leopold
+
+ — 3:56 PM
+Ok then I'll see if I can rollback develop
+LaurynG — 4:03 PM
+You don’t need to rollback it’s okay. Just for moving forward everyone needs to be on the same page. Hobbs said today we should have a tiny bit of time at the end so I can let everyone know then. But he said bc of the quiz we get more group time wed.
+! And everyone just be aware when you update your code it has Lukes method in which isn’t fully finished
+Keller E — 4:06 PM
+got it, i made a new branch of develop to start with the run scheduler part, as part of it i added the test config brooks sent to the files
+Luke Leopold
+
+ — 4:06 PM
+It adds faculty just fine. It just needs a config file. All it doesn't do is check for duplicates and it doesn't have unit tests
+Hailey H
+
+ — 5:20 PM
+We still need to test it, as we do not know this for sure. We agreed as a group that finished means that it fully passes all tests that we have. Once we test it and check for duplicates, then we can mark it as done
+Hailey H
+
+ — 6:44 PM
+@Client Can you hop in a meeting room to help Ashton setup the scheduler?
+Will Killian
+
+ — 6:56 PM
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+﻿
+
+{
+  "config": {
+    "rooms": ["Roddy 136", "Roddy 140", "Roddy 147"],
+    "labs": ["Linux", "Mac"],
+    "courses": [
+        {"course_id": "CMSC 140", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": [], "conflicts": ["CMSC 161", "CMSC 162"], "faculty": []},
+        {"course_id": "CMSC 140", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": [], "conflicts": ["CMSC 161", "CMSC 162"], "faculty": []},
+        {"course_id": "CMSC 152", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": [], "faculty": []},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": ["Zoppetti"]},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux"], "conflicts": [], "faculty": []},
+        {"course_id": "CMSC 161", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": []},
+        {"course_id": "CMSC 162", "credits": 4, "room": ["Roddy 140"], "lab": ["Linux"], "conflicts": ["CMSC 140"], "faculty": []},
+        {"course_id": "CMSC 330", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 362", "CMSC 366"], "faculty": []},
+        {"course_id": "CMSC 340", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 340", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 362", "CMSC 366", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 362", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 330", "CMSC 366"], "faculty": []},
+        {"course_id": "CMSC 366", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 340", "CMSC 362", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 366", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Linux", "Mac"], "conflicts": ["CMSC 362", "CMSC 330"], "faculty": []},
+        {"course_id": "CMSC 380", "credits": 4, "room": ["Roddy 140"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 420", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 420", "credits": 4, "room": ["Roddy 140"], "lab": ["Mac"], "conflicts": ["CMSC 380", "CMSC 453", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 453", "credits": 4, "room": ["Roddy 136", "Roddy 140", "Roddy 147"], "lab": ["Mac", "Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 476"], "faculty": []},
+        {"course_id": "CMSC 476", "credits": 4, "room": ["Roddy 136"], "lab": ["Linux"], "conflicts": ["CMSC 380", "CMSC 420", "CMSC 453"], "faculty": []}
+    ],
+    "faculty": [
+        {
+            "name": "Zoppetti",
+            "maximum_credits": 12,
+            "minimum_credits": 12,
+            "unique_course_limit": 3,
+            "maximum_days": 4,
+            "times": {
+                "MON": ["11:00-16:00"],
+                "TUE": [],
+                "WED": ["10:00-15:00"],
+                "THU": ["10:00-17:00"],
+                "FRI": ["11:00-16:00"]
+            },
+            "course_preferences": {
+                "CMSC 362": 5,
+                "CMSC 476": 5,
+                "CMSC 161": 4
+            },
+            "room_preferences": {
+                "Roddy 136": 5,
+                "Roddy 140": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Linux": 5,
+                "Mac": 1
+            }
+        },
+        {
+            "name": "Hardy",
+            "maximum_credits": 14,
+            "minimum_credits": 12,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["MON", "WED", "FRI"],
+            "times": {
+                "MON": ["09:00-15:00"],
+                "TUE": ["09:00-15:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-15:00"],
+                "FRI": ["09:00-15:00"]
+            },
+            "course_preferences": {
+                "CMSC 140": 5,
+                "CMSC 152": 4
+            },
+            "room_preferences": {
+                "Roddy 147": 10,
+                "Roddy 140": 1,
+                "Roddy 136": 1
+            },
+            "lab_preferences": {
+                "Linux": 3,
+                "Mac": 3
+            }
+        },
+        {
+            "name": "Hogg",
+            "maximum_credits": 8,
+            "minimum_credits": 8,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["MON", "WED"],
+            "times": {
+                "MON": ["09:00-13:00"],
+                "TUE": ["09:00-15:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-15:00"],
+                "FRI": ["09:00-15:00"]
+            },
+            "course_preferences": {
+                "CMSC 162": 5,
+                "CMSC 380": 5
+            },
+            "room_preferences": {
+                "Roddy 140": 5,
+                "Roddy 136": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Linux": 5,
+                "Mac": 1
+            }
+        },
+        {
+            "name": "Xie",
+            "maximum_credits": 12,
+            "minimum_credits": 12,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["WED"],
+            "times": {
+                "MON": ["09:00-15:00"],
+                "TUE": ["09:00-15:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-15:00"],
+                "FRI": ["09:00-15:00"]
+            },
+            "course_preferences": {
+                "CMSC 366": 5,
+                "CMSC 330": 4
+            },
+            "room_preferences": {
+                "Roddy 140": 5,
+                "Roddy 136": 1,
+                "Roddy 147": 5
+            },
+            "lab_preferences": {
+                "Linux": 3,
+                "Mac": 3
+            }
+        },
+        {
+            "name": "Rogers",
+            "maximum_credits": 4,
+            "minimum_credits": 0,
+            "unique_course_limit": 1,
+            "times": {
+                "MON": ["17:00-21:00"],
+                "TUE": ["17:00-21:00"],
+                "WED": ["17:00-21:00"],
+                "THU": ["17:00-21:00"],
+                "FRI": []
+            },
+            "course_preferences": {
+                "CMSC 161": 5
+            },
+            "room_preferences": {
+                "Roddy 136": 5,
+                "Roddy 140": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Linux": 5,
+                "Mac": 1
+            }
+        },
+        {
+            "name": "Wertz",
+            "maximum_credits": 4,
+            "minimum_credits": 0,
+            "unique_course_limit": 1,
+            "times": {
+                "MON": [],
+                "TUE": ["08:00-10:00"],
+                "WED": [],
+                "THU": ["08:00-10:00"],
+                "FRI": []
+            },
+            "course_preferences": {
+                "CMSC 161": 5
+            },
+            "room_preferences": {
+                "Roddy 147": 5,
+                "Roddy 136": 1,
+                "Roddy 140": 1
+            },
+            "lab_preferences": {
+                "Linux": 5,
+                "Mac": 1
+            }
+        },
+        {
+            "name": "Hobbs",
+            "maximum_credits": 4,
+            "minimum_credits": 0,
+            "unique_course_limit": 1,
+            "times": {
+                "MON": ["16:00-19:00"],
+                "TUE": ["16:00-19:00"],
+                "WED": ["16:00-19:00"],
+                "THU": ["16:00-19:00"],
+                "FRI": []
+            },
+            "course_preferences": {
+                "CMSC 420": 5
+            },
+            "room_preferences": {
+                "Roddy 140": 5,
+                "Roddy 136": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Mac": 5,
+                "Linux": 1
+            }
+        },
+        {
+            "name": "Yang",
+            "maximum_credits": 12,
+            "minimum_credits": 12,
+            "unique_course_limit": 2,
+            "maximum_days": 4,
+            "mandatory_days": ["WED"],
+            "times": {
+                "MON": ["09:00-17:00"],
+                "TUE": ["09:00-17:00"],
+                "WED": ["09:00-15:00"],
+                "THU": ["09:00-17:00"],
+                "FRI": ["09:00-17:00"]
+            },
+            "course_preferences": {
+                "CMSC 340": 5,
+                "CMSC 453": 4
+            },
+            "room_preferences": {
+                "Roddy 140": 3,
+                "Roddy 136": 3,
+                "Roddy 147": 3
+            },
+            "lab_preferences": {
+                "Mac": 3,
+                "Linux": 3
+            }
+        },
+        {
+            "name": "Schwartz",
+            "maximum_credits": 0,
+            "minimum_credits": 0,
+            "unique_course_limit": 1,
+            "times": {
+                "MON": [],
+                "TUE": [],
+                "WED": [],
+                "THU": [],
+                "FRI": []
+            },
+            "course_preferences": {},
+            "room_preferences": {
+                "Roddy 140": 5,
+                "Roddy 136": 1,
+                "Roddy 147": 1
+            },
+            "lab_preferences": {
+                "Mac": 5,
+                "Linux": 1
+            }
+        }
+    ]
+  },
+  "time_slot_config": {
+    "times": {
+      "MON": [
+        {"start": "08:00", "spacing": 60, "end": "19:00"}
+      ],
+      "TUE": [
+        {"start": "08:00", "spacing": 60, "end": "12:00"},
+        {"start": "13:10", "spacing": 60, "end": "17:10"},
+        {"start": "17:10", "spacing": 30, "end": "19:40"}
+      ],
+      "WED": [
+        {"start": "08:00", "spacing": 60, "end": "19:00"}
+      ],
+      "THU": [
+        {"start": "08:00", "spacing": 60, "end": "12:00"},
+        {"start": "13:10", "spacing": 60, "end": "17:10"},
+        {"start": "17:10", "spacing": 30, "end": "19:40"}
+      ],
+      "FRI": [
+        {"start": "08:00", "spacing": 60, "end": "17:00"}
+      ]
+    },
+    "classes": [
+      {
+        "credits": 3,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "WED", "duration": 50},
+          {"day": "FRI", "duration": 50}
+        ]
+      },
+      {
+        "credits": 3,
+        "meetings": [
+          {"day": "TUE", "duration": 75},
+          {"day": "THU", "duration": 75}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 110, "lab": true},
+          {"day": "WED", "duration": 110}
+        ],
+        "start_time": "16:00"
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 110, "lab": true},
+          {"day": "FRI", "duration": 110}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "TUE", "duration": 110, "lab": true},
+          {"day": "THU", "duration": 110}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "TUE", "duration": 110},
+          {"day": "THU", "duration": 110, "lab": true}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "TUE", "duration": 110, "lab": true},
+          {"day": "FRI", "duration": 50}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "WED", "duration": 110, "lab": true},
+          {"day": "FRI", "duration": 50}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "THU", "duration": 110, "lab": true},
+          {"day": "FRI", "duration": 50}
+        ]
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 110, "lab": true},
+          {"day": "TUE", "duration": 50},
+          {"day": "FRI", "duration": 50}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 110, "lab": true},
+          {"day": "WED", "duration": 50},
+          {"day": "FRI", "duration": 50}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 110, "lab": true},
+          {"day": "THU", "duration": 50},
+          {"day": "FRI", "duration": 50}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "TUE", "duration": 50},
+          {"day": "FRI", "duration": 110, "lab": true}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "WED", "duration": 50},
+          {"day": "FRI", "duration": 110, "lab": true}
+        ],
+        "disabled": true
+      },
+      {
+        "credits": 4,
+        "meetings": [
+          {"day": "MON", "duration": 50},
+          {"day": "THU", "duration": 50},
+          {"day": "FRI", "duration": 110, "lab": true}
+        ],
+        "disabled": true
+      }
+    ]
+  },
+  "limit": 100,
+  "optimizer_flags": [
+    "faculty_course",
+    "faculty_room",
+    "faculty_lab",
+    "same_room",
+    "same_lab",
+    "pack_rooms"
+  ]
+}

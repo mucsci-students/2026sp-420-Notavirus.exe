@@ -38,7 +38,6 @@ def modifyLab(labs, courses, faculty):
         break
     
     #Show updates
-
     affected_courses = [c for c in courses if old_name in c.lab]
     affected_faculty = [f for f in faculty if old_name in f.lab_preferences]
 
@@ -47,16 +46,16 @@ def modifyLab(labs, courses, faculty):
 
     if affected_courses:
         print(f"  -{len(affected_courses)} course(s): {','.join(c.course_id for c in affected_courses)}")
+    if affected_faculty:
         print(f"  -{len(affected_faculty)} faculty: {','.join(f.name for f in affected_faculty)}")
 
     #Confirm changes
-
     while True:
-        confirm = input(f"\nProceed with these changes [y/n]")
+        confirm = input(f"\nProceed with these changes [y/n]: ")
         if confirm.lower() in ('y', 'n'):
             break
 
-        #Update name
+    # Update name
     if confirm.lower() == 'y':
         index = labs.index(old_name)
         labs[index] = new_name
@@ -65,17 +64,16 @@ def modifyLab(labs, courses, faculty):
             if old_name in course.lab:
                 course.lab = [new_name if lab == old_name else lab for lab in course.lab]
 
-            #Update faculty preferences
+        # Update faculty preferences
         for f in faculty:
             if old_name in f.lab_preferences:
                 f.lab_preferences[new_name] = f.lab_preferences.pop(old_name)
 
-            print(f"Lab successfully updated to '{new_name}'")
+        print(f"Lab successfully updated to '{new_name}'")
     else:
         print(f"Cancelled, no changes made.")
 
-        return labs, courses, faculty
-
+    return labs, courses, faculty
 
 
 def main():

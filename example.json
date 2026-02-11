@@ -395,9 +395,9 @@
           "Mac": 3
         },
         "mandatory_days": [
+          "MON",
           "WED",
-          "FRI",
-          "MON"
+          "FRI"
         ]
       },
       {
@@ -452,8 +452,8 @@
           "Mac": 1
         },
         "mandatory_days": [
-          "WED",
-          "MON"
+          "MON",
+          "WED"
         ]
       },
       {

@@ -124,9 +124,9 @@ def display_Schedule(schedule: list):
     # ------------------------------------------------------------------ #
     #  1. FULL TIMETABLE GRID  (rows = time slots, columns = days)        #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 60)
     print(" FULL TIMETABLE GRID")
-    print("=" * 70)
+    print("=" * 60)
 
     # Build a lookup: (day_name, time_slot) -> list of "COURSE_ID (ROOM)" strings
     grid = defaultdict(list)
@@ -142,7 +142,7 @@ def display_Schedule(schedule: list):
 
     time_slots_sorted = sorted(time_slot_labels)
 
-    col_w = 20
+    col_w = 15
     print(f"{'Time':<12}" + "".join(f"{day:<{col_w}}" for day in DAYS_ORDER))
     print("-" * (12 + col_w * len(DAYS_ORDER)))
 
@@ -157,9 +157,9 @@ def display_Schedule(schedule: list):
     # ------------------------------------------------------------------ #
     #  2. ROOM / TIME SLOT LAYOUT                                         #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 60)
     print(" ROOM / TIME SLOT LAYOUT")
-    print("=" * 70)
+    print("=" * 60)
 
     by_room = defaultdict(list)
     for ci in schedule:
@@ -169,17 +169,18 @@ def display_Schedule(schedule: list):
     for room in sorted(by_room):
         print(f"\n  Room: {room}")
         print(f"  {'Course':<15} {'Section':<10} {'Faculty':<20} {'Days':<15} {'Time'}")
-        print("  " + "-" * 65)
+        print("  " + "-" * 60)
         for ci in sorted(by_room[room], key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
-            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {ci.faculty:<20} {days_str:<15} {str(ci.time)}")
+            time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
+            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {ci.faculty:<20} {days_str:<15} {time_str}")
 
     # ------------------------------------------------------------------ #
     #  3. FACULTY ASSIGNMENTS  (who teaches what)                         #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 60)
     print(" FACULTY ASSIGNMENTS")
-    print("=" * 70)
+    print("=" * 60)
 
     by_faculty = defaultdict(list)
     for ci in schedule:
@@ -190,13 +191,13 @@ def display_Schedule(schedule: list):
         total_credits = sum(ci.course.credits for ci in courses)
         print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
         print(f"  {'Course':<15} {'Section':<10} {'Room':<15} {'Days':<15} {'Time':<20} {'Credits'}")
-        print("  " + "-" * 75)
+        print("  " + "-" * 60)
         for ci in sorted(courses, key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
             room_str = ci.room if ci.room else "No Room"
-            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {room_str:<15} {days_str:<15} {str(ci.time):<20} {ci.course.credits}")
-
-    print("\n" + "=" * 70)
+            time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
+            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {room_str:<15} {days_str:<15} {time_str:<20} {ci.course.credits}")
+    print("\n" + "=" * 60)
 
 
 

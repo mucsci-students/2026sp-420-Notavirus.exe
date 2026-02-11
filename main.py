@@ -10,6 +10,7 @@ MIN_DAYS = 1
 MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+CONFIG_JSON = "example.json"
 
 # Displays entered information for new faculty for validation
 # Returns a FacultyConfig or Nothing
@@ -94,7 +95,6 @@ def addFaculty_input():
         if isFullTime.lower() == 'y' or isFullTime.lower() == 'n':
             break
 
-
     # Add dates/Times to new faculty info
     while True:
         raw_dates = input("Enter available dates (MTWRF): ")
@@ -105,8 +105,7 @@ def addFaculty_input():
         if MIN_DAYS <= len(dates) <= MAX_DAYS:
             break
         print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
-
-    
+  
     #Get preferred courses and weights
     courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
     coursesPref = {}
@@ -129,26 +128,22 @@ def addFaculty_input():
 # Returns True if duplicate info would be added, otherwise returns false.
 def faculty_check_duplicate(config: CombinedConfig, new_faculty: scheduler.FacultyConfig):
     for current_faculty in config.config.faculty:
-        if current_faculty.name == new_faculty.name and current_faculty.course_preferences == new_faculty.course_preferences:
+        if current_faculty.name == new_faculty.name or (current_faculty.course_preferences == new_faculty.course_preferences and current_faculty.times == new_faculty.times): # TODO Decide on how strict to be with checking for duplicates
             return True
     return False
 
-# Save data to a config.json file
-def save_config_json(config: CombinedConfig, filename: str) -> None:
-    with open(filename, 'w') as file:
-        file.write(config.model_dump_json(indent=2))
+# Append new faculty to the CombinedConfig
+def addFaculty_JSON(config: CombinedConfig, faculty: scheduler.FacultyConfig):
+    # Update config with new faculty
+    with config.edit_mode() as edit_config:
+        edit_config.config.faculty.append(faculty)
+        
+    # Save updated config to JSON
+    save_config_json(config, CONFIG_JSON)
+    print("New faculty information saved!")
 
-# Load the config file and create a scheduler object.
-# Returns a tuple with a CombinedConfig and scheduler object variables.
-def initConfig():
-    # Load configuration from JSON file
-    config = load_config_from_file(CombinedConfig, "example.json")
-    # Create scheduler obj
-    scheduler_obj = Scheduler(config)
-    return (config, scheduler_obj)
-    
-def main(): #Mainly part of display/run scheduler
-    (config, scheduler) = initConfig()
+# Wrapper function to contain addFaculty method calls
+def addFaculty(config: CombinedConfig):
     try:
         faculty = addFaculty_input()
         if faculty is None or not addFaculty_confirm(faculty):
@@ -160,16 +155,28 @@ def main(): #Mainly part of display/run scheduler
             print("New faculty not added.")
             return #should be replaced with continue later for running the CLI
 
-         # Update config with new faculty
-        with config.edit_mode() as edit_config:
-            edit_config.config.faculty.append(faculty)
-        
-        # Save updated config to JSON
-        save_config_json(config, "example.json")
-        print("New faculty information saved!")
+        addFaculty_JSON(config=config, faculty=faculty)
     
     except Exception as exc:
         print(f"Failed to save faculty: {exc}")
+
+# Save data to a config.json file
+def save_config_json(config: CombinedConfig, filename: str) -> None:
+    with open(filename, 'w') as file:
+        file.write(config.model_dump_json(indent=2))
+
+# Load the config file and create a scheduler object.
+# Returns a tuple with a CombinedConfig and scheduler object variables.
+def initConfig():
+    # Load configuration from JSON file
+    config = load_config_from_file(CombinedConfig, CONFIG_JSON)
+    # Create scheduler obj
+    scheduler_obj = Scheduler(config)
+    return (config, scheduler_obj)
+
+def main(): #Mainly part of display/run scheduler
+    (config, scheduler) = initConfig()
+    addFaculty(config)
 
 
 if __name__ == "__main__":

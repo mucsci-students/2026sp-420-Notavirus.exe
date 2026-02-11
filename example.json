@@ -297,7 +297,7 @@
       {
         "name": "Zoppetti",
         "maximum_credits": 12,
-        "maximum_days": 4,
+        "maximum_days": 5,
         "minimum_credits": 12,
         "unique_course_limit": 3,
         "times": {
@@ -396,8 +396,8 @@
         },
         "mandatory_days": [
           "MON",
-          "WED",
-          "FRI"
+          "FRI",
+          "WED"
         ]
       },
       {
@@ -646,7 +646,7 @@
         "name": "Yang",
         "maximum_credits": 12,
         "maximum_days": 4,
-        "minimum_credits": 12,
+        "minimum_credits": 4,
         "unique_course_limit": 2,
         "times": {
           "MON": [
@@ -699,9 +699,9 @@
       },
       {
         "name": "Schwartz",
-        "maximum_credits": 0,
+        "maximum_credits": 20,
         "maximum_days": 5,
-        "minimum_credits": 0,
+        "minimum_credits": 3,
         "unique_course_limit": 1,
         "times": {
           "MON": [],
@@ -712,13 +712,12 @@
         },
         "course_preferences": {},
         "room_preferences": {
-          "Roddy 140": 5,
+          "Roddy 140": 6,
           "Roddy 136": 1,
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Mac": 5,
-          "Linux": 1
+          "Mac": 8
         },
         "mandatory_days": []
       }

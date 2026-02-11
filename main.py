@@ -51,6 +51,7 @@ def main(): #Mainly part of display/run scheduler
             elif choice == '3':
                 # Delete conflict
                 deleteConflict(config_path)
+                
             elif choice == '4':
                 # Exit program
                 print("Exiting scheduler.")

@@ -10,6 +10,8 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
+s = scheduler()
+
 # Add a new faculty to the scheduler.
 # Preconditions: Preferred Courses Exist
 # Postconditon: Returns FacultyConfig or Nothing
@@ -109,6 +111,95 @@ def addFaculty():
         else:
             return None
         #Check if name and preferred courses are the same
+ 
+def display_Schedule(scheduler):
+    if scheduler is None:
+        print("No schedule to display")
+        return
+    DAYS_ORDER = ["MON", "TUE", "WED", "THUR", "FRI"]
+
+    try:
+        assignments = scheduler.get_assignments()
+    except AttributeError:
+        print("Schedule could not be read.")
+        return
+    
+    if not assignments:
+        print("no assignments")
+
+    # ------------------------------------------------------------------ #
+    #  1. FULL TIMETABLE GRID  (rows = time slots, columns = days)        #
+    # ------------------------------------------------------------------ #
+    print("\n" + "=" * 70)
+    print(" FULL TIMEABLE GRID")
+    print("=" * 70)
+
+    # Collect all unique time slots and sort them
+    time_slots = sorted(set(a.time_range for a in assignments))
+
+    # Build a lookup: (day, time_range) -> list of entries
+    from collections import defaultdict
+    grid = defaultdict(list)
+    for a in assignments:
+        for day in a.days:
+            grid[(day, a.time_range)].append(f"{a.course_id} ({a.room})")
+
+    #print header row
+    col_w = 20
+    print(f"{'Time':<12}" + "".join(f"{day:<{col_w}}" for day in DAYS_ORDER))
+    print("-" * (12 + col_w * len(DAYS_ORDER)))
+
+    for slot in time_slots:
+        row = f"{slot < 12}"
+        for day in DAYS_ORDER:
+            entries = grid.get((day, slot), [])
+            cell = ", ".join(entries) if entries else "-"
+            row += f"{cell:<{col_w}}"
+        print(row)
+
+    # ------------------------------------------------------------------ #
+    #  2. ROOM / TIME SLOT LAYOUT                                         #
+    # ------------------------------------------------------------------ #
+
+    print("\n" + "=" * 70)
+    print(" ROOM / TIME SLOT LAYOUT")
+    print("=" * 70)
+
+    by_room = defaultdict(list)
+    for a in assignments:
+        by_room[a.room].append(a)
+
+    for room in sorted(by_room):
+        print(f"\n  Room: {room}")
+        print(f"  {'Course':<15} {'Faculty':<20} {'Days':<15} {'Time'}")
+        print("  " + "-" * 60)
+        for a in sorted(by_room[room], key=lambda x: x.time_range):
+            days_str = "/".join(a.days)
+            print(f"  {a.course_id:<15} {a.faculty_name:<20} {days_str:<15} {a.time_range}")
+
+    # ------------------------------------------------------------------ #
+    #  3. FACULTY ASSIGNMENTS  (who teaches what)                         #
+    # ------------------------------------------------------------------ #
+
+    print("\n" + "=" * 70)
+    print(" FACULTY ASSIGNMENTS")
+    print("=" * 70)
+
+    by_faculty = defaultdict(list)
+    for a in assignments:
+        by_faculty[a.faculty_name].append(a)
+
+    for faculty_name in sorted(by_faculty):
+        courses = by_faculty[faculty_name]
+        total_credits = sum(a.credits for a in courses)
+        print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
+        print(f"  {'Course':<15} {'Room':<10} {'Days':<15} {'Time':<20} {'Credits'}")
+        print("  " + "-" * 65)
+        for a in sorted(courses, key=lambda x: x.time_range):
+            days_str = "/".join(a.days)
+            print(f"  {a.course_id:<15} {a.room:<10} {days_str:<15} {a.time_range:<20} {a.credits}")
+
+    print("\n" + "=" * 70)
 
 
 
@@ -123,7 +214,7 @@ def main(): #Mainly part of display/run scheduler
         scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[faculty])
         print("New faculty information saved!")
         
-
+    
     except Exception as exc:
         print(f"Failed to save faculty: {exc}")
 

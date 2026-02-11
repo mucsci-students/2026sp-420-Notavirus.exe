@@ -128,7 +128,7 @@ def main():
             # Save to file
             import json
             with open(config_file, 'w') as f:
-                json.dump(config.model_dump(), f, indent=2)
+                json.dump(config.model_dump(mode='json'), f, indent=2)
             print(f"Changes saved to {config_file}")
         else:
             print("Changes not saved.")

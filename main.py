@@ -48,7 +48,7 @@ def display_Schedule(schedule: list):
         for time_instance in ci.time.times:
             day_name = time_instance.day.name
             room_str = ci.room if ci.room else "No Room"
-            grid[(day_name, slot_label)].append(f"{ci.course.course_id} ({room_str})")
+            grid[(day_name, slot_label)].append((ci.course.course_id, room_str))
 
     time_slots_sorted = sorted(time_slot_labels)
 
@@ -56,12 +56,41 @@ def display_Schedule(schedule: list):
     print(dash_sep)
 
     for slot_label in time_slots_sorted:
-        row = f"{slot_label:<{time_w}}"
-        for day in DAYS_ORDER:
-            entries = grid.get((day, slot_label), [])
-            cell = ", ".join(entries) if entries else "-"
-            row += f"{cell:<{col_w}}"
-        print(row)
+        max_entries = max(
+            len(grid.get((day, slot_label), [])) for day in DAYS_ORDER
+        )
+
+        for i in range(max(1, max_entries)):
+            # Course ID line
+            if i == 0:
+                row = f"{slot_label:<{time_w}}"
+            else:
+                row = f"{'':<{time_w}}"
+            for day in DAYS_ORDER:
+                entries = grid.get((day, slot_label), [])
+                if i < len(entries):
+                    cell = entries[i][0]  # course_id
+                elif i == 0:
+                    cell = "-"
+                else:
+                    cell = ""
+                row += f"{cell:<{col_w}}"
+            print(row)
+
+            # Room line (directly under course)
+            row = f"{'':<{time_w}}"
+            for day in DAYS_ORDER:
+                entries = grid.get((day, slot_label), [])
+                if i < len(entries):
+                    cell = f"({entries[i][1]})"  # room
+                else:
+                    cell = ""
+                row += f"{cell:<{col_w}}"
+            print(row)
+
+        # Dash separator between time slots
+        print(f"{'':<{time_w}}" + "".join(f"{'─' * (col_w - 1):<{col_w}}" for _ in DAYS_ORDER))
+        print()
 
     # ------------------------------------------------------------------ #
     #  2. ROOM / TIME SLOT LAYOUT                                         #
@@ -101,6 +130,7 @@ def display_Schedule(schedule: list):
         print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
         print(f"  {'Course':<15} {'Section':<10} {'Room':<15} {'Days':<15} {'Time':<20} {'Credits'}")
         print("  " + inner_sep)
+        
         for ci in sorted(courses, key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
             room_str = ci.room if ci.room else "No Room"
@@ -108,7 +138,6 @@ def display_Schedule(schedule: list):
             print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {room_str:<15} {days_str:<15} {time_str:<20} {ci.course.credits}")
 
     print("\n" + eq_sep)
-
 
 
 

@@ -114,59 +114,16 @@ def display_Schedule(schedule: list):
 
 def main():
     try:
-        faculty = scheduler.FacultyConfig(
-            name="Dr. Smith",
-            maximum_credits=12,
-            minimum_credits=3,
-            unique_course_limit=2,
-            maximum_days=5,
-            times={
-                "MON": [TimeRange(start="09:00", end="17:00")],
-                "WED": [TimeRange(start="09:00", end="17:00")],
-                "FRI": [TimeRange(start="09:00", end="17:00")],
-            }
+        # Load config from JSON file
+        config = scheduler.load_config_from_file(
+            scheduler.CombinedConfig,
+            "example.json"
         )
 
-        time_slot_config = scheduler.TimeSlotConfig(
-            times={
-                "MON": [TimeBlock(start="08:00", spacing=60, end="22:00")],
-                "TUE": [TimeBlock(start="08:00", spacing=60, end="22:00")],
-                "WED": [TimeBlock(start="08:00", spacing=60, end="22:00")],
-                "THU": [TimeBlock(start="08:00", spacing=60, end="22:00")],
-                "FRI": [TimeBlock(start="08:00", spacing=60, end="22:00")],
-            },
-            classes=[
-                ClassPattern(
-                    credits=3,
-                    meetings=[
-                        Meeting(day="MON", duration=150, lab=False),
-                        Meeting(day="WED", duration=150, lab=False),
-                    ]
-                )
-            ]
-        )
-
-        config = scheduler.CombinedConfig(
-            config=scheduler.SchedulerConfig(
-                rooms=["ROOM101"],
-                labs=["LAB 101"],
-                courses=[
-                    scheduler.CourseConfig(
-                        course_id="CMSC161",
-                        credits=3,
-                        room=["ROOM101"],
-                        lab=[],
-                        faculty=["Dr. Smith"],
-                        conflicts=[]
-                    )
-                ],
-                faculty=[faculty]
-            ),
-            time_slot_config=time_slot_config
-        )
-
+        # Create scheduler
         s = scheduler.Scheduler(config)
 
+        # Generate and display schedule
         found = False
         for schedule in s.get_models():
             display_Schedule(schedule)
@@ -176,6 +133,8 @@ def main():
         if not found:
             print("No valid schedule could be generated.")
 
+    except FileNotFoundError:
+        print("Error: example.json not found.")
     except Exception as exc:
         import traceback
         traceback.print_exc()

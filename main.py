@@ -10,6 +10,51 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
+# List of faculty
+faculty_list = []
+
+
+
+def main(): #Mainly part of display/run scheduler
+    while True:
+        # Display menu options
+        print("\nScheduler Menu")
+        print("1. Add Faculty")
+        print("2. Modify Course")
+        print("3. Exit")
+
+        # Get user choice
+        choice = input("Choose an option (number only): ").strip()
+
+        try:
+            if choice == '1':
+                # Add a new faculty member
+                faculty = addFaculty()
+                if faculty is not None:
+                    faculty_list.append(faculty)
+                    print("New faculty information saved.")
+
+            elif choice == '2':
+                # Modify an existing course 
+                modifyCourse()
+
+            elif choice == '3':
+                # Exit program
+                print("Exiting scheduler.")
+                break
+
+            else:
+                # Handle invalid selections
+                print("Invalid option. Please choose 1, 2, or 3.")
+
+        except Exception as exc:
+            # Catch unexpected runtime errors
+            print(f"Operation failed: {exc}")
+
+
+
+
+
 # Add a new faculty to the scheduler.
 # Preconditions: Preferred Courses Exist
 # Postconditon: Returns FacultyConfig or Nothing
@@ -111,16 +156,50 @@ def addFaculty():
         #Check if name and preferred courses are the same
     
 
-def main(): #Mainly part of display/run scheduler
-    try:
-        faculty = addFaculty()
-        if faculty is None:
-            print("No faculty information saved.")
-            return
-        scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[faculty])
-        print("New faculty information saved!")
-    except Exception as exc:
-        print(f"Failed to save faculty: {exc}")
+
+
+# Modify an existing course.
+# Preconditions: User knows the course ID.
+# Postconditions: Updated course data is collected.
+def modifyCourse():
+    # Ask which course to modify
+    while True:
+        course_id = input("Enter the course ID to modify: ").strip()
+        if course_id != "":
+            break
+
+    print("\nEnter new values or press Enter to keep existing ones.")
+
+    # Ask for updated credits
+    credits = input("New credit value: ").strip()
+
+    # Ask for updated room
+    room = input("New room: ").strip()
+
+    # Ask for updated lab
+    lab = input("New lab: ").strip()
+
+    # Show modification summary
+    print("\nModification Summary:")
+    print(f"Course: {course_id}")
+    print(f"Credits: {credits if credits else '[unchanged]'}")
+    print(f"Room: {room if room else '[unchanged]'}")
+    print(f"Lab: {lab if lab else '[unchanged]'}")
+
+    # Confirm changes
+    while True:
+        confirm = input("Apply these changes? [y/n]: ").lower()
+        if confirm in ('y', 'n'):
+            break
+
+    if confirm == 'y':
+        print("Course modifications recorded.")
+    else:
+        print("Course modification canceled.")
+
+
+
+
 
 
 if __name__ == "__main__":

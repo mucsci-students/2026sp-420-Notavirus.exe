@@ -1,5 +1,5 @@
-from scheduler import * 
-
+import scheduler
+from scheduler import load_config_from_file, CombinedConfig
 
 """
  Modifies an existing lab and updates all references.
@@ -79,88 +79,65 @@ def modifyLab(labs, courses, faculty):
 
 
 def main():
-    # Create some test data
-    labs = ["LAB101", "LAB102"]
-    
-    courses = [
-        CourseConfig(
-            course_id="CMSC161",
-            credits=3,
-            room=["ROOM101"],
-            lab=["LAB101"],  # references LAB101
-            faculty=["Dr. Smith"],
-            conflicts=[]
-        ),
-        CourseConfig(
-            course_id="CMSC162",
-            credits=3,
-            room=["ROOM102"],
-            lab=["LAB101"],  # also references LAB101
-            faculty=["Dr. Jones"],
-            conflicts=[]
-        ),
-        CourseConfig(
-            course_id="CMSC200",
-            credits=4,
-            room=["ROOM103"],
-            lab=[],  # no lab
-            faculty=["Dr. Smith"],
-            conflicts=[]
+    try:
+        # Load config from JSON file
+        config_file = "example.json"
+        config = scheduler.load_config_from_file(
+            scheduler.CombinedConfig,
+            config_file
         )
-    ]
-    
-    faculty = [
-        FacultyConfig(
-            name="Dr. Smith",
-            maximum_credits=12,
-            minimum_credits=3,
-            unique_course_limit=2,
-            maximum_days=5,
-            times={
-                "MON": [TimeRange(start="09:00", end="17:00")],
-                "WED": [TimeRange(start="09:00", end="17:00")],
-            },
-            lab_preferences={"LAB101": 8}  # has preference for LAB101
-        ),
-        FacultyConfig(
-            name="Dr. Jones",
-            maximum_credits=12,
-            minimum_credits=3,
-            unique_course_limit=2,
-            maximum_days=5,
-            times={
-                "TUE": [TimeRange(start="09:00", end="17:00")],
-                "THU": [TimeRange(start="09:00", end="17:00")],
-            },
-            lab_preferences={}
-        )
-    ]
-    
-    # Show initial state
-    print("=== Initial State ===")
-    print(f"Labs: {labs}")
-    print(f"\nCourses using LAB101:")
-    for c in courses:
-        if "LAB101" in c.lab:
-            print(f"  - {c.course_id}")
-    print(f"\nFaculty with LAB101 preference:")
-    for f in faculty:
-        if "LAB101" in f.lab_preferences:
-            print(f"  - {f.name} (preference: {f.lab_preferences['LAB101']})")
-    
-    # Test modifyLab
-    labs, courses, faculty = modifyLab(labs, courses, faculty)
-    
-    # Show final state
-    print("\n=== Final State ===")
-    print(f"Labs: {labs}")
-    print(f"\nAll courses and their labs:")
-    for c in courses:
-        print(f"  - {c.course_id}: {c.lab if c.lab else 'No lab'}")
-    print(f"\nAll faculty lab preferences:")
-    for f in faculty:
-        if f.lab_preferences:
-            print(f"  - {f.name}: {f.lab_preferences}")
+
+        # Extract the data we need
+        labs = config.config.labs
+        courses = config.config.courses
+        faculty = config.config.faculty
+
+        # Show initial state
+        print("=== Initial State ===")
+        print(f"Labs: {labs}")
+        print(f"\nCourses and their labs:")
+        for c in courses:
+            print(f"  - {c.course_id}: {c.lab if c.lab else 'No lab'}")
+        print(f"\nFaculty lab preferences:")
+        for f in faculty:
+            if f.lab_preferences:
+                print(f"  - {f.name}: {f.lab_preferences}")
+
+        # Call modifyLab
+        labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+        # Show final state
+        print("\n=== Final State ===")
+        print(f"Labs: {labs}")
+        print(f"\nCourses and their labs:")
+        for c in courses:
+            print(f"  - {c.course_id}: {c.lab if c.lab else 'No lab'}")
+        print(f"\nFaculty lab preferences:")
+        for f in faculty:
+            if f.lab_preferences:
+                print(f"  - {f.name}: {f.lab_preferences}")
+
+        # OPTIONAL: Save changes back to JSON
+        save_choice = input("\nSave changes to config file? [y/n]: ")
+        if save_choice.lower() == 'y':
+            # Update the config object with modified data
+            config.config.labs = labs
+            config.config.courses = courses
+            config.config.faculty = faculty
+            
+            # Save to file
+            import json
+            with open(config_file, 'w') as f:
+                json.dump(config.model_dump(), f, indent=2)
+            print(f"Changes saved to {config_file}")
+        else:
+            print("Changes not saved.")
+
+    except FileNotFoundError:
+        print(f"Error: {config_file} not found.")
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

@@ -71,8 +71,8 @@ def modifyLab(labs, courses, faculty):
                 f.lab_preferences[new_name] = f.lab_preferences.pop(old_name)
 
             print(f"Lab successfully updated to '{new_name}'")
-        else:
-            print(f"Cancelled, no changes made.")
+    else:
+        print(f"Cancelled, no changes made.")
 
         return labs, courses, faculty
 

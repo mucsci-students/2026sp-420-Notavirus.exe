@@ -111,18 +111,54 @@ def addCourse(available_rooms, available_labs, available_faculty):
             return None
 
 def main():
-    available_rooms = ["ROOM101", "ROOM102"]
-    available_labs = ["LAB101"]
-    available_faculty = ["Dr. Smith", "Dr. Jones"]
+    try:
+        # Load config from JSON file
+        config_file = "example.json"
+        config = load_config_from_file(CombinedConfig, config_file)
 
-    course = addCourse(available_rooms, available_labs, available_faculty)
+        # Extract available options from config
+        available_rooms = config.config.rooms
+        available_labs = config.config.labs
+        available_faculty = [f.name for f in config.config.faculty]
 
-    if course is None:
-        print("No course added.")
-        return
+        # Show initial state
+        print("=== Current Courses ===")
+        for c in config.config.courses:
+            print(f"  - {c.course_id} ({c.credits} credits)")
 
-    print("\nCourse successfully created:")
-    print(course)
+        # Add new course
+        course = addCourse(available_rooms, available_labs, available_faculty)
+
+        if course is None:
+            print("No course added.")
+            return
+
+        print("\nCourse successfully created:")
+        print(course)
+
+        # Add to config
+        config.config.courses.append(course)
+
+        # Show updated course list
+        print("\n=== Updated Courses ===")
+        for c in config.config.courses:
+            print(f"  - {c.course_id} ({c.credits} credits)")
+
+        # Save changes back to JSON
+        save_choice = input("\nSave changes to config file? [y/n]: ")
+        if save_choice.lower() == 'y':
+            import json
+            with open(config_file, 'w') as f:
+                json.dump(config.model_dump(mode='json'), f, indent=2)
+            print(f"Changes saved to {config_file}")
+        else:
+            print("Changes not saved.")
+
+    except FileNotFoundError:
+        print(f"Error: {config_file} not found.")
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

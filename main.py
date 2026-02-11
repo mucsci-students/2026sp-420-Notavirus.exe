@@ -348,13 +348,14 @@ def deleteCourse(config_path):
     print(f"\nCourse '{course_id}' has been permanently deleted.")
 
 # Allows user to modify existing faculty
-def modifyFaculty(config_path):
-    # Load the config 
+def modifyFaculty(config_path: str):
+    # Load the config
     config = load_config_from_file(CombinedConfig, config_path)
     scheduler_config = config.config
 
+    # Check if there are any faculty
     if not scheduler_config.faculty:
-        print("There are no faculty currently existing in the configuration.")
+        print("There are no faculty in the configuration.")
         return
 
     # Display existing faculty
@@ -376,12 +377,19 @@ def modifyFaculty(config_path):
             break
 
     if faculty is None:
-        print(f"\nError: No faculty by '{faculty_name}' was found. No changes were made.")
+        print(f"\nError: No faculty '{faculty_name}' found. No changes were made.")
         return
+
+    # Determine position type
+    if faculty.maximum_credits == FULL_TIME_MAX_CREDITS:
+        position = "Full-time"
+    else:
+        position = "Adjunct"
 
     # Display current information
     print("\nCurrent Faculty Information:")
     print(f"Name: {faculty.name}")
+    print(f"Position: {position}")
     print(f"Maximum Credits: {faculty.maximum_credits}")
     print(f"Minimum Credits: {faculty.minimum_credits}")
     print(f"Unique Course Limit: {faculty.unique_course_limit}")
@@ -393,22 +401,24 @@ def modifyFaculty(config_path):
 
     # Menu for what to modify
     print("\nWhat would you like to modify?")
-    print("1. Maximum Credits")
-    print("2. Minimum Credits")
-    print("3. Availability Times")
-    print("4. Course Preferences")
-    print("5. Room Preferences")
-    print("6. Lab Preferences")
-    print("7. Cancel")
+    print("1. Position (Full-time/Adjunct)")
+    print("2. Maximum Credits")
+    print("3. Minimum Credits")
+    print("4. Unique Course Limit")
+    print("5. Maximum Days")
+    print("6. Availability Times")
+    print("7. Course Preferences")
+    print("8. Room Preferences")
+    print("9. Lab Preferences")
+    print("10. Cancel")
 
     while True:
-        choice = input("Choose an option (1-7): ").strip()
-        if choice in ['1', '2', '3', '4', '5', '6', '7']:
+        choice = input("Choose an option (1-10): ").strip()
+        if choice in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']:
             break
-        print("Invalid option. Please choose 1-7.")
+        print("Invalid option. Please choose 1-10.")
 
-
-    if choice == '7':
+    if choice == '10':
         print("Modification canceled.")
         return
 
@@ -423,31 +433,68 @@ def modifyFaculty(config_path):
                     break
 
             if choice == '1':
+                # Modify position type
                 while True:
-                    try:
-                        new_max = int(input("Enter new maximum credits: "))
-                        if new_max >= 0:
-                            editable_faculty.maximum_credits = new_max
-                            break
-                        print("Please enter a non-negative number.")
-                    except ValueError:
-                        print("Please enter a valid number.")
+                    position = input("Is this faculty full-time? [y/n]: ").lower().strip()
+                    if position in ('y', 'n'):
+                        break
+                    print("Please enter 'y' or 'n'.")
+                
+                if position == 'y':
+                    editable_faculty.maximum_credits = FULL_TIME_MAX_CREDITS
+                    editable_faculty.unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
+                else:
+                    editable_faculty.maximum_credits = ADJUNCT_MAX_CREDITS
+                    editable_faculty.unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
 
             elif choice == '2':
                 while True:
                     try:
-                        new_min = int(input("Enter new minimum credits: "))
-                        if new_min >= 0:
-                            editable_faculty.minimum_credits = new_min
+                        new_max = int(input("Enter new maximum credits: "))
+                        if new_max >= editable_faculty.minimum_credits:
+                            editable_faculty.maximum_credits = new_max
                             break
-                        print("Please enter a non-negative number.")
+                        print(f"Maximum credits must be >= minimum credits ({editable_faculty.minimum_credits}).")
                     except ValueError:
                         print("Please enter a valid number.")
 
             elif choice == '3':
+                while True:
+                    try:
+                        new_min = int(input("Enter new minimum credits: "))
+                        if 0 <= new_min <= editable_faculty.maximum_credits:
+                            editable_faculty.minimum_credits = new_min
+                            break
+                        print(f"Minimum credits must be between 0 and maximum credits ({editable_faculty.maximum_credits}).")
+                    except ValueError:
+                        print("Please enter a valid number.")
+
+            elif choice == '4':
+                while True:
+                    try:
+                        new_limit = int(input("Enter new unique course limit: "))
+                        if new_limit > 0:
+                            editable_faculty.unique_course_limit = new_limit
+                            break
+                        print("Unique course limit must be at least 1.")
+                    except ValueError:
+                        print("Please enter a valid number.")
+
+            elif choice == '5':
+                while True:
+                    try:
+                        new_max_days = int(input("Enter new maximum days (0-5): "))
+                        if 0 <= new_max_days <= 5:
+                            editable_faculty.maximum_days = new_max_days
+                            break
+                        print("Maximum days must be between 0 and 5.")
+                    except ValueError:
+                        print("Please enter a valid number.")
+
+            elif choice == '6':
                 # Modify availability times
                 while True:
-                    raw_dates = input("Enter available days of the week (MTWRF e.g. MWRF): ")
+                    raw_dates = input("Enter available dates (MTWRF): ")
                     dates = []
                     for ch in raw_dates.upper():
                         if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
@@ -484,7 +531,7 @@ def modifyFaculty(config_path):
 
                 editable_faculty.times = datesTimes
 
-            elif choice == '4':
+            elif choice == '7':
                 # Modify course preferences
                 courses = input("Enter preferred courses, separated with a semicolon (Ex. CMSC 161; CMSC 162): ")
                 coursesPref = {}
@@ -501,7 +548,7 @@ def modifyFaculty(config_path):
                                 print("Please enter a whole number between 0 and 10.")
                 editable_faculty.course_preferences = coursesPref
 
-            elif choice == '5':
+            elif choice == '8':
                 # Modify room preferences
                 rooms = input("Enter preferred rooms, separated with a semicolon (Ex. Roddy 136; Roddy 140): ")
                 roomsPref = {}
@@ -518,7 +565,7 @@ def modifyFaculty(config_path):
                                 print("Please enter a whole number between 0 and 10.")
                 editable_faculty.room_preferences = roomsPref
 
-            elif choice == '6':
+            elif choice == '9':
                 # Modify lab preferences
                 labs = input("Enter preferred labs, separated with a semicolon (Ex. Linux; Mac): ")
                 labsPref = {}

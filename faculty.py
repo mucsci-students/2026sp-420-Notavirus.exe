@@ -172,7 +172,7 @@ def modifyFaculty(config_path: str):
             elif choice == '6':
                 # Modify availability times
                 while True:
-                    raw_dates = input("Enter available dates (MTWRF): ")
+                    raw_dates = input("Enter available dates with no spaces (MTWRF e.g. MWRF): ")
                     dates = []
                     for ch in raw_dates.upper():
                         if ch in {"M", "T", "W", "R", "F"} and ch not in dates:

@@ -15,103 +15,6 @@ ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 # Add a new faculty to the scheduler.
 # Preconditions: Preferred Courses Exist
 # Postconditon: Returns FacultyConfig or Nothing
-def addFaculty():
-    while(True):
-        name = input("Enter the new faculty's name: ")
-        if name != "":
-            break
-    
-    while(True):
-        position = input("Does the new faculty have a full-time position? [y/n]: ")
-        if position.lower() == 'y' or position.lower() == 'n':
-            break
-
-    #course limit is two or one depending on position
-    if position.lower() == 'y':
-        position = "Full-time"
-        unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
-        max_credits = FULL_TIME_MAX_CREDITS
-    else:
-        position = "Adjunct"
-        unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
-        max_credits = ADJUNCT_MAX_CREDITS
-
-    # Add dates/Times to new faculty info
-    while True:
-        raw_dates = input("Enter available dates (MTWRF): ")
-        dates = []
-        for ch in raw_dates.upper():
-            if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
-                dates.append(ch)
-        if MIN_DAYS <= len(dates) <= MAX_DAYS:
-            break
-        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
-
-    # match char dates to substitute for normal spelling, get availability for each day
-    datesTimes = {}
-    for day in dates:
-        match day.upper():
-            case 'M':
-                day = "MON"
-            case 'T':
-                day = "TUE"
-            case 'W':
-                day = "WED"
-            case 'R':
-                day = "THU"
-            case 'F':
-                day = "FRI"
-            case _: # any letters/characters not matched are skipped
-                continue
-
-        while(True): #Times should be in TimeRange format (i.e. using military time and assigning start/end times seperately)
-            timerange = TimeRange(start='09:00', end='17:00')
-            datesTimes[day] = [timerange]
-            if datesTimes[day] != "":
-                break
-
-    courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
-    coursesPref = {}
-    if courses != "":
-        for course in str.split(courses, ";"):
-            while True:
-                try:
-                    weight = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
-                except ValueError:
-                    print("Please enter a whole number between 0 and 10.")
-                    continue
-                if 0 <= weight <= 10:
-                    break
-                print("Please enter a whole number between 0 and 10.")
-            coursesPref[course.upper().strip()] = weight
-
-    #output entered data
-    print("\nNew Faculty Summary:")
-    print("Name: " + name + "\nPosition Type: " + position + "\nAvailability: ")
-    print(datesTimes)
-    print("Preferred courses:")
-    print(coursesPref)
-
-    #Confirm entered data
-    while(True):
-        confirm = input("\nIs this information correct? [y/n]: ")
-        if confirm.lower() == 'y' or confirm.lower() == 'n':
-            break
-    
-    if confirm.lower() == 'y':
-        return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=coursesPref, 
-                                    maximum_days=5, times=datesTimes)
-    else:
-        while(True):
-            confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
-            if confirm.lower() == 'y' or confirm.lower() == 'n':
-                break
-        if confirm.lower() == 'y':
-            return addFaculty()
-        else:
-            return None
-        #Check if name and preferred courses are the same
- 
 def display_Schedule(schedule: list):
     if not schedule:
         print("No schedule to display.")
@@ -121,33 +24,39 @@ def display_Schedule(schedule: list):
 
     DAYS_ORDER = ["MON", "TUE", "WED", "THU", "FRI"]
 
+    # All widths calculated from col_w
+    col_w = 20
+    time_w = 12
+    total_w = time_w + (col_w * len(DAYS_ORDER))
+    eq_sep = "=" * total_w
+    dash_sep = "-" * total_w
+    inner_sep = "-" * (total_w - 2)
+
     # ------------------------------------------------------------------ #
     #  1. FULL TIMETABLE GRID  (rows = time slots, columns = days)        #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 60)
+    print("\n" + eq_sep)
     print(" FULL TIMETABLE GRID")
-    print("=" * 60)
+    print(eq_sep)
 
-    # Build a lookup: (day_name, time_slot) -> list of "COURSE_ID (ROOM)" strings
     grid = defaultdict(list)
     time_slot_labels = set()
 
     for ci in schedule:
-        slot_label = str(ci.time).split(",")[0].split(" ", 1)[1]  # grabs "09:00-11:30" from "MON 09:00-11:30,WED 09:00-11:30"
+        slot_label = str(ci.time).split(",")[0].split(" ", 1)[1]
         time_slot_labels.add(slot_label)
         for time_instance in ci.time.times:
-            day_name = time_instance.day.name  # Day enum -> "MON", "TUE", etc.
+            day_name = time_instance.day.name
             room_str = ci.room if ci.room else "No Room"
             grid[(day_name, slot_label)].append(f"{ci.course.course_id} ({room_str})")
 
     time_slots_sorted = sorted(time_slot_labels)
 
-    col_w = 15
-    print(f"{'Time':<12}" + "".join(f"{day:<{col_w}}" for day in DAYS_ORDER))
-    print("-" * (12 + col_w * len(DAYS_ORDER)))
+    print(f"{'Time':<{time_w}}" + "".join(f"{day:<{col_w}}" for day in DAYS_ORDER))
+    print(dash_sep)
 
     for slot_label in time_slots_sorted:
-        row = f"{slot_label:<12}"
+        row = f"{slot_label:<{time_w}}"
         for day in DAYS_ORDER:
             entries = grid.get((day, slot_label), [])
             cell = ", ".join(entries) if entries else "-"
@@ -157,9 +66,9 @@ def display_Schedule(schedule: list):
     # ------------------------------------------------------------------ #
     #  2. ROOM / TIME SLOT LAYOUT                                         #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 60)
+    print("\n" + eq_sep)
     print(" ROOM / TIME SLOT LAYOUT")
-    print("=" * 60)
+    print(eq_sep)
 
     by_room = defaultdict(list)
     for ci in schedule:
@@ -169,7 +78,7 @@ def display_Schedule(schedule: list):
     for room in sorted(by_room):
         print(f"\n  Room: {room}")
         print(f"  {'Course':<15} {'Section':<10} {'Faculty':<20} {'Days':<15} {'Time'}")
-        print("  " + "-" * 60)
+        print("  " + inner_sep)
         for ci in sorted(by_room[room], key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
             time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
@@ -178,9 +87,9 @@ def display_Schedule(schedule: list):
     # ------------------------------------------------------------------ #
     #  3. FACULTY ASSIGNMENTS  (who teaches what)                         #
     # ------------------------------------------------------------------ #
-    print("\n" + "=" * 60)
+    print("\n" + eq_sep)
     print(" FACULTY ASSIGNMENTS")
-    print("=" * 60)
+    print(eq_sep)
 
     by_faculty = defaultdict(list)
     for ci in schedule:
@@ -191,14 +100,14 @@ def display_Schedule(schedule: list):
         total_credits = sum(ci.course.credits for ci in courses)
         print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
         print(f"  {'Course':<15} {'Section':<10} {'Room':<15} {'Days':<15} {'Time':<20} {'Credits'}")
-        print("  " + "-" * 60)
+        print("  " + inner_sep)
         for ci in sorted(courses, key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
             room_str = ci.room if ci.room else "No Room"
             time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
             print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {room_str:<15} {days_str:<15} {time_str:<20} {ci.course.credits}")
-    print("\n" + "=" * 60)
 
+    print("\n" + eq_sep)
 
 
 

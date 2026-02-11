@@ -10,6 +10,51 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
+#List of faculty
+faculty_list = []
+
+
+
+
+def main(): #Mainly part of display/run scheduler
+# Main loop for faculty management menu
+    while True:
+        # Display menu options
+        print("\nFaculty Scheduler Menu")
+        print("1. Add Faculty")
+        print("2. Delete Faculty")
+        print("3. Exit")
+
+        # Get user menu choice
+        choice = input("Choose an option (number only): ").strip()
+
+        try:
+            if choice == '1':
+                faculty = addFaculty()
+                if faculty is not None:
+                    faculty_list.append(faculty)
+                    print("New faculty information saved.")
+
+            elif choice == '2':
+                deleteFaculty(faculty_list)
+
+            elif choice == '3':
+                print("Exiting faculty editor.")
+                break
+
+            else:
+                # Handle invalid menu selections
+                print("Invalid option. Please choose 1, 2, or 3.")
+
+        except Exception as exc:
+            # Catch and report unexpected errors
+            print(f"Operation failed: {exc}")
+
+
+
+
+
+
 # Add a new faculty to the scheduler.
 # Preconditions: Preferred Courses Exist
 # Postconditon: Returns FacultyConfig or Nothing
@@ -111,16 +156,52 @@ def addFaculty():
         #Check if name and preferred courses are the same
     
 
-def main(): #Mainly part of display/run scheduler
-    try:
-        faculty = addFaculty()
-        if faculty is None:
-            print("No faculty information saved.")
-            return
-        scheduler.SchedulerConfig(rooms=[], labs=[], courses=[], faculty=[faculty])
-        print("New faculty information saved!")
-    except Exception as exc:
-        print(f"Failed to save faculty: {exc}")
+
+
+# Delete an existing faculty member from the scheduler.
+# Preconditions: Faculty list is initialized and may contain one or more faculty entries.
+# Postconditions: Removes the faculty with the matching name (case-insensitive)
+#                 from the faculty list if found; otherwise, no changes are made.
+def deleteFaculty(faculty_list):
+    # Check if there is any faculty to delete
+    if not faculty_list:
+        print("No faculty available to delete.")
+        return
+    
+    # Display current faculty names
+    print("\nCurrent Faculty:")
+    for faculty in faculty_list:
+        print(f"- {faculty.name}")
+
+    # Prompt for faculty name
+    while True:
+        name = input("\nEnter the name of the faculty to delete: ").strip()
+        if name:
+            break
+
+    # Search for matching faculty (case-insensitive)
+    faculty_to_delete = None
+    for faculty in faculty_list:
+        if faculty.name.lower() == name.lower():
+            faculty_to_delete = faculty
+            break
+
+    # Handle case where faculty is not found
+    if faculty_to_delete is None:
+        print(f"No faculty named '{name}' found.")
+        return
+    
+    # Confirm deletion
+    confirm = input(f"Are you sure you want to delete {faculty_to_delete.name}? [y/n]: ").lower()
+
+    # Remove faculty if confirmed
+    if confirm == 'y':
+        faculty_list.remove(faculty_to_delete)
+        print(f"{faculty_to_delete.name} has been deleted.")
+    else:
+        print ("Deletion canceled.")
+
+
 
 
 if __name__ == "__main__":

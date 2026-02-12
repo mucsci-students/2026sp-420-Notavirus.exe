@@ -6,8 +6,8 @@
       "Roddy 147"
     ],
     "labs": [
-      "Linux",
-      "Apple"
+      "Mac",
+      "Linux"
     ],
     "courses": [
       {
@@ -49,8 +49,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Apple",
-          "Linux"
+          "Linux",
+          "Mac"
         ],
         "conflicts": [],
         "faculty": []
@@ -62,7 +62,7 @@
           "Roddy 136"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [
           "CMSC 140"
@@ -80,7 +80,7 @@
           "Roddy 147"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [],
         "faculty": []
@@ -94,7 +94,7 @@
           "Roddy 147"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [
           "CMSC 140"
@@ -108,7 +108,7 @@
           "Roddy 140"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [
           "CMSC 140"
@@ -124,8 +124,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Linux",
-          "Apple"
+          "Mac",
+          "Linux"
         ],
         "conflicts": [
           "CMSC 362",
@@ -142,8 +142,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Apple",
-          "Linux"
+          "Linux",
+          "Mac"
         ],
         "conflicts": [
           "CMSC 380",
@@ -162,8 +162,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Apple",
-          "Linux"
+          "Linux",
+          "Mac"
         ],
         "conflicts": [
           "CMSC 362",
@@ -179,7 +179,7 @@
           "Roddy 136"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [
           "CMSC 330",
@@ -196,8 +196,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Linux",
-          "Apple"
+          "Mac",
+          "Linux"
         ],
         "conflicts": [
           "CMSC 340",
@@ -215,8 +215,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Linux",
-          "Apple"
+          "Mac",
+          "Linux"
         ],
         "conflicts": [
           "CMSC 362",
@@ -231,8 +231,8 @@
           "Roddy 140"
         ],
         "lab": [
-          "Apple",
-          "Linux"
+          "Linux",
+          "Mac"
         ],
         "conflicts": [
           "CMSC 420",
@@ -248,7 +248,7 @@
           "Roddy 140"
         ],
         "lab": [
-          "Apple"
+          "Linux"
         ],
         "conflicts": [
           "CMSC 380",
@@ -266,8 +266,8 @@
           "Roddy 147"
         ],
         "lab": [
-          "Apple",
-          "Linux"
+          "Linux",
+          "Mac"
         ],
         "conflicts": [
           "CMSC 380",
@@ -283,7 +283,7 @@
           "Roddy 136"
         ],
         "lab": [
-          "Linux"
+          "Mac"
         ],
         "conflicts": [
           "CMSC 380",
@@ -338,8 +338,8 @@
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Linux": 5,
-          "Apple": 1
+          "Mac": 5,
+          "Linux": 1
         },
         "mandatory_days": []
       },
@@ -391,8 +391,8 @@
           "Roddy 136": 1
         },
         "lab_preferences": {
-          "Linux": 3,
-          "Apple": 3
+          "Mac": 3,
+          "Linux": 3
         },
         "mandatory_days": [
           "FRI",
@@ -448,8 +448,8 @@
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Linux": 5,
-          "Apple": 1
+          "Mac": 5,
+          "Linux": 1
         },
         "mandatory_days": [
           "WED",
@@ -504,8 +504,8 @@
           "Roddy 147": 5
         },
         "lab_preferences": {
-          "Linux": 3,
-          "Apple": 3
+          "Mac": 3,
+          "Linux": 3
         },
         "mandatory_days": [
           "WED"
@@ -553,8 +553,8 @@
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Linux": 5,
-          "Apple": 1
+          "Mac": 5,
+          "Linux": 1
         },
         "mandatory_days": []
       },
@@ -590,8 +590,8 @@
           "Roddy 140": 1
         },
         "lab_preferences": {
-          "Linux": 5,
-          "Apple": 1
+          "Mac": 5,
+          "Linux": 1
         },
         "mandatory_days": []
       },
@@ -637,8 +637,8 @@
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Linux": 1,
-          "Apple": 5
+          "Mac": 1,
+          "Linux": 5
         },
         "mandatory_days": []
       },
@@ -690,8 +690,8 @@
           "Roddy 147": 3
         },
         "lab_preferences": {
-          "Linux": 3,
-          "Apple": 3
+          "Mac": 3,
+          "Linux": 3
         },
         "mandatory_days": [
           "WED"
@@ -717,8 +717,8 @@
           "Roddy 147": 1
         },
         "lab_preferences": {
-          "Linux": 1,
-          "Apple": 5
+          "Mac": 1,
+          "Linux": 5
         },
         "mandatory_days": []
       }

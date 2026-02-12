@@ -166,6 +166,72 @@ def test_duplicate_new_name_rejected(labs, courses, faculty):
     assert "LAB201" in result_labs
     assert result_labs.count("LAB102") == 1
 
+    
+# ------------------------------------------------------------------ #
+#  Case and spacing tests                                              #
+# ------------------------------------------------------------------ #
+
+def test_lowercase_lab_name_without_space_not_found(labs, courses, faculty, capsys):
+    """modifyLab should not find 'lab101' when list contains 'LAB101' - case sensitive."""
+    inputs = [
+        "lab101",   # lowercase - won't match "LAB101"
+        "",         # cancel
+    ]
+    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
+    captured = capsys.readouterr()
+    assert "does not exist" in captured.out
+    assert result_labs == labs  # no changes made
+
+
+def test_lowercase_lab_name_with_space_not_found(labs, courses, faculty, capsys):
+    """modifyLab should not find 'lab 101' when list contains 'LAB101' - case sensitive."""
+    inputs = [
+        "lab 101",  # lowercase with space - won't match "LAB101"
+        "",         # cancel
+    ]
+    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
+    captured = capsys.readouterr()
+    assert "does not exist" in captured.out
+    assert result_labs == labs  # no changes made
+
+
+def test_lab_with_space_not_found(labs, courses, faculty, capsys):
+    """modifyLab should not find 'LAB 101' when list contains 'LAB101' - exact match only."""
+    inputs = [
+        "LAB 101",  # space between LAB and 101 - won't match "LAB101"
+        "",         # cancel
+    ]
+    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
+    captured = capsys.readouterr()
+    assert "does not exist" in captured.out
+    assert result_labs == labs  # no changes made
+
+
+def test_lab_with_space_works_if_in_list(courses, faculty):
+    """modifyLab should find 'LAB 101' if the list actually contains 'LAB 101'."""
+    labs_with_space = ["LAB 101", "LAB102"]
+    inputs = [
+        "LAB 101",  # exact match
+        "LAB 201",  # new name
+        "y",
+    ]
+    result_labs, _, _ = run_modifyLab(inputs, labs_with_space, courses, faculty)
+    assert "LAB 201" in result_labs
+    assert "LAB 101" not in result_labs
+
+
+def test_lowercase_lab_works_if_in_list(courses, faculty):
+    """modifyLab should find 'lab101' if the list actually contains 'lab101'."""
+    labs_lowercase = ["lab101", "LAB102"]
+    inputs = [
+        "lab101",   # exact match
+        "lab201",   # new name
+        "y",
+    ]
+    result_labs, _, _ = run_modifyLab(inputs, labs_lowercase, courses, faculty)
+    assert "lab201" in result_labs
+    assert "lab101" not in result_labs
+
 
 # ------------------------------------------------------------------ #
 #  Return value tests                                                  #

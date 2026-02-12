@@ -1,3 +1,9 @@
+# main.py
+# Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke, Brooks, ...
+# Description:
+
+
 
 """
  Modifies an existing lab and updates all references.
@@ -14,7 +20,7 @@ def modifyLab(labs, courses, faculty):
 
     #Select lab to modify
     while True:
-        old_name = input("Enter the name of the lab you would like to modify (or press Enter to cancel): ").strip()
+        old_name = input("Enter the name of the lab you would like to modify, must be entered how it is shown above. (or press Enter to cancel): ").strip()
         if old_name == "":
             print("Cancelled")
             return labs, courses, faculty

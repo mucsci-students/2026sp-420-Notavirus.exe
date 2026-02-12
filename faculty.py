@@ -1,9 +1,8 @@
 # faculty.py
 # Functions to modify/delete/add a faculty member
 
-from scheduler import load_config_from_file, Day, TimeRange
-from scheduler.config import CombinedConfig
 import scheduler
+from scheduler import TimeRange
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -173,7 +172,13 @@ def modifyFaculty(config, config_path: str):
             elif choice == '6':
                 # Modify availability times
                 while True:
-                    raw_dates = input("Enter available dates with no spaces (MTWRF e.g. MWRF): ")
+                    raw_dates = input("Enter available dates (MTWRF), press Enter for all days, or type 'none' for no availability: ")
+                    if raw_dates.strip() == "":
+                        dates = ["M", "T", "W", "R", "F"]
+                        break
+                    if raw_dates.strip().lower() == "none":
+                        dates = []
+                        break
                     dates = []
                     for ch in raw_dates.upper():
                         if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
@@ -182,33 +187,52 @@ def modifyFaculty(config, config_path: str):
                         break
                     print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
 
-                datesTimes = {}
-                for day in dates:
-                    match day.upper():
-                        case 'M':
-                            day_name = "MON"
-                        case 'T':
-                            day_name = "TUE"
-                        case 'W':
-                            day_name = "WED"
-                        case 'R':
-                            day_name = "THU"
-                        case 'F':
-                            day_name = "FRI"
-                        case _:
-                            continue
+                # If no days, set all to empty
+                if dates == []:
+                    editable_faculty.times = {"MON": [], "TUE": [], "WED": [], "THU": [], "FRI": []}
+                else:
+                    datesTimes = {}
+                    for day in dates:
+                        match day.upper():
+                            case 'M':
+                                day_name = "MON"
+                            case 'T':
+                                day_name = "TUE"
+                            case 'W':
+                                day_name = "WED"
+                            case 'R':
+                                day_name = "THU"
+                            case 'F':
+                                day_name = "FRI"
+                            case _:
+                                continue
 
-                    while True:
-                        start_time = input(f"Enter start time for {day_name} (HH:MM): ").strip()
-                        end_time = input(f"Enter end time for {day_name} (HH:MM): ").strip()
-                        try:
-                            timerange = TimeRange(start=start_time, end=end_time)
-                            datesTimes[day_name] = [timerange]
-                            break
-                        except Exception as e:
-                            print(f"Invalid time format: {e}")
+                        while True:
+                            start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
+                            print(f"DEBUG start_time: '{start_time}'")
 
-                editable_faculty.times = datesTimes
+                            end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
+                            print(f"DEBUG end_time: '{end_time}'")
+
+                            if start_time == "":
+                                start_time = "00:00"
+                            if end_time == "":
+                                end_time = "23:59"
+                            try:
+                                start_h, start_m = map(int, start_time.split(":"))
+                                end_h, end_m = map(int, end_time.split(":"))
+                                start_minutes = start_h * 60 + start_m
+                                end_minutes = end_h * 60 + end_m
+                                if end_minutes <= start_minutes:
+                                    print("End time must be after start time. Please use military time (e.g. 09:00, 13:00).")
+                                    continue
+                                timerange = TimeRange(start=start_time, end=end_time)
+                                datesTimes[day_name] = [timerange]
+                                break
+                            except ValueError:
+                                print("Invalid time format. Please use HH:MM in military time (e.g. 09:00, 13:00).")
+
+                    editable_faculty.times = datesTimes
 
             elif choice == '7':
                 # Modify course preferences

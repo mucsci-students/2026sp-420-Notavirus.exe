@@ -1,4 +1,6 @@
-# course.py
+# Filename: course.py
+# Description: Functions to add, delete, modify, and list courses
+# Authors: Lauryn Gilbert, Hailey, ...
 
 from scheduler.config import CombinedConfig
 
@@ -12,25 +14,23 @@ FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
 
-# listCourses lists all the courses
-# ! function not needed
-def listCourses(config, config_path: str):
-    scheduler_config = config.config
-
-    if not scheduler_config.courses:
-        print("There are no courses in the configuration.")
-        return
-
-    print("\nCourses:")
-    for i, course in enumerate(scheduler_config.courses, 1):
-        print(f"\n{i}. {course.course_id} ({course.credits} credits)")
-        print(f"   Rooms: {', '.join(course.room) if course.room else 'None'}")
-        print(f"   Labs: {', '.join(course.lab) if course.lab else 'None'}")
-        print(f"   Faculty: {', '.join(course.faculty) if course.faculty else 'None'}")
-        print(f"   Conflicts: {', '.join(course.conflicts) if course.conflicts else 'None'}")
-
-
-# deleteCourse function
+# deleteCourse takes an existing course and removes it from the config_path
+#  file through a command line interface. 
+#
+# Parameters: 
+#   config - calls load_config_from_file on config_path to load the config file
+#   config_path str - the file to load that is input by the user
+# Preconditions: 
+#   - The config must contain at least one course.  
+#   - The course intended to delete must already exist in the config_path file.
+# Postconditions: 
+#   - The course will no longer exist in the config_path file. 
+#   - If no faculty exists, a message would be in the Command-Line and no 
+#      changes to the config will occur 
+#   - If the faculty entered does not exist, a message will exist in the 
+#      Command-Line letting the user know and no changes will be made to the 
+#      config file
+# Return: none
 def deleteCourse(config, config_path: str):
     # Load the config 
     scheduler_config = config.config
@@ -77,7 +77,7 @@ def deleteCourse(config, config_path: str):
         with scheduler_config.edit_mode() as editable:
             # First, clean up references in OTHER courses
             for course in editable.courses:
-                if course.course_id != course_id:  # Don't process the course we're deleting
+                if course.course_id != course_id:
                     # Remove course_id from conflicts using list methods
                     while course_id in course.conflicts:
                         course.conflicts.remove(course_id)
@@ -87,7 +87,7 @@ def deleteCourse(config, config_path: str):
                 if course_id in faculty.course_preferences:
                     del faculty.course_preferences[course_id]
             
-            # Finally, remove the actual course (do this LAST)
+            # Last, remove the actual course
             editable.courses = [c for c in editable.courses if c.course_id != course_id]
                     
     except Exception as e:
@@ -100,3 +100,32 @@ def deleteCourse(config, config_path: str):
         f.write(config.model_dump_json(indent=2))
     
     print(f"\nCourse '{course_id}' has been permanently deleted.")
+    
+
+
+
+# listCourses lists all the courses in the command line.
+# ! function not needed, added if I(Lauryn) wanted to display them differently
+#
+# Parameters: 
+#   config - calls load_config_from_file on config_path to load the config file
+#   config_path str - the file to load that is input by the user
+# Precondition: 
+#   - The config file must contain courses 
+# Postcondition: 
+#   - All courses will be listed in the command line displayed to the user
+# Return: none
+def listCourses(config, config_path: str):
+    scheduler_config = config.config
+
+    if not scheduler_config.courses:
+        print("There are no courses in the configuration.")
+        return
+
+    print("\nCourses:")
+    for i, course in enumerate(scheduler_config.courses, 1):
+        print(f"\n{i}. {course.course_id} ({course.credits} credits)")
+        print(f"   Rooms: {', '.join(course.room) if course.room else 'None'}")
+        print(f"   Labs: {', '.join(course.lab) if course.lab else 'None'}")
+        print(f"   Faculty: {', '.join(course.faculty) if course.faculty else 'None'}")
+        print(f"   Conflicts: {', '.join(course.conflicts) if course.conflicts else 'None'}")

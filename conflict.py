@@ -1,5 +1,6 @@
-# conflict.py
-# Functions to add/delete/modify conflict
+# Filename: conflict.py
+# Description: Functions to add, delete, modify conflicts
+# Authors: Lauryn Gilbert
 
 from scheduler.config import CombinedConfig
 
@@ -12,7 +13,23 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
-# function deleteConflict
+# deleteConflict takes an existing conflict and removes it from the 
+#  config file specified by the user
+#
+# Parameters: 
+#   config - calls load_config_from_file on config_path to load the config file
+#   config_path str - the file to load that is input by the user
+# Preconditions: 
+#   - The config must contain at least one conflict.  
+#   - The conflict intended to delete must already exist in the config_path file.
+# Postconditions: 
+#   - The conflict will no longer exist in the config_path file. 
+#   - If no conflicts exists, a message would be in the Command-Line and no 
+#      changes to the config will occur 
+#   - If the conflict entered does not exist, a message will exist in the 
+#      Command-Line letting the user know and no changes will be made to the 
+#      config file
+# Return: none
 def deleteConflict(config: CombinedConfig, config_path: str):
     scheduler_config = config.config
 
@@ -91,6 +108,7 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         f.write(config.model_dump_json(indent=2))
 
     print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")
+
 
 
 

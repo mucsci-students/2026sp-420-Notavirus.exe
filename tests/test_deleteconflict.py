@@ -40,7 +40,9 @@ def test_delete_conflict_reversed_order(config, config_path):
 
     updated = load_config_from_file(CombinedConfig, config_path)
     cmsc140 = next(c for c in updated.config.courses if c.course_id == "CMSC 140")
+    cmsc161 = next(c for c in updated.config.courses if c.course_id == "CMSC 161")
     assert "CMSC 161" not in cmsc140.conflicts
+    assert "CMSC 140" not in cmsc161.conflicts
 
 
 def test_delete_conflict_canceled(config, config_path):

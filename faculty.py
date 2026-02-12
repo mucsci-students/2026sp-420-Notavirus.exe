@@ -209,7 +209,11 @@ def modifyFaculty(config, config_path: str):
 
                         while True:
                             start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
+                            print(f"DEBUG start_time: '{start_time}'")
+
                             end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
+                            print(f"DEBUG end_time: '{end_time}'")
+
                             if start_time == "":
                                 start_time = "00:00"
                             if end_time == "":

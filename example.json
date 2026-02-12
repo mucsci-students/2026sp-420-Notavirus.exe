@@ -305,6 +305,20 @@
         "faculty": [
           "Zoppetti"
         ]
+      },
+      {
+        "course_id": "CMSC 500",
+        "credits": 4,
+        "room": [
+          "Roddy 147"
+        ],
+        "lab": [
+          "Linux"
+        ],
+        "conflicts": [],
+        "faculty": [
+          "Hobbs"
+        ]
       }
     ],
     "faculty": [
@@ -409,9 +423,9 @@
           "Mac": 3
         },
         "mandatory_days": [
-          "MON",
           "FRI",
-          "WED"
+          "WED",
+          "MON"
         ]
       },
       {
@@ -466,8 +480,8 @@
           "Mac": 1
         },
         "mandatory_days": [
-          "MON",
-          "WED"
+          "WED",
+          "MON"
         ]
       },
       {

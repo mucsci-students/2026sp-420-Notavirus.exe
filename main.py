@@ -1,8 +1,14 @@
 # main.py
+# Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke, ...
+# Description:
+
 import sys
 from faculty import *
 from course import *
 from conflict import *
+from scheduler import load_config_from_file
+from scheduler.config import CombinedConfig
 
 faculty_list = []
 
@@ -13,15 +19,30 @@ def main():
     
     config_path = sys.argv[1]
 
+    # load the config file
+    config = load_config_from_file(CombinedConfig, config_path)
+
     while True:
         print("\nScheduler Menu")
-        print("1. Add Faculty")
-        print("2. Add Conflict")
-        print("3. Delete Conflict")
-        print("4. List Courses")
-        print("5. Delete Course")
-        print("6. Modify Faculty")
-        print("7. Exit")
+        print("1.  Add Faculty")
+        print("2.  Modify Faculty")
+        print("3.  Delete Faculty")
+        print("4.  Add Course")
+        print("5.  Modify Course")
+        print("6.  Delete Course")
+        print("7.  Add Conflict")
+        print("8.  Modify Conflict")
+        print("9.  Delete Conflict")
+        print("10. Add Lab")
+        print("11. Modify Lab")
+        print("12. Delete Lab")
+        print("13. Add Room")
+        print("14. Modify Room")
+        print("15. Delete Room")
+        print("16. Print the Configuration File")
+        print("17. Run the Scheduler")
+        print("18. Display Schedules in CSV")
+        print("19. Exit")
 
         choice = input("Choose an option (number only): ").strip()
 
@@ -31,21 +52,30 @@ def main():
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
+
             elif choice == '2':
-                addConflict()
-            elif choice == '3':
-                deleteConflict(config_path)
-            elif choice == '4':
-                listCourses(config_path)
-            elif choice == '5':
-                deleteCourse(config_path)
+                modifyFaculty(config, config_path)
+            
+            # insert choices 3-5 here 
+                
             elif choice == '6':
-                modifyFaculty(config_path)
+                deleteCourse(config, config_path)    
+
             elif choice == '7':
+                addConflict()
+
+            # insert choice 8 - modify conflict here
+
+            elif choice == '9':
+                deleteConflict(config, config_path)
+            
+            # insert choices 10-19 here
+            
+            elif choice == '19':
                 print("Exiting scheduler.")
                 break
             else:
-                print("Invalid option. Please choose 1-7.")
+                print("Invalid option. Please choose 1-19.")
         except Exception as exc:
             print(f"Operation failed: {exc}")
 

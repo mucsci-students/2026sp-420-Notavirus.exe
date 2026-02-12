@@ -43,7 +43,7 @@ def display_Schedule(schedule: list):
     time_slot_labels = set()
 
     for ci in schedule:
-        slot_label = str(ci.time).split(",")[0].split(" ", 1)[1]
+        slot_label = str(ci.time).split(",")[0].split(" ", 1)[1].replace("^", "")
         time_slot_labels.add(slot_label)
         for time_instance in ci.time.times:
             day_name = time_instance.day.name
@@ -130,7 +130,7 @@ def display_Schedule(schedule: list):
         print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
         print(f"  {'Course':<15} {'Section':<10} {'Room':<15} {'Days':<15} {'Time':<20} {'Credits'}")
         print("  " + inner_sep)
-        
+
         for ci in sorted(courses, key=lambda x: str(x.time)):
             days_str = "/".join(ti.day.name for ti in ci.time.times)
             room_str = ci.room if ci.room else "No Room"

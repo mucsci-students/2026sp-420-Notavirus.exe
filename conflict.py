@@ -13,9 +13,8 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
-def deleteConflict(config_path: str):
-    # Load the config
-    config = load_config_from_file(CombinedConfig, config_path)
+# function deleteConflict
+def deleteConflict(config: CombinedConfig, config_path: str):
     scheduler_config = config.config
 
     # Build list of existing conflicts
@@ -26,33 +25,41 @@ def deleteConflict(config_path: str):
             if pair not in existing_conflicts:
                 existing_conflicts.append(pair)
 
-    # Check if there are any conflicts
     if not existing_conflicts:
         print("There are no conflicts currently in the configuration.")
         return
+
+    # Get all valid course IDs
+    valid_courses = {course.course_id for course in scheduler_config.courses}
 
     # Display existing conflicts
     print("\nExisting Conflicts:")
     for i, (a, b) in enumerate(existing_conflicts, 1):
         print(f"{i}. {a} <-> {b}")
 
-    # Prompt for the first course
+    # Prompt for the first course and validate it exists
     while True:
-        course_1 = input("\nEnter the first course ID: ").strip().upper()
-        if course_1 != "":
+        course_1 = input("\nEnter the first course ID (e.g. 'CMSC 100'): ").strip().upper()
+        if course_1 == "":
+            print("Course ID cannot be empty.")
+        elif course_1 not in valid_courses:
+            print(f"Error: '{course_1}' is not a valid course. Valid courses are: {', '.join(sorted(valid_courses))}")
+        else:
             break
 
-    # Prompt for the second course
+    # Prompt for the second course and validate it exists AND conflicts with course_1
     while True:
-        course_2 = input("Enter the conflicting course ID: ").strip().upper()
-        if course_2 != "":
+        course_2 = input("Enter the conflicting course ID (e.g. 'CMSC 100'): ").strip().upper()
+        if course_2 == "":
+            print("Course ID cannot be empty.")
+        elif course_2 not in valid_courses:
+            print(f"Error: '{course_2}' is not a valid course. Valid courses are: {', '.join(sorted(valid_courses))}")
+        elif course_2 == course_1:
+            print("Error: A course cannot conflict with itself.")
+        elif tuple(sorted([course_1, course_2])) not in existing_conflicts:
+            print(f"Error: No conflict exists between '{course_1}' and '{course_2}'.")
+        else:
             break
-
-    # Check if the conflict exists
-    pair = tuple(sorted([course_1, course_2]))
-    if pair not in existing_conflicts:
-        print(f"\nError: No conflict exists between '{course_1}' and '{course_2}'. No changes were made.")
-        return
 
     # Display summary
     print("\nConflict Summary:")
@@ -84,7 +91,8 @@ def deleteConflict(config_path: str):
     with open(config_path, "w", encoding="utf-8") as f:
         f.write(config.model_dump_json(indent=2))
 
-    print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")    
+    print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")
+
 
 
 # Add a conflict between two courses

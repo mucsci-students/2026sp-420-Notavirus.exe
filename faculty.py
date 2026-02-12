@@ -15,9 +15,8 @@ FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
 
-def modifyFaculty(config_path: str):
+def modifyFaculty(config, config_path: str):
     # Load the config
-    config = load_config_from_file(CombinedConfig, config_path)
     scheduler_config = config.config
 
     # Check if there are any faculty
@@ -271,6 +270,8 @@ def modifyFaculty(config_path: str):
         f.write(config.model_dump_json(indent=2))
 
     print(f"\nFaculty '{faculty_name}' has been successfully modified.")
+
+    return config
 
 
 def addFaculty():

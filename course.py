@@ -14,8 +14,7 @@ ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
 # listCourses lists all the courses
 # ! function not needed
-def listCourses(config_path: str):
-    config = load_config_from_file(CombinedConfig, config_path)
+def listCourses(config, config_path: str):
     scheduler_config = config.config
 
     if not scheduler_config.courses:
@@ -32,9 +31,8 @@ def listCourses(config_path: str):
 
 
 # deleteCourse function
-def deleteCourse(config_path: str):
+def deleteCourse(config, config_path: str):
     # Load the config 
-    config = load_config_from_file(CombinedConfig, config_path)
     scheduler_config = config.config
     
     # Check if there are any courses

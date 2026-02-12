@@ -3,6 +3,8 @@ import sys
 from faculty import *
 from course import *
 from conflict import *
+from scheduler import load_config_from_file
+from scheduler.config import CombinedConfig
 
 faculty_list = []
 
@@ -12,6 +14,9 @@ def main():
         return
     
     config_path = sys.argv[1]
+
+    # load the config file
+    config = load_config_from_file(CombinedConfig, config_path)
 
     while True:
         print("\nScheduler Menu")
@@ -43,14 +48,25 @@ def main():
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
+
+            elif choice == '2':
+                modifyFaculty(config, config_path)
+            
+            # insert choices 3-5 here 
+                
+            elif choice == '6':
+                deleteCourse(config, config_path)    
+
             elif choice == '7':
                 addConflict()
+
+            # insert choice 8 - modify conflict here
+
             elif choice == '9':
-                deleteConflict(config_path)
-            elif choice == '6':
-                deleteCourse(config_path)
-            elif choice == '2':
-                modifyFaculty(config_path)
+                deleteConflict(config, config_path)
+            
+            # insert choices 10-19 here
+            
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

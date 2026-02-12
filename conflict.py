@@ -1,7 +1,6 @@
 # conflict.py
 # Functions to add/delete/modify conflict
 
-from scheduler import load_config_from_file, Day, TimeRange
 from scheduler.config import CombinedConfig
 
 # Global Variables

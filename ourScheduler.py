@@ -141,13 +141,5 @@ def display_Schedule(schedule: list):
 
     print("\n" + eq_sep)
 
-    # Generate and display schedule
-    found = False
-    for schedule in s.get_models():
-        display_Schedule(schedule)
-        found = True
-        break
 
-    if not found:
-        print("No valid schedule could be generated.")
 

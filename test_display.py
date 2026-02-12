@@ -1,9 +1,9 @@
-import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 from io import StringIO
 import sys
-sys.path.insert(0, '..')  # make sure main.py is importable
-from main import display_Schedule
+sys.path.insert(0, '..')
+from ourScheduler import display_Schedule
 
 
 def make_mock_course_instance(course_id, section, credits, faculty, room, days, time_str):
@@ -15,10 +15,8 @@ def make_mock_course_instance(course_id, section, credits, faculty, room, days, 
     ci.faculty = faculty
     ci.room = room
 
-    # Mock time
     ci.time.__str__ = MagicMock(return_value=time_str)
-    
-    # Mock time.times (list of TimeInstance)
+
     time_instances = []
     for day in days:
         ti = MagicMock()
@@ -29,160 +27,173 @@ def make_mock_course_instance(course_id, section, credits, faculty, room, days, 
     return ci
 
 
-class TestDisplaySchedule(unittest.TestCase):
-
-    def setUp(self):
-        """Set up mock schedule data for testing."""
-        self.mock_schedule = [
-            make_mock_course_instance(
-                course_id="CMSC 161",
-                section=1,
-                credits=4,
-                faculty="Dr. Smith",
-                room="Roddy 147",
-                days=["MON", "WED", "FRI"],
-                time_str="MON 09:00-09:50,WED 09:00-09:50,FRI 09:00-09:50"
-            ),
-            make_mock_course_instance(
-                course_id="CMSC 162",
-                section=1,
-                credits=4,
-                faculty="Dr. Jones",
-                room="Roddy 140",
-                days=["TUE", "THU"],
-                time_str="TUE 11:00-11:50,THU 11:00-11:50"
-            ),
-        ]
-
-    def _capture_output(self, schedule):
-        """Helper to capture printed output."""
-        captured = StringIO()
-        with patch('sys.stdout', captured):
-            display_Schedule(schedule)
-        return captured.getvalue()
-
-    # ------------------------------------------------------------------ #
-    #  Empty schedule tests                                                #
-    # ------------------------------------------------------------------ #
-
-    def test_empty_schedule_prints_message(self):
-        """display_Schedule should print a message for empty input."""
-        captured = StringIO()
-        with patch('sys.stdout', captured):
-            display_Schedule([])
-        self.assertIn("No schedule to display", captured.getvalue())
-
-    def test_none_schedule_prints_message(self):
-        """display_Schedule should handle None input gracefully."""
-        captured = StringIO()
-        with patch('sys.stdout', captured):
-            display_Schedule(None)
-        self.assertIn("No schedule to display", captured.getvalue())
-
-    # ------------------------------------------------------------------ #
-    #  Section header tests                                                #
-    # ------------------------------------------------------------------ #
-
-    def test_timetable_grid_header_present(self):
-        """Output should contain the timetable grid header."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("FULL TIMETABLE GRID", output)
-
-    def test_room_layout_header_present(self):
-        """Output should contain the room layout header."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("ROOM / TIME SLOT LAYOUT", output)
-
-    def test_faculty_assignments_header_present(self):
-        """Output should contain the faculty assignments header."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("FACULTY ASSIGNMENTS", output)
-
-    # ------------------------------------------------------------------ #
-    #  Timetable grid tests                                                #
-    # ------------------------------------------------------------------ #
-
-    def test_grid_contains_day_headers(self):
-        """Grid should show all five day columns."""
-        output = self._capture_output(self.mock_schedule)
-        for day in ["MON", "TUE", "WED", "THU", "FRI"]:
-            self.assertIn(day, output)
-
-    def test_grid_contains_course_ids(self):
-        """Grid should contain course IDs."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("CMSC 161", output)
-        self.assertIn("CMSC 162", output)
-
-    def test_grid_contains_time_slots(self):
-        """Grid should show time slot labels."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("09:00-09:50", output)
-        self.assertIn("11:00-11:50", output)
-
-    def test_grid_contains_rooms(self):
-        """Grid should show room names under courses."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("Roddy 147", output)
-        self.assertIn("Roddy 140", output)
-
-    # ------------------------------------------------------------------ #
-    #  Room layout tests                                                   #
-    # ------------------------------------------------------------------ #
-
-    def test_room_layout_contains_rooms(self):
-        """Room layout should list all rooms."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("Room: Roddy 147", output)
-        self.assertIn("Room: Roddy 140", output)
-
-    def test_room_layout_contains_faculty(self):
-        """Room layout should show faculty names."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("Dr. Smith", output)
-        self.assertIn("Dr. Jones", output)
-
-    # ------------------------------------------------------------------ #
-    #  Faculty assignment tests                                            #
-    # ------------------------------------------------------------------ #
-
-    def test_faculty_assignments_contains_names(self):
-        """Faculty assignments should list all faculty."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("Dr. Smith", output)
-        self.assertIn("Dr. Jones", output)
-
-    def test_faculty_assignments_shows_credits(self):
-        """Faculty assignments should show total credits."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("Total Credits: 4", output)
-
-    def test_faculty_assignments_shows_course_ids(self):
-        """Faculty assignments should show course IDs."""
-        output = self._capture_output(self.mock_schedule)
-        self.assertIn("CMSC 161", output)
-        self.assertIn("CMSC 162", output)
-
-    # ------------------------------------------------------------------ #
-    #  No room tests                                                       #
-    # ------------------------------------------------------------------ #
-
-    def test_no_room_displays_no_room(self):
-        """Courses with no room should display 'No Room'."""
-        schedule = [
-            make_mock_course_instance(
-                course_id="CMSC 200",
-                section=1,
-                credits=3,
-                faculty="Dr. Smith",
-                room=None,
-                days=["MON", "WED", "FRI"],
-                time_str="MON 10:00-10:50,WED 10:00-10:50,FRI 10:00-10:50"
-            )
-        ]
-        output = self._capture_output(schedule)
-        self.assertIn("No Room", output)
+@pytest.fixture
+def mock_schedule():
+    return [
+        make_mock_course_instance(
+            course_id="CMSC 161",
+            section=1,
+            credits=4,
+            faculty="Dr. Smith",
+            room="Roddy 147",
+            days=["MON", "WED", "FRI"],
+            time_str="MON 09:00-09:50,WED 09:00-09:50,FRI 09:00-09:50"
+        ),
+        make_mock_course_instance(
+            course_id="CMSC 162",
+            section=1,
+            credits=4,
+            faculty="Dr. Jones",
+            room="Roddy 140",
+            days=["TUE", "THU"],
+            time_str="TUE 11:00-11:50,THU 11:00-11:50"
+        ),
+    ]
 
 
-if __name__ == "__main__":
-    unittest.main()
+# ------------------------------------------------------------------ #
+#  Empty schedule tests                                                #
+# ------------------------------------------------------------------ #
+
+def test_empty_schedule_prints_message(capsys):
+    """display_Schedule should print a message for empty input."""
+    display_Schedule([])
+    captured = capsys.readouterr()
+    assert "No schedule to display" in captured.out
+
+
+def test_none_schedule_prints_message(capsys):
+    """display_Schedule should handle None input gracefully."""
+    display_Schedule(None)
+    captured = capsys.readouterr()
+    assert "No schedule to display" in captured.out
+
+
+# ------------------------------------------------------------------ #
+#  Section header tests                                                #
+# ------------------------------------------------------------------ #
+
+def test_timetable_grid_header_present(mock_schedule, capsys):
+    """Output should contain the timetable grid header."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "FULL TIMETABLE GRID" in captured.out
+
+
+def test_room_layout_header_present(mock_schedule, capsys):
+    """Output should contain the room layout header."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "ROOM / TIME SLOT LAYOUT" in captured.out
+
+
+def test_faculty_assignments_header_present(mock_schedule, capsys):
+    """Output should contain the faculty assignments header."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "FACULTY ASSIGNMENTS" in captured.out
+
+
+# ------------------------------------------------------------------ #
+#  Timetable grid tests                                                #
+# ------------------------------------------------------------------ #
+
+def test_grid_contains_day_headers(mock_schedule, capsys):
+    """Grid should show all five day columns."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    for day in ["MON", "TUE", "WED", "THU", "FRI"]:
+        assert day in captured.out
+
+
+def test_grid_contains_course_ids(mock_schedule, capsys):
+    """Grid should contain course IDs."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "CMSC 161" in captured.out
+    assert "CMSC 162" in captured.out
+
+
+def test_grid_contains_time_slots(mock_schedule, capsys):
+    """Grid should show time slot labels."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "09:00-09:50" in captured.out
+    assert "11:00-11:50" in captured.out
+
+
+def test_grid_contains_rooms(mock_schedule, capsys):
+    """Grid should show room names under courses."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "Roddy 147" in captured.out
+    assert "Roddy 140" in captured.out
+
+
+# ------------------------------------------------------------------ #
+#  Room layout tests                                                   #
+# ------------------------------------------------------------------ #
+
+def test_room_layout_contains_rooms(mock_schedule, capsys):
+    """Room layout should list all rooms."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "Room: Roddy 147" in captured.out
+    assert "Room: Roddy 140" in captured.out
+
+
+def test_room_layout_contains_faculty(mock_schedule, capsys):
+    """Room layout should show faculty names."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "Dr. Smith" in captured.out
+    assert "Dr. Jones" in captured.out
+
+
+# ------------------------------------------------------------------ #
+#  Faculty assignment tests                                            #
+# ------------------------------------------------------------------ #
+
+def test_faculty_assignments_contains_names(mock_schedule, capsys):
+    """Faculty assignments should list all faculty."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "Dr. Smith" in captured.out
+    assert "Dr. Jones" in captured.out
+
+
+def test_faculty_assignments_shows_credits(mock_schedule, capsys):
+    """Faculty assignments should show total credits."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "Total Credits: 4" in captured.out
+
+
+def test_faculty_assignments_shows_course_ids(mock_schedule, capsys):
+    """Faculty assignments should show course IDs."""
+    display_Schedule(mock_schedule)
+    captured = capsys.readouterr()
+    assert "CMSC 161" in captured.out
+    assert "CMSC 162" in captured.out
+
+
+# ------------------------------------------------------------------ #
+#  No room tests                                                       #
+# ------------------------------------------------------------------ #
+
+def test_no_room_displays_no_room(capsys):
+    """Courses with no room should display 'No Room'."""
+    schedule = [
+        make_mock_course_instance(
+            course_id="CMSC 200",
+            section=1,
+            credits=3,
+            faculty="Dr. Smith",
+            room=None,
+            days=["MON", "WED", "FRI"],
+            time_str="MON 10:00-10:50,WED 10:00-10:50,FRI 10:00-10:50"
+        )
+    ]
+    display_Schedule(schedule)
+    captured = capsys.readouterr()
+    assert "No Room" in captured.out

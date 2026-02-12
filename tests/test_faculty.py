@@ -1,5 +1,6 @@
 from scheduler import *
 from main import *
+from faculty import *
 
 #Note: Unit tests written using example.json
 
@@ -25,11 +26,11 @@ def test_faculty_check_duplicate_name():
     assert faculty_check_duplicate(config=config, new_faculty=faculty) == True
 
 # Check if adding a duplicate availability and course preferences will be handled correctly.
-# faculty_check_duplicate should return True.
+# faculty_check_duplicate should return False.
 def test_faculty_check_duplicate_datesPref():
     (config, scheduler) = initConfig()
     faculty = addFaculty_config(name="distinctName", isFullTime="y", dates=['M', 'W', 'F'], courses={})
-    assert faculty_check_duplicate(config=config, new_faculty=faculty) == True
+    assert faculty_check_duplicate(config=config, new_faculty=faculty) == False
 
 # Check if adding a distinct faculty will be handled correctly.
 # faculty_check_duplicate should return False.

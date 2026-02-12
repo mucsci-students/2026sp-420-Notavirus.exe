@@ -1,141 +1,93 @@
-import scheduler
-from scheduler import load_config_from_file, CombinedConfig
+# main.py
+# Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke, ...
+# Description:
 
-"""
- Modifies an existing lab and updates all references.
- returns updated list. 
-"""
+import sys
+from lab import modifyLab
+from scheduler import load_config_from_file
+from scheduler.config import CombinedConfig
 
-def modifyLab(labs, courses, faculty):
-    if not labs:
-        print("No labs available")
-        return labs, courses, faculty
-    
-    print("\n--- Modify Lab ---")
-    print(f"Current labs: {','.join(labs)}")
-
-    #Select lab to modify
-    while True:
-        old_name = input("Enter the name of the lab you would like to modify (or press Enter to cancel): ").strip()
-        if old_name == "":
-            print("Cancelled")
-            return labs, courses, faculty
-        if(old_name not in labs):
-            print(f"Error: Lab '{old_name}' does not exist.")
-            print(f"Available Labs: {','.join(labs)}")
-            continue
-        break
-
-    #Select new name
-    while True:
-        new_name = input(f"Enter the new name of the lab '{old_name}': ").strip()
-        if new_name == "":
-            print("Lab name cannot be empty.")
-            continue
-        if new_name in labs:
-            print(f"Error lab '{new_name}' already exists")
-            continue
-        break
-    
-    #Show updates
-    affected_courses = [c for c in courses if old_name in c.lab]
-    affected_faculty = [f for f in faculty if old_name in f.lab_preferences]
-
-    print(f"\nThis will update")
-    print(f"  -Lab name '{old_name}'  ->  '{new_name}'")
-
-    if affected_courses:
-        print(f"  -{len(affected_courses)} course(s): {','.join(c.course_id for c in affected_courses)}")
-    if affected_faculty:
-        print(f"  -{len(affected_faculty)} faculty: {','.join(f.name for f in affected_faculty)}")
-
-    #Confirm changes
-    while True:
-        confirm = input(f"\nProceed with these changes [y/n]: ")
-        if confirm.lower() in ('y', 'n'):
-            break
-
-    # Update name
-    if confirm.lower() == 'y':
-        index = labs.index(old_name)
-        labs[index] = new_name
-
-        for course in courses:
-            if old_name in course.lab:
-                course.lab = [new_name if lab == old_name else lab for lab in course.lab]
-
-        # Update faculty preferences
-        for f in faculty:
-            if old_name in f.lab_preferences:
-                f.lab_preferences[new_name] = f.lab_preferences.pop(old_name)
-
-        print(f"Lab successfully updated to '{new_name}'")
-    else:
-        print(f"Cancelled, no changes made.")
-
-    return labs, courses, faculty
-
+faculty_list = []
 
 def main():
-    try:
-        # Load config from JSON file
-        config_file = "example.json"
-        config = scheduler.load_config_from_file(
-            scheduler.CombinedConfig,
-            config_file
-        )
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <config_path>")
+        return
+    
+    config_path = sys.argv[1]
 
-        # Extract the data we need
-        labs = config.config.labs
-        courses = config.config.courses
-        faculty = config.config.faculty
+    # load the config file
+    config = load_config_from_file(CombinedConfig, config_path)
 
-        # Show initial state
-        print("=== Initial State ===")
-        print(f"Labs: {labs}")
-        print(f"\nCourses and their labs:")
-        for c in courses:
-            print(f"  - {c.course_id}: {c.lab if c.lab else 'No lab'}")
-        print(f"\nFaculty lab preferences:")
-        for f in faculty:
-            if f.lab_preferences:
-                print(f"  - {f.name}: {f.lab_preferences}")
+    while True:
+        print("\nScheduler Menu")
+        print("1.  Add Faculty")
+        print("2.  Modify Faculty")
+        print("3.  Delete Faculty")
+        print("4.  Add Course")
+        print("5.  Modify Course")
+        print("6.  Delete Course")
+        print("7.  Add Conflict")
+        print("8.  Modify Conflict")
+        print("9.  Delete Conflict")
+        print("10. Add Lab")
+        print("11. Modify Lab")
+        print("12. Delete Lab")
+        print("13. Add Room")
+        print("14. Modify Room")
+        print("15. Delete Room")
+        print("16. Print the Configuration File")
+        print("17. Run the Scheduler")
+        print("18. Display Schedules in CSV")
+        print("19. Exit")
 
-        # Call modifyLab
-        labs, courses, faculty = modifyLab(labs, courses, faculty)
+        choice = input("Choose an option (number only): ").strip()
 
-        # Show final state
-        print("\n=== Final State ===")
-        print(f"Labs: {labs}")
-        print(f"\nCourses and their labs:")
-        for c in courses:
-            print(f"  - {c.course_id}: {c.lab if c.lab else 'No lab'}")
-        print(f"\nFaculty lab preferences:")
-        for f in faculty:
-            if f.lab_preferences:
-                print(f"  - {f.name}: {f.lab_preferences}")
+        try:
+            if choice == '1':
+                faculty = addFaculty()
+                if faculty is not None:
+                    faculty_list.append(faculty)
+                    print("New faculty information saved.")
 
-        # OPTIONAL: Save changes back to JSON
-        save_choice = input("\nSave changes to config file? [y/n]: ")
-        if save_choice.lower() == 'y':
-            # Update the config object with modified data
-            config.config.labs = labs
-            config.config.courses = courses
-            config.config.faculty = faculty
+            elif choice == '2':
+                modifyFaculty(config, config_path)
             
-            # Save to file
-            import json
-            with open(config_file, 'w') as f:
-                json.dump(config.model_dump(mode='json'), f, indent=2)
-            print(f"Changes saved to {config_file}")
-        else:
-            print("Changes not saved.")
+            # insert choices 3-5 here 
+                
+            elif choice == '6':
+                deleteCourse(config, config_path)    
 
-    except FileNotFoundError:
-        print(f"Error: {config_file} not found.")
-    except Exception as exc:
-        import traceback
-        traceback.print_exc()
+            elif choice == '7':
+                addConflict()
+
+            # insert choice 8 - modify conflict here
+
+            elif choice == '9':
+                deleteConflict(config, config_path)
+            
+            # insert choices 10-19 here
+
+            elif choice == '11':
+                labs = config.config.labs
+                courses = config.config.courses
+                faculty = config.config.faculty
+                labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+                import json
+                with open(config_path, 'w') as f:
+                    json.dump(config.model_dump(mode='json'), f, indent=2)
+                print(f"Changes saved to {config_path}")
+                
+            
+            elif choice == '19':
+                print("Exiting scheduler.")
+                break
+            else:
+                print("Invalid option. Please choose 1-19.")
+        except Exception as exc:
+            print(f"Operation failed: {exc}")
 
 
 if __name__ == "__main__":

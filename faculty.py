@@ -1,5 +1,6 @@
-# faculty.py
-# Functions to modify/delete/add a faculty member
+# Filename: faculty.py
+# Description: Functions to modify/delete/add a faculty member
+# Authors: Lauryn Gilbert, Luke, ...
 
 import scheduler
 from scheduler import TimeRange
@@ -13,7 +14,26 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
-
+# modifyFaculty takes a config and config path to modify different preferences 
+#  associated with existing faculty. The function uses a CLI and will update 
+#  the config_path file when modifications occur. 
+#
+# Parameters: 
+#   config - calls load_config_from_file on config_path to load the config file
+#   config_path str - the file to load that is input by the user
+# Preconditions: 
+#   - The config must contain faculty 
+#   - The faculty intended to delete must already exist in the config_path file
+# Postconditions: 
+#   - The config_path file will be updated with the modifications specified by
+#      the user and there will be a message in the Command-Line letting the 
+#      user know the changes have been made 
+#   - If no faculty exists, the Command-Line will have a message saying that
+#      and no changes will be made to the config,
+#   - If the faculty entered does not exist, the Command-Line will have a 
+#      message displayed to the user letting them know and no changes will be  
+#      made to the config file
+# Return: none
 def modifyFaculty(config, config_path: str):
     # Load the config
     scheduler_config = config.config

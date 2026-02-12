@@ -1,7 +1,6 @@
-# main.py
-# Builds a command line interface for users to run, modify, and display the scheduler
+# Filename: main.py
+# Description: Builds a command line interface for users to run, modify, and display the scheduler
 # Authors: Lauryn Gilbert, Hailey, Luke, ...
-# Description:
 
 import sys
 from faculty import *

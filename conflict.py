@@ -3,7 +3,8 @@
 # Description: Functions to add, delete, modify conflicts
 # Authors: Lauryn Gilbert, Luke Leopold
 
-from scheduler import *
+from scheduler import CourseConfig
+from scheduler.config import CombinedConfig
 
 #Find courses and return their course_id's.
 #Returns a courseConfig and a Course tuple.

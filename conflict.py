@@ -44,6 +44,14 @@ def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, new
     # Defensive checks
     if not isinstance(selectedConflict, str) or not isinstance(newCourse, str):
         return False
+    if modifyMode not in (1, 2):
+        return False
+    
+    valid_course_ids = {course.course_id for course in config.config.courses}
+    if selectedConflict not in valid_course_ids or newCourse not in valid_course_ids:
+        return False
+    if newCourse in (old_course_id, selectedConflict):
+        return False
 
     # ensure selectedConflict exists in the selectedCourse
     if selectedConflict not in selectedCourse.conflicts:

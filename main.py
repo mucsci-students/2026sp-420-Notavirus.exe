@@ -1,12 +1,6 @@
-# main.py
-# Builds a command line interface for users to run, modify, and display the scheduler
-# Authors: Lauryn Gilbert, Hailey, Luke, Brooks, ...
-# Description:
-
-import sys
-from lab import modifyLab
-# Authors: Lauryn Gilbert, Hailey, Luke, ...
-# Description:
+# Filename: main.py
+# Description: Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke, Brooks, Keller
 
 import sys
 from faculty import *
@@ -21,7 +15,7 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <config_path>")
         return
-    
+
     config_path = sys.argv[1]
 
     # load the config file
@@ -57,20 +51,16 @@ def main():
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
-
             elif choice == '2':
                 modifyFaculty(config, config_path)
-            
-            # insert choices 3-5 here 
-                
+            # insert choice 3 - deleteFaculty here
+            # insert choice 4 - addCourse here
+            # insert choice 5 - modifyCourse here
             elif choice == '6':
-                deleteCourse(config, config_path)    
-
+                deleteCourse(config, config_path)
             elif choice == '7':
                 addConflict()
-
-            # insert choice 8 - modify conflict here
-
+            # insert choice 8 - modifyConflict here
             elif choice == '9':
                 deleteConflict(config, config_path)
             

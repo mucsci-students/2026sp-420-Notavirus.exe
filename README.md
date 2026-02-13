@@ -7,7 +7,7 @@ A command-line tool for managing and generating academic course schedules. Built
 
 ## Authors
 
-Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas maina, Keller.
+Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller.
 
 ---
 

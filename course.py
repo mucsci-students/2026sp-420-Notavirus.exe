@@ -13,6 +13,112 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
+# Modify an existing course.
+# Preconditions: User knows the course ID.
+# Postconditions: Updated course data is collected.
+def modifyCourse(config_path: str):
+    config = load_config_from_file(CombinedConfig, config_path)
+    scheduler_config = config.config
+
+    if not scheduler_config.courses:
+        print("There are no courses in the configuration.")
+        return
+
+    # Display existing courses
+    print("\nExisting Courses:")
+    for i, course in enumerate(scheduler_config.courses, 1):
+        print(f"{i}. {course.course_id} ({course.credits} credits)")
+
+    # Prompt for course
+    while True:
+        course_id = input("\nEnter the full course ID to modify: ").strip().upper()
+        if course_id:
+            break
+
+    matching = [c for c in scheduler_config.courses if c.course_id == course_id]
+    if not matching:
+        print(f"No course '{course_id}' found.")
+        return
+
+    course = matching[0]
+
+    # Ask for updated values
+    print("\nEnter new values or press Enter to keep existing ones.")
+
+    credits = input("New credit value: ").strip()
+    room = input("New room (comma separated): ").strip()
+    lab = input("New lab (comma separated): ").strip()
+
+
+    # Summary of modification
+    print("\nModification Summary:")
+    print(f"Course: {course_id}")
+    print(f"Credits: {credits if credits else '[unchanged]'}")
+    print(f"Room: {room if room else '[unchanged]'}")
+    print(f"Lab: {lab if lab else '[unchanged]'}")
+
+    # Apply or do not apply changes
+    while True:
+        confirm = input("Apply these changes? [y/n]: ").lower()
+        if confirm in ('y', 'n'):
+            break
+        print("Please enter 'y' or 'n'")
+
+    if confirm == 'n':
+        print("Course modification canceled.")
+        return
+
+    try:
+        with scheduler_config.edit_mode() as editable:
+            editable_course = next(c for c in editable.courses if c.course_id == course_id)
+
+            if credits:
+                try:
+                    credits_int = int(credits)
+                    if credits_int < 0:
+                        print(f"Error: Credits cannot be negative.")
+                        return
+                    editable_course.credits = credits_int
+                except ValueError:
+                    print(f"Error: '{credits}' is not a valid number.")
+                    return
+            if room:
+                room_list = [r.strip() for r in room.split(",") if r.strip()]
+                editable_course.room = room_list
+
+            if lab:
+                editable_course.lab = [l.strip() for l in lab.split(",")]
+
+    except Exception as e:
+        print(f"Error modifying course: {e}")
+        return
+
+    # Save back to the config file
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(config.model_dump_json(indent=2))
+
+    print(f"Course '{course_id}' updated successfully.")
+
+# Testing function
+def modifyCourse_config(course, credits=None, room=None, lab=None):
+
+    if credits is not None:
+        if credits < 0:
+            course.credits = course.credits
+        else:
+            course.credits = credits
+
+    if room is not None:
+        course.room = room
+
+    if lab is not None:
+        course.lab = lab
+
+    return course
+
+
+
+
 
 # deleteCourse takes an existing course and removes it from the config_path
 #  file through a command line interface. 
@@ -77,7 +183,7 @@ def deleteCourse(config, config_path: str):
         with scheduler_config.edit_mode() as editable:
             # First, clean up references in OTHER courses
             for course in editable.courses:
-                if course.course_id != course_id:
+                if course.course_id != course_id:  # Don't process the course we're deleting
                     # Remove course_id from conflicts using list methods
                     while course_id in course.conflicts:
                         course.conflicts.remove(course_id)

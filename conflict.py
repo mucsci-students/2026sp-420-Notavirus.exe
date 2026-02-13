@@ -90,6 +90,10 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
             conflictNum += 1
             print(str(conflictNum) + ": " + str(course.course_id) + " conflicts with " + conflict)            
 
+    if conflictNum == 0:
+        print("There are no conflicts to modify.")
+        return
+
     while(True):
         modifyNum = input("Which conflict would you like to modify? [1 - " + str(conflictNum) + "]: ").strip()
         if str.isnumeric(modifyNum) and int(modifyNum) >= 1 and int(modifyNum) <= conflictNum:

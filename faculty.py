@@ -429,3 +429,19 @@ def deleteFaculty(config_path: str):
         f.write(config.model_dump_json(indent=2))
 
     print(f"{faculty_to_delete.name} deleted successfully.")
+
+# For Testing File:
+
+def deleteFaculty_config(faculty_list, name):
+    """
+    Removes a faculty member by name (case-insensitive).
+    Returns True if removed, False if not found.
+    """
+
+    for faculty in faculty_list:
+        if faculty.name.lower() == name.lower():
+            faculty_list.remove(faculty)
+            return True
+
+    return False
+

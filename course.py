@@ -97,7 +97,7 @@ def modifyCourse(config_path: str):
 
     print(f"Course '{course_id}' updated successfully.")
 
-
+# Testing function
 def modifyCourse_config(course, credits=None, room=None, lab=None):
 
     if credits is not None:

@@ -6,6 +6,7 @@ import sys
 from faculty import *
 from course import *
 from conflict import *
+from lab import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
 
@@ -63,7 +64,21 @@ def main():
             # insert choice 8 - modifyConflict here
             elif choice == '9':
                 deleteConflict(config, config_path)
-            # insert choices 10-18 here
+            
+            # insert choices 10-19 here
+
+            elif choice == '11':
+                labs = config.config.labs
+                courses = config.config.courses
+                faculty = config.config.faculty
+                labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+                import json
+                with open(config_path, 'w') as f:
+                    json.dump(config.model_dump(mode='json'), f, indent=2)
+                print(f"Changes saved to {config_path}")
+                
+            
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

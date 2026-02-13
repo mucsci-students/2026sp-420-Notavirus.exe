@@ -1,10 +1,5 @@
-# lab.py
-# Functions to add/modify/delete a lab
-
-from scheduler import load_config_from_file, TimeRange
-from scheduler.config import CombinedConfig
-import scheduler
-
+# add_lab.py
+from scheduler import TimeRange
 
 def add_lab():
     # Lab name
@@ -15,7 +10,7 @@ def add_lab():
 
     # Associated course
     while True:
-        course = input("Enter the course this lab is associated with (e.g. CMSC 161): ").strip()
+        course = input("Enter the course this lab is associated with (e.g., CMSC 161): ").strip()
         if course != "":
             break
 
@@ -26,34 +21,28 @@ def add_lab():
 
     # Lab meeting days
     while True:
-        raw_days = input("Enter the days this lab meets (MTWRF): ")
-        days = []
-        for ch in raw_days.upper():
-            if ch in {"M", "T", "W", "R", "F"} and ch not in days:
-                days.append(ch)
-
-        if len(days) > 0:
+        raw_days = input("Enter the days this lab meets (MTWRF): ").upper()
+        days = [ch for ch in raw_days if ch in "MTWRF"]
+        if days:
             break
-
         print("Please enter at least one valid day (MTWRF).")
 
     # Convert to scheduler day format
-    daysTimes = {}
+    times = {}
     for day in days:
         match day:
-            case 'M': day_name = "MON"
-            case 'T': day_name = "TUE"
-            case 'W': day_name = "WED"
-            case 'R': day_name = "THU"
-            case 'F': day_name = "FRI"
+            case "M": day_name = "MON"
+            case "T": day_name = "TUE"
+            case "W": day_name = "WED"
+            case "R": day_name = "THU"
+            case "F": day_name = "FRI"
             case _: continue
 
         while True:
             start_time = input(f"Enter start time for {day_name} (HH:MM): ").strip()
             end_time = input(f"Enter end time for {day_name} (HH:MM): ").strip()
             try:
-                timerange = TimeRange(start=start_time, end=end_time)
-                daysTimes[day_name] = [timerange]
+                times[day_name] = [TimeRange(start=start_time, end=end_time)]
                 break
             except Exception as e:
                 print(f"Invalid time format: {e}")
@@ -63,28 +52,18 @@ def add_lab():
     print(f"Name: {name}")
     print(f"Course: {course.upper()}")
     print(f"Instructor: {instructor}")
-    print(f"Times: {daysTimes}")
+    print(f"Times: {times}")
 
-    # Confirm
     while True:
-        confirm = input("\nIs this information correct? [y/n]: ").lower().strip()
-        if confirm in ('y', 'n'):
+        confirm = input("Is this information correct? [y/n]: ").lower()
+        if confirm in ("y", "n"):
             break
 
-    if confirm == 'y':
-        return scheduler.LabConfig(
-            name=name,
-            course=course.upper(),
-            instructor=instructor,
-            times=daysTimes
-        )
-    else:
-        while True:
-            restart = input("Would you like to restart adding the lab? [y/n]: ").lower().strip()
-            if restart in ('y', 'n'):
-                break
-
-        if restart == 'y':
-            return add_lab()
-        else:
-            return None
+    if confirm == "y":
+        return {
+            "name": name,
+            "course": course.upper(),
+            "instructor": instructor,
+            "times": times
+        }
+    return None

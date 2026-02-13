@@ -126,13 +126,21 @@ def modifyFaculty(config, config_path: str):
                         break
                     print("Please enter 'y' or 'n'.")
                 
+<<<<<<< HEAD
                 if position == 'y': # change to full time, adjusts credits accordingly
+=======
+                if position == 'y':
+>>>>>>> develop
                     editable_faculty.maximum_credits = FULL_TIME_MAX_CREDITS
                     editable_faculty.unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
                     if editable_faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
                         editable_faculty.minimum_credits = FULL_TIME_MAX_CREDITS
                     new_position = "Full-time"
+<<<<<<< HEAD
                 else: # change to part time, adjusts credits accordingly
+=======
+                else:
+>>>>>>> develop
                     if editable_faculty.minimum_credits > ADJUNCT_MAX_CREDITS:
                         editable_faculty.minimum_credits = ADJUNCT_MAX_CREDITS                    
                     editable_faculty.maximum_credits = ADJUNCT_MAX_CREDITS
@@ -145,7 +153,11 @@ def modifyFaculty(config, config_path: str):
                 print(f"Minimum credits adjusted to: {editable_faculty.minimum_credits}")
                 print(f"Unique course limit set to: {editable_faculty.unique_course_limit}")
 
+<<<<<<< HEAD
             elif choice == '2': # modify maximum credits
+=======
+            elif choice == '2':
+>>>>>>> develop
                 while True:
                     try:
                         new_max = int(input("Enter new maximum credits: "))
@@ -156,7 +168,11 @@ def modifyFaculty(config, config_path: str):
                     except ValueError:
                         print("Please enter a valid number.")
 
+<<<<<<< HEAD
             elif choice == '3': # modify minimum credits
+=======
+            elif choice == '3':
+>>>>>>> develop
                 while True:
                     try:
                         new_min = int(input("Enter new minimum credits: "))
@@ -167,7 +183,11 @@ def modifyFaculty(config, config_path: str):
                     except ValueError:
                         print("Please enter a valid number.")
 
+<<<<<<< HEAD
             elif choice == '4': # modify new unique course limit
+=======
+            elif choice == '4':
+>>>>>>> develop
                 while True:
                     try:
                         new_limit = int(input("Enter new unique course limit: "))
@@ -178,7 +198,11 @@ def modifyFaculty(config, config_path: str):
                     except ValueError:
                         print("Please enter a valid number.")
 
+<<<<<<< HEAD
             elif choice == '5': # modify maxmimum days
+=======
+            elif choice == '5':
+>>>>>>> develop
                 while True:
                     try:
                         new_max_days = int(input("Enter new maximum days (0-5): "))
@@ -226,7 +250,11 @@ def modifyFaculty(config, config_path: str):
                                 day_name = "FRI"
                             case _:
                                 continue
+<<<<<<< HEAD
                         # Change preferences for time, outputs for all the days input
+=======
+
+>>>>>>> develop
                         while True:
                             start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
                             print(f"DEBUG start_time: '{start_time}'")
@@ -234,13 +262,19 @@ def modifyFaculty(config, config_path: str):
                             end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
                             print(f"DEBUG end_time: '{end_time}'")
 
+<<<<<<< HEAD
                             # Hitting enter will auto fill to all week or 24 hrs a day
+=======
+>>>>>>> develop
                             if start_time == "":
                                 start_time = "00:00"
                             if end_time == "":
                                 end_time = "23:59"
                             try:
+<<<<<<< HEAD
                                 # Ensures start is before end
+=======
+>>>>>>> develop
                                 start_h, start_m = map(int, start_time.split(":"))
                                 end_h, end_m = map(int, end_time.split(":"))
                                 start_minutes = start_h * 60 + start_m

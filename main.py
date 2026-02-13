@@ -1,15 +1,24 @@
 # Filename: main.py
 # Description: Builds a command line interface for users to run, modify, and display the scheduler
+<<<<<<< HEAD
 # Authors: Lauryn Gilbert, Hailey, Luke, ...
+=======
+# Authors: Lauryn Gilbert, Hailey, Luke, Brooks, Keller
+>>>>>>> develop
 
 import sys
 from faculty import *
 from course import *
 from conflict import *
+<<<<<<< HEAD
+=======
+from lab import *
+>>>>>>> develop
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
 
 faculty_list = []
+<<<<<<< HEAD
 
 def main():
     if len(sys.argv) < 2:
@@ -18,6 +27,16 @@ def main():
     
     config_path = sys.argv[1]
 
+=======
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <config_path>")
+        return
+
+    config_path = sys.argv[1]
+
+>>>>>>> develop
     # load the config file
     config = load_config_from_file(CombinedConfig, config_path)
 
@@ -51,6 +70,7 @@ def main():
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
+<<<<<<< HEAD
 
             elif choice == '2':
                 modifyFaculty(config, config_path)
@@ -65,10 +85,37 @@ def main():
 
             # insert choice 8 - modify conflict here
 
+=======
+            elif choice == '2':
+                modifyFaculty(config, config_path)
+            # insert choice 3 - deleteFaculty here
+            # insert choice 4 - addCourse here
+            # insert choice 5 - modifyCourse here
+            elif choice == '6':
+                deleteCourse(config, config_path)
+            elif choice == '7':
+                addConflict()
+            # insert choice 8 - modifyConflict here
+>>>>>>> develop
             elif choice == '9':
                 deleteConflict(config, config_path)
             
             # insert choices 10-19 here
+<<<<<<< HEAD
+=======
+
+            elif choice == '11':
+                labs = config.config.labs
+                courses = config.config.courses
+                faculty = config.config.faculty
+                labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+                import json
+                with open(config_path, 'w') as f:
+                    json.dump(config.model_dump(mode='json'), f, indent=2)
+                print(f"Changes saved to {config_path}")
+                
+>>>>>>> develop
             
             elif choice == '19':
                 print("Exiting scheduler.")
@@ -79,4 +126,8 @@ def main():
             print(f"Operation failed: {exc}")
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> develop

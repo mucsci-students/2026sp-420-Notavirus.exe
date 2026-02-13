@@ -1,9 +1,9 @@
-# faculty.py
-# Functions to modify/delete/add a faculty member
+# Filename: faculty.py
+# Description: Functions to modify/delete/add a faculty member
+# Authors: Lauryn Gilbert, Luke, ...
 
-from scheduler import load_config_from_file, Day, TimeRange
-from scheduler.config import CombinedConfig
 import scheduler
+from scheduler import TimeRange
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -14,105 +14,26 @@ MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
-
-
-def addFaculty():
-    while(True):
-        name = input("Enter the new faculty's name: ")
-        if name != "":
-            break
-    
-    while(True):
-        position = input("Does the new faculty have a full-time position? [y/n]: ")
-        if position.lower() == 'y' or position.lower() == 'n':
-            break
-
-    #course limit is two or one depending on position
-    if position.lower() == 'y':
-        position = "Full-time"
-        unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
-        max_credits = FULL_TIME_MAX_CREDITS
-    else:
-        position = "Adjunct"
-        unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
-        max_credits = ADJUNCT_MAX_CREDITS
-
-    # Add dates/Times to new faculty info
-    while True:
-        raw_dates = input("Enter available dates (MTWRF): ")
-        dates = []
-        for ch in raw_dates.upper():
-            if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
-                dates.append(ch)
-        if MIN_DAYS <= len(dates) <= MAX_DAYS:
-            break
-        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
-
-    # match char dates to substitute for normal spelling, get availability for each day
-    datesTimes = {}
-    for day in dates:
-        match day.upper():
-            case 'M':
-                day = "MON"
-            case 'T':
-                day = "TUE"
-            case 'W':
-                day = "WED"
-            case 'R':
-                day = "THU"
-            case 'F':
-                day = "FRI"
-            case _: # any letters/characters not matched are skipped
-                continue
-
-        while(True): #Times should be in TimeRange format (i.e. using military time and assigning start/end times seperately)
-            timerange = TimeRange(start='09:00', end='17:00')
-            datesTimes[day] = [str(timerange)]
-            if datesTimes[day] != "":
-                break
-
-    courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
-    coursesPref = {}
-    if courses != "":
-        for course in str.split(courses, ";"):
-            while True:
-                try:
-                    weight = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
-                except ValueError:
-                    print("Please enter a whole number between 0 and 10.")
-                    continue
-                if 0 <= weight <= 10:
-                    break
-                print("Please enter a whole number between 0 and 10.")
-            coursesPref[course.upper().strip()] = weight
-
-    #output entered data
-    print("\nNew Faculty Summary:")
-    print("Name: " + name + "\nPosition Type: " + position + "\nAvailability: ")
-    print(datesTimes)
-    print("Preferred courses:")
-    print(coursesPref)
-
-    #Confirm entered data
-    while(True):
-        confirm = input("\nIs this information correct? [y/n]: ")
-        if confirm.lower() == 'y' or confirm.lower() == 'n':
-            break
-    
-    if confirm.lower() == 'y':
-        return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=coursesPref, 
-                                    maximum_days=5, times=datesTimes)
-    else:
-        while(True):
-            confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
-            if confirm.lower() == 'y' or confirm.lower() == 'n':
-                break
-        if confirm.lower() == 'y':
-            return addFaculty()
-        else:
-            return None
-
-
+# modifyFaculty takes a config and config path to modify different preferences 
+#  associated with existing faculty. The function uses a CLI and will update 
+#  the config_path file when modifications occur. 
+#
+# Parameters: 
+#   config - calls load_config_from_file on config_path to load the config file
+#   config_path str - the file to load that is input by the user
+# Preconditions: 
+#   - The config must contain faculty 
+#   - The faculty intended to delete must already exist in the config_path file
+# Postconditions: 
+#   - The config_path file will be updated with the modifications specified by
+#      the user and there will be a message in the Command-Line letting the 
+#      user know the changes have been made 
+#   - If no faculty exists, the Command-Line will have a message saying that
+#      and no changes will be made to the config,
+#   - If the faculty entered does not exist, the Command-Line will have a 
+#      message displayed to the user letting them know and no changes will be  
+#      made to the config file
+# Return: none
 def modifyFaculty(config, config_path: str):
     # Load the config
     scheduler_config = config.config
@@ -280,33 +201,52 @@ def modifyFaculty(config, config_path: str):
                         break
                     print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
 
-                datesTimes = {}
-                for day in dates:
-                    match day.upper():
-                        case 'M':
-                            day_name = "MON"
-                        case 'T':
-                            day_name = "TUE"
-                        case 'W':
-                            day_name = "WED"
-                        case 'R':
-                            day_name = "THU"
-                        case 'F':
-                            day_name = "FRI"
-                        case _:
-                            continue
+                # If no days, set all to empty
+                if dates == []:
+                    editable_faculty.times = {"MON": [], "TUE": [], "WED": [], "THU": [], "FRI": []}
+                else:
+                    datesTimes = {}
+                    for day in dates:
+                        match day.upper():
+                            case 'M':
+                                day_name = "MON"
+                            case 'T':
+                                day_name = "TUE"
+                            case 'W':
+                                day_name = "WED"
+                            case 'R':
+                                day_name = "THU"
+                            case 'F':
+                                day_name = "FRI"
+                            case _:
+                                continue
 
-                    while True:
-                        start_time = input(f"Enter start time for {day_name} (HH:MM): ").strip()
-                        end_time = input(f"Enter end time for {day_name} (HH:MM): ").strip()
-                        try:
-                            timerange = TimeRange(start=start_time, end=end_time)
-                            datesTimes[day_name] = [timerange]
-                            break
-                        except Exception as e:
-                            print(f"Invalid time format: {e}")
+                        while True:
+                            start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
+                            print(f"DEBUG start_time: '{start_time}'")
 
-                editable_faculty.times = datesTimes
+                            end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
+                            print(f"DEBUG end_time: '{end_time}'")
+
+                            if start_time == "":
+                                start_time = "00:00"
+                            if end_time == "":
+                                end_time = "23:59"
+                            try:
+                                start_h, start_m = map(int, start_time.split(":"))
+                                end_h, end_m = map(int, end_time.split(":"))
+                                start_minutes = start_h * 60 + start_m
+                                end_minutes = end_h * 60 + end_m
+                                if end_minutes <= start_minutes:
+                                    print("End time must be after start time. Please use military time (e.g. 09:00, 13:00).")
+                                    continue
+                                timerange = TimeRange(start=start_time, end=end_time)
+                                datesTimes[day_name] = [timerange]
+                                break
+                            except ValueError:
+                                print("Invalid time format. Please use HH:MM in military time (e.g. 09:00, 13:00).")
+
+                    editable_faculty.times = datesTimes
 
             elif choice == '7':
                 # Modify course preferences

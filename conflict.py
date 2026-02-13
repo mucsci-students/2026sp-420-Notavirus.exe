@@ -66,6 +66,7 @@ def addConflict(config_path: str):
         print("Conflict addition canceled.")
         return
 
+    # Add conflict to each course (c1 conflicts with c2, c2 conflicts with c1)
     try:
         with scheduler_config.edit_mode() as editable:
             c1 = next(c for c in editable.courses if c.course_id == course_1)
@@ -87,11 +88,10 @@ def addConflict(config_path: str):
 
     print("Conflict added successfully.")
 
+# For testing add conflict file
 def addConflict_config(course_list, course_id_1, course_id_2):
-    """
-    Adds a mutual conflict between two courses.
-    Returns True if successful, False otherwise.
-    """
+    #Adds a mutual conflict between two courses.
+    #Returns True if successful, False otherwise.
 
     if course_id_1 == course_id_2:
         return False
@@ -109,7 +109,6 @@ def addConflict_config(course_list, course_id_1, course_id_2):
         c2.conflicts.append(course_id_1)
 
     return True
-
 
 
 # function deleteConflict

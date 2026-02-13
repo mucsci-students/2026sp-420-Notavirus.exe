@@ -1,7 +1,14 @@
-# main.py
+# Filename: main.py
+# Description: Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, Keller
+
 import sys
 from faculty import *
-from ourScheduler import *
+from course import *
+from conflict import *
+from lab import *
+from scheduler import load_config_from_file
+from scheduler.config import CombinedConfig
 
 faculty_list = []
 
@@ -9,15 +16,11 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <config_path>")
         return
-     
+
     config_path = sys.argv[1]
 
-    # Load config once at startup
-    try:
-        config = load_config_from_file(CombinedConfig, config_path)
-    except Exception as exc:
-        print(f"Failed to load config: {exc}")
-        return
+    # load the config file
+    config = load_config_from_file(CombinedConfig, config_path)
 
     while True:
         print("\nScheduler Menu")
@@ -49,24 +52,34 @@ def main():
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
-
             elif choice == '2':
-                modifyFaculty(config_path)
-            elif choice == '16':
-                
-                try:
-                    config = load_config_from_file(CombinedConfig, config_path)
-                    s = Scheduler(config)
-                    found = False
-                    for schedule in s.get_models():
-                        display_Schedule(schedule)
-                        found = True
-                        break
-                    if not found:
-                        print("No valid schedule could be generated.")
-                except Exception as exc:
-                    print(f"Failed to display schedule: {exc}")
+                modifyFaculty(config, config_path)
+            elif choice == '3':
+                deleteFaculty(config_path)
+            elif choice == '5':
+                modifyCourse(config_path)   
+            elif choice == '6':
+                deleteCourse(config, config_path)    
+            elif choice == '7':
+                addConflict()
+            elif choice == '8':
+                modifyconflict_input(config=config, config_path=config_path)
+            elif choice == '9':
+                deleteConflict(config, config_path)
+      
 
+            elif choice == '11':
+                labs = config.config.labs
+                courses = config.config.courses
+                faculty = config.config.faculty
+                labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+                import json
+                with open(config_path, 'w') as f:
+                    json.dump(config.model_dump(mode='json'), f, indent=2)
+                print(f"Changes saved to {config_path}")
+                
+                
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

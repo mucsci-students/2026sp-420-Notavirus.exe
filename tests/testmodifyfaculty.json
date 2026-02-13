@@ -1,0 +1,55 @@
+{
+    "config": {
+      "rooms": ["Roddy 136", "Roddy 140"],
+      "labs": ["Linux", "Mac"],
+      "courses": [
+        {
+          "course_id": "CMSC 340",
+          "credits": 4,
+          "room": ["Roddy 136"],
+          "lab": ["Linux"],
+          "conflicts": [],
+          "faculty": ["Yang"]
+        }
+      ],
+      "faculty": [
+        {
+          "name": "Yang",
+          "maximum_credits": 12,
+          "minimum_credits": 12,
+          "unique_course_limit": 2,
+          "maximum_days": 4,
+          "mandatory_days": ["WED"],
+          "times": {
+            "MON": ["09:00-17:00"],
+            "TUE": ["09:00-17:00"],
+            "WED": ["09:00-15:00"],
+            "THU": ["09:00-17:00"],
+            "FRI": ["09:00-17:00"]
+          },
+          "course_preferences": {"CMSC 340": 5},
+          "room_preferences": {"Roddy 136": 3, "Roddy 140": 3},
+          "lab_preferences": {"Mac": 3, "Linux": 3}
+        }
+      ]
+    },
+    "time_slot_config": {
+      "times": {
+        "MON": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "TUE": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "WED": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "THU": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "FRI": [{"start": "08:00", "spacing": 60, "end": "19:00"}]
+      },
+      "classes": [
+        {
+          "credits": 4,
+          "meetings": [
+            {"day": "TUE", "duration": 110, "lab": true},
+            {"day": "THU", "duration": 110}
+          ]
+        }
+      ]
+    },
+    "limit": 10
+  }

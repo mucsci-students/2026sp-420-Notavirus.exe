@@ -1,0 +1,52 @@
+{
+    "config": {
+      "rooms": ["Roddy 136", "Roddy 140"],
+      "labs": ["Linux", "Mac"],
+      "courses": [
+        {
+          "course_id": "CMSC 140",
+          "credits": 4,
+          "room": ["Roddy 136"],
+          "lab": [],
+          "conflicts": ["CMSC 161"],
+          "faculty": []
+        },
+        {
+          "course_id": "CMSC 161",
+          "credits": 4,
+          "room": ["Roddy 136"],
+          "lab": ["Linux"],
+          "conflicts": ["CMSC 140"],
+          "faculty": []
+        },
+        {
+          "course_id": "CMSC 162",
+          "credits": 4,
+          "room": ["Roddy 140"],
+          "lab": ["Linux"],
+          "conflicts": [],
+          "faculty": []
+        }
+      ],
+      "faculty": []
+    },
+    "time_slot_config": {
+      "times": {
+        "MON": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "TUE": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "WED": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "THU": [{"start": "08:00", "spacing": 60, "end": "19:00"}],
+        "FRI": [{"start": "08:00", "spacing": 60, "end": "19:00"}]
+      },
+      "classes": [
+        {
+          "credits": 4,
+          "meetings": [
+            {"day": "TUE", "duration": 110, "lab": true},
+            {"day": "THU", "duration": 110}
+          ]
+        }
+      ]
+    },
+    "limit": 10
+  }

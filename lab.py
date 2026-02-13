@@ -1,4 +1,4 @@
-# add_lab.py
+# lab.py
 from scheduler import TimeRange
 
 def add_lab():

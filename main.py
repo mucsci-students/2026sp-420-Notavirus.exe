@@ -1,3 +1,18 @@
+<<<<<<< modify_course
+# main.py
+import sys
+from course import *
+
+faculty_list = []
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <config_path>")
+        return
+    
+    config_path = sys.argv[1]
+
+=======
 # Filename: main.py
 # Description: Builds a command line interface for users to run, modify, and display the scheduler
 # Authors: Lauryn Gilbert, Hailey, Luke, Brooks, Keller
@@ -22,6 +37,7 @@ def main():
     # load the config file
     config = load_config_from_file(CombinedConfig, config_path)
 
+>>>>>>> develop
     while True:
         print("\nScheduler Menu")
         print("1.  Add Faculty")
@@ -47,6 +63,12 @@ def main():
         choice = input("Choose an option (number only): ").strip()
 
         try:
+<<<<<<< modify_course
+            if choice == '5':
+                modifyCourse(config_path)
+            elif choice == '6':
+                deleteCourse(config_path)
+=======
             if choice == '1':
                 faculty = addFaculty()
                 if faculty is not None:
@@ -79,6 +101,7 @@ def main():
                 print(f"Changes saved to {config_path}")
                 
             
+>>>>>>> develop
             elif choice == '19':
                 print("Exiting scheduler.")
                 break
@@ -88,4 +111,8 @@ def main():
             print(f"Operation failed: {exc}")
 
 if __name__ == "__main__":
+<<<<<<< modify_course
     main()
+=======
+    main()
+>>>>>>> develop

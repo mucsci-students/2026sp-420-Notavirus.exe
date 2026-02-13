@@ -14,7 +14,10 @@ FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 3b1a3d10d4dd69bd4ba1df69e2a25ddc97da85e2
 # Modify an existing course.
 # Preconditions: User knows the course ID.
 # Postconditions: Updated course data is collected.
@@ -121,7 +124,10 @@ def modifyCourse_config(course, credits=None, room=None, lab=None):
 
 
 
+<<<<<<< HEAD
 >>>>>>> develop
+=======
+>>>>>>> 3b1a3d10d4dd69bd4ba1df69e2a25ddc97da85e2
 
 # deleteCourse takes an existing course and removes it from the config_path
 #  file through a command line interface. 
@@ -187,10 +193,14 @@ def deleteCourse(config, config_path: str):
             # First, clean up references in OTHER courses
             for course in editable.courses:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if course.course_id != course_id:
 =======
                 if course.course_id != course_id:  # Don't process the course we're deleting
 >>>>>>> develop
+=======
+                if course.course_id != course_id:  # Don't process the course we're deleting
+>>>>>>> 3b1a3d10d4dd69bd4ba1df69e2a25ddc97da85e2
                     # Remove course_id from conflicts using list methods
                     while course_id in course.conflicts:
                         course.conflicts.remove(course_id)

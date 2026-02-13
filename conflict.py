@@ -73,7 +73,7 @@ def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, new
     return True
         
 # Collect input for modifying conflicts.
-def modifyconflict_input(config: CombinedConfig):
+def modifyconflict_input(config: CombinedConfig, config_path: str):
     conflictNum = int(0)
     coursesNum = int(0)
     print("Existing Conflicts:")
@@ -120,13 +120,9 @@ def modifyconflict_input(config: CombinedConfig):
         if modified:
             # Save via runtime import to avoid circular import at module import time
             try:
-                import main as main_mod
-                try:
-                    main_mod.save_config_json(config=config, filename=main_mod.CONFIG_JSON)
-                    print("Config saved.")
-                except Exception:
-                    main_mod.save_config_json(config=config, filename="example.json")
-                    print("Config saved to example.json.")
+                with open(config_path, 'w') as file:
+                    file.write(config.model_dump_json(indent=2))
+                print("Config saved.")
             except Exception:
                 print("Modification applied, but failed to save config automatically.")
         else:

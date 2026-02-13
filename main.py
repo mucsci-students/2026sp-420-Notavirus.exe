@@ -15,7 +15,7 @@ def main():
 =======
 # Filename: main.py
 # Description: Builds a command line interface for users to run, modify, and display the scheduler
-# Authors: Lauryn Gilbert, Hailey, Luke, Brooks, Keller
+# Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, Keller
 
 import sys
 from faculty import *
@@ -83,7 +83,8 @@ def main():
                 deleteCourse(config, config_path)
             elif choice == '7':
                 addConflict()
-            # insert choice 8 - modifyConflict here
+            elif choice == '8':
+                modifyconflict_input(config=config, config_path=config_path)
             elif choice == '9':
                 deleteConflict(config, config_path)
             

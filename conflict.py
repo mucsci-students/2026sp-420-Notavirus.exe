@@ -87,6 +87,30 @@ def addConflict(config_path: str):
 
     print("Conflict added successfully.")
 
+def addConflict_config(course_list, course_id_1, course_id_2):
+    """
+    Adds a mutual conflict between two courses.
+    Returns True if successful, False otherwise.
+    """
+
+    if course_id_1 == course_id_2:
+        return False
+
+    c1 = next((c for c in course_list if c.course_id == course_id_1), None)
+    c2 = next((c for c in course_list if c.course_id == course_id_2), None)
+
+    if c1 is None or c2 is None:
+        return False
+
+    if course_id_2 not in c1.conflicts:
+        c1.conflicts.append(course_id_2)
+
+    if course_id_1 not in c2.conflicts:
+        c2.conflicts.append(course_id_1)
+
+    return True
+
+
 
 # function deleteConflict
 def deleteConflict(config: CombinedConfig, config_path: str):

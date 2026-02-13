@@ -6,6 +6,7 @@ import sys
 from faculty import *
 from course import *
 from conflict import *
+from lab import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
 

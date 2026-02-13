@@ -14,6 +14,7 @@ class DummyCourse:
 
 # Basic Single Field Modifications
 
+# Test changing credits
 def test_modify_credits():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -23,7 +24,7 @@ def test_modify_credits():
     assert course.room == "SCI 100"  # Unchanged
     assert course.lab is None  # Unchanged
 
-
+# Test changing rooms
 def test_modify_room():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -33,7 +34,7 @@ def test_modify_room():
     assert course.room == "SCI 200"
     assert course.lab is None  # Unchanged
 
-
+# Test changing labs
 def test_modify_lab():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -46,6 +47,7 @@ def test_modify_lab():
 
 # Multiple Field Modifications
 
+# Test changing more than one field
 def test_modify_multiple_fields():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -55,7 +57,7 @@ def test_modify_multiple_fields():
     assert course.room == "SCI 200"
     assert course.lab is None  # Unchanged
 
-
+# Test changing every field
 def test_modify_all_fields():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
     
@@ -66,8 +68,7 @@ def test_modify_all_fields():
     assert course.lab == "LAB 1"
 
 
-# No Modification
-
+# Test no modification
 def test_modify_nothing():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -80,6 +81,7 @@ def test_modify_nothing():
 
 # Edge Cases - Zero and Empty Values
 
+# Test changing credits to 0
 def test_modify_credits_zero():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -87,7 +89,7 @@ def test_modify_credits_zero():
 
     assert course.credits == 0
 
-
+# Test changing room to nothing
 def test_modify_room_empty():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -95,7 +97,7 @@ def test_modify_room_empty():
 
     assert course.room == ""
 
-
+# Test changing lab to nothing
 def test_modify_lab_empty():
     course = DummyCourse("CMSC 140", 3, "SCI 100", "LAB A")
 
@@ -104,8 +106,7 @@ def test_modify_lab_empty():
     assert course.lab == ""
 
 
-# Negative Values
-
+# Test negative values
 def test_modify_credits_negative():
 
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
@@ -114,8 +115,7 @@ def test_modify_credits_negative():
     assert course.credits == 3
 
 
-# Large Values
-
+# Test large values
 def test_modify_credits_large_value():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
 
@@ -124,8 +124,7 @@ def test_modify_credits_large_value():
     assert course.credits == 999
 
 
-# Immutability Tests 
-
+# Test that the course id is not changed
 def test_course_id_unchanged():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
     
@@ -134,8 +133,7 @@ def test_course_id_unchanged():
     assert course.course_id == "CMSC 140"
 
 
-# Sequential Modifications
-
+# Test multiple calls together
 def test_multiple_calls_cumulative():
     course = DummyCourse("CMSC 140", 3, "SCI 100", None)
     

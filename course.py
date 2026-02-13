@@ -88,6 +88,26 @@ def modifyCourse(config_path: str):
     print(f"Course '{course_id}' updated successfully.")
 
 
+def modifyCourse_config(course, credits=None, room=None, lab=None):
+    """
+    Modifies a course object.
+    Only updates values that are not None.
+    """
+
+    if credits is not None:
+        course.credits = credits
+
+    if room is not None:
+        course.room = room
+
+    if lab is not None:
+        course.lab = lab
+
+    return course
+
+
+
+
 # deleteCourse function
 def deleteCourse(config_path: str):
     # Load the config 

@@ -53,15 +53,17 @@ def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, new
 
         for course in config.config.courses:
             if course.course_id == selectedConflict:
-                course.conflicts = [newCourse if c == old_course_id else c for c in course.conflicts]
+                updated = [newCourse if c == old_course_id else c for c in course.conflicts]
+                course.conflicts = list(dict.fromkeys(updated))
                 break
 
-    else:
+    elif modifyMode == 2:
         selectedCourse.conflicts = [newCourse if c == selectedConflict else c for c in selectedCourse.conflicts]
 
         for course in config.config.courses:
             if course.course_id == selectedConflict:
-                course.conflicts = [c for c in course.conflicts if c != old_course_id]
+                updated = [newCourse if c == selectedConflict else c for c in selectedCourse.conflicts]
+                selectedCourse.conflicts = list(dict.fromkeys(updated))                
                 break
 
         for course in config.config.courses:
@@ -69,7 +71,8 @@ def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, new
                 if old_course_id not in course.conflicts:
                     course.conflicts.append(old_course_id)
                 break
-
+    else: # If modifyMode != 1 or 2, return false
+        return False
     return True
         
 # Collect input for modifying conflicts.

@@ -47,6 +47,7 @@ def modifyCourse(config_path: str):
     room = input("New room (comma separated): ").strip()
     lab = input("New lab (comma separated): ").strip()
 
+
     # Summary of modification
     print("\nModification Summary:")
     print(f"Course: {course_id}")
@@ -59,6 +60,7 @@ def modifyCourse(config_path: str):
         confirm = input("Apply these changes? [y/n]: ").lower()
         if confirm in ('y', 'n'):
             break
+        print("Please enter 'y' or 'n'")
 
     if confirm == 'n':
         print("Course modification canceled.")
@@ -69,10 +71,18 @@ def modifyCourse(config_path: str):
             editable_course = next(c for c in editable.courses if c.course_id == course_id)
 
             if credits:
-                editable_course.credits = int(credits)
-
+                try:
+                    credits_int = int(credits)
+                    if credits_int < 0:
+                        print(f"Error: Credits cannot be negative.")
+                        return
+                    editable_course.credits = credits_int
+                except ValueError:
+                    print(f"Error: '{credits}' is not a valid number.")
+                    return
             if room:
-                editable_course.room = [r.strip() for r in room.split(",")]
+                room_list = [r.strip() for r in room.split(",") if r.strip()]
+                editable_course.room = room_list
 
             if lab:
                 editable_course.lab = [l.strip() for l in lab.split(",")]
@@ -89,13 +99,12 @@ def modifyCourse(config_path: str):
 
 
 def modifyCourse_config(course, credits=None, room=None, lab=None):
-    """
-    Modifies a course object.
-    Only updates values that are not None.
-    """
 
     if credits is not None:
-        course.credits = credits
+        if credits < 0:
+            course.credits = course.credits
+        else:
+            course.credits = credits
 
     if room is not None:
         course.room = room

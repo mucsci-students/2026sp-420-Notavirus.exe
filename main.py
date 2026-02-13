@@ -5,6 +5,13 @@
 
 import sys
 from lab import modifyLab
+# Authors: Lauryn Gilbert, Hailey, Luke, ...
+# Description:
+
+import sys
+from faculty import *
+from course import *
+from conflict import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
 
@@ -88,7 +95,6 @@ def main():
                 print("Invalid option. Please choose 1-19.")
         except Exception as exc:
             print(f"Operation failed: {exc}")
-
 
 if __name__ == "__main__":
     main()

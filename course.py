@@ -309,7 +309,6 @@ def deleteCourse(config, config_path: str):
                     
     except Exception as e:
         print(f"\nError: Failed to delete course due to validation error: {e}")
-        print(f"Debug - Course ID being deleted: {course_id}")
         return
     
     # Save back to the config file

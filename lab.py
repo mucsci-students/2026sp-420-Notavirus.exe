@@ -79,9 +79,28 @@ def modifyLab(labs, courses, faculty):
 
 
 def deleteLab_json(lab: str, config: CombinedConfig, config_path: str):
-    updConfig = config.config.labs.remove(lab)
+    try:
+        with config.config.edit_mode() as editable:
+            for course in editable.courses:
+                 if lab in course.lab:
+                    course.lab.remove(lab)
+            for faculty in editable.faculty:
+                if lab in faculty.lab_preferences:
+                    del faculty.lab_preferences[lab]
+            
+            editable.labs.remove(lab)
+                    
+    except Exception as e:
+        print(f"\nError: Failed to delete lab due to validation error: {e}")
+        return False
+    
+    # Save back to the config file
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(config.model_dump_json(indent=2))
     with open(config_path, 'w') as file:
         file.write(config.model_dump_json(indent=2))
+
+    return True
 
 def deleteLab_input(config: CombinedConfig, config_path: str):
     num = int(1)
@@ -106,8 +125,8 @@ def deleteLab_input(config: CombinedConfig, config_path: str):
     while(True):
         confirm = input("Are you sure you want to delete " + config.config.labs[int(labnum) - 1] + "? [y/n]: ").strip()
         if confirm == 'y':
-            deleteLab_json(config.config.labs[int(labnum) - 1], config=config, config_path=config_path)
-            print("Lab deleted.")
+            if deleteLab_json(config.config.labs[int(labnum) - 1], config=config, config_path=config_path):
+                print("Lab deleted.")
             return
         if confirm == 'n':
             print("Quitting deleting a lab.")

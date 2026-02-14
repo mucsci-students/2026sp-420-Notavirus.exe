@@ -1,10 +1,115 @@
+# conflict.py
+# Functions to add/delete/modify conflict
 
-# Filename: conflict.py
-# Description: Functions to add, delete, modify conflicts
-# Authors: Lauryn Gilbert, Luke Leopold
-
-from scheduler import CourseConfig
+from scheduler import load_config_from_file, Day, TimeRange
 from scheduler.config import CombinedConfig
+
+# Global Variables
+FULL_TIME_MAX_CREDITS = 12
+ADJUNCT_MAX_CREDITS = 4
+MIN_CREDITS = 3
+MIN_DAYS = 1
+MAX_DAYS = 5
+FULL_TIME_UNIQUE_COURSE_LIMIT = 2
+ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+
+
+# Add a conflict between two courses
+# Preconditions: User knows the course IDs involved.
+# Postconditions: Conflict information is collected.
+def addConflict(config_path: str):
+    config = load_config_from_file(CombinedConfig, config_path)
+    scheduler_config = config.config
+
+    if not scheduler_config.courses:
+        print("There are no courses in the configuration.")
+        return
+
+    print("\nExisting Courses:")
+    for course in scheduler_config.courses:
+        print(f"- {course.course_id}")
+
+    while True:
+        # Prompt for the first course
+        course_1 = input("\nEnter the first course ID: ").strip().upper()
+        if course_1:
+            break
+
+    while True:
+        # Prompt for the conflicting course
+        course_2 = input("Enter the conflicting course ID: ").strip().upper()
+        if course_2:
+            break
+
+    if course_1 == course_2:
+        print("A course cannot conflict with itself.")
+        return
+
+    matching_1 = [c for c in scheduler_config.courses if c.course_id == course_1]
+    matching_2 = [c for c in scheduler_config.courses if c.course_id == course_2]
+
+    # If course ID is not found, exit
+    if not matching_1 or not matching_2:
+        print("One or both course IDs not found.")
+        return
+
+    print("\nConflict Summary:")
+    print(f"- {course_1} conflicts with {course_2}")
+
+    # Confirm conflict
+    while True:
+        confirm = input("Add this conflict? [y/n]: ").lower()
+        if confirm in ('y', 'n'):
+            break
+
+    if confirm == 'n':
+        print("Conflict addition canceled.")
+        return
+
+    # Add conflict to each course (c1 conflicts with c2, c2 conflicts with c1)
+    try:
+        with scheduler_config.edit_mode() as editable:
+            c1 = next(c for c in editable.courses if c.course_id == course_1)
+            c2 = next(c for c in editable.courses if c.course_id == course_2)
+
+            if course_2 not in c1.conflicts:
+                c1.conflicts.append(course_2)
+
+            if course_1 not in c2.conflicts:
+                c2.conflicts.append(course_1)
+
+    except Exception as e:
+        print(f"Error adding conflict: {e}")
+        return
+
+    # Save back to the config file
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(config.model_dump_json(indent=2))
+
+    print("Conflict added successfully.")
+
+# For testing add conflict file
+def addConflict_config(course_list, course_id_1, course_id_2):
+    #Adds a mutual conflict between two courses.
+    #Returns True if successful, False otherwise.
+
+    if course_id_1 == course_id_2:
+        return False
+
+    c1 = next((c for c in course_list if c.course_id == course_id_1), None)
+    c2 = next((c for c in course_list if c.course_id == course_id_2), None)
+
+    if c1 is None or c2 is None:
+        return False
+
+    if course_id_2 not in c1.conflicts:
+        c1.conflicts.append(course_id_2)
+
+    if course_id_1 not in c2.conflicts:
+        c2.conflicts.append(course_id_1)
+
+    return True
+
 
 #Find courses and return their course_id's.
 #Returns a courseConfig and a Course tuple.
@@ -248,36 +353,3 @@ def deleteConflict(config: CombinedConfig, config_path: str):
 
     print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")
 
-
-
-
-# Add a conflict between two courses
-# Preconditions: User knows the course IDs involved.
-# Postconditions: Conflict information is collected.
-def addConflict():
-    # Prompt for the first course
-    while True:
-        course_1 = input("Enter the first course ID: ").strip()
-        if course_1 != "":
-            break
-
-    # Prompt for the conflicting course
-    while True:
-        course_2 = input("Enter the conflicting course ID: ").strip()
-        if course_2 != "":
-            break
-
-    # Display summary of the conflict being added
-    print("\nConflict Summary:")
-    print(f"- {course_1} conflicts with {course_2}")
-
-    # Confirm conflict addition
-    while True:
-        confirm = input("Add this conflict? [y/n]: ").lower().strip()
-        if confirm in ('y', 'n'):
-            break
-    if confirm == 'y':
-        # Note: Actual conflict storage will occur once courses exist
-        print("Conflict recorded.")
-    else:
-        print("Conflict addition canceled.")

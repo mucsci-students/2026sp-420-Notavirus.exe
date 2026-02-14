@@ -3,7 +3,6 @@
 # Authors: Lauryn Gilbert, Luke Leopold, ...
 import scheduler
 from scheduler import Day, TimeRange, load_config_from_file, CombinedConfig, Scheduler
-import json
 #Global Variables
 FULL_TIME_MAX_CREDITS = 12
 ADJUNCT_MAX_CREDITS = 4
@@ -34,13 +33,6 @@ def addFaculty_confirm(new_faculty: scheduler.FacultyConfig):
     if confirm.lower() == 'y':
         return True
     else:
-        """ while(True):
-            confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
-            if confirm.lower() == 'y' or confirm.lower() == 'n':
-                break
-        if confirm.lower() == 'y':
-            return addFaculty_input()
-        else: """
         return False
 # Set up FacultyConfig to add a new faculty to the JSON file
 # Returns a FacultyConfig.
@@ -143,7 +135,7 @@ def addFaculty(config: CombinedConfig, config_path: str):
             print("This faculty already exists! Maybe you meant to modify their information?")
             print("New faculty not added.")
             return
-        addFaculty_JSON(config=config, faculty=faculty, config_path)
+        addFaculty_JSON(config=config, faculty=faculty, config_path=config_path)
     
     except Exception as exc:
         print(f"Failed to save faculty: {exc}")# modifyFaculty takes a config and config path to modify different preferences 

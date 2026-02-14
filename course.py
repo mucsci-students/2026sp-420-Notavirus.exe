@@ -3,6 +3,7 @@
 # Authors: Lauryn Gilbert, Hailey, ...
 
 from scheduler.config import CombinedConfig
+from scheduler import load_config_from_file
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12

@@ -3,6 +3,7 @@ from main import *
 from faculty import *
 
 #Note: Unit tests written using example.json
+TESTING_CONFIG = "example.json"
 
 # Test adding a full time faculty with no course preferences FacultyConfig setup
 # addFaculty_config should match with the given Faculty config
@@ -21,20 +22,20 @@ def test_addFaculty_config():
 # Check if adding a duplicate name will be handled correctly.
 # faculty_check_duplicate should return True.
 def test_faculty_check_duplicate_name():
-    (config, scheduler) = initConfig()
-    faculty = addFaculty_config(name="Luke", isFullTime="y", dates=['M', 'W', 'F'], courses={"CMSC example" : 0})
+    config = load_config_from_file(CombinedConfig, TESTING_CONFIG)
+    faculty = addFaculty_config(name="Hardy", isFullTime="y", dates=['M', 'W', 'F'], courses={"CMSC example" : 0})
     assert faculty_check_duplicate(config=config, new_faculty=faculty) == True
 
 # Check if adding a duplicate availability and course preferences will be handled correctly.
 # faculty_check_duplicate should return False.
 def test_faculty_check_duplicate_datesPref():
-    (config, scheduler) = initConfig()
+    config = load_config_from_file(CombinedConfig, TESTING_CONFIG)
     faculty = addFaculty_config(name="distinctName", isFullTime="y", dates=['M', 'W', 'F'], courses={})
     assert faculty_check_duplicate(config=config, new_faculty=faculty) == False
 
 # Check if adding a distinct faculty will be handled correctly.
 # faculty_check_duplicate should return False.
 def test_faculty_check_distinct():
-    (config, scheduler) = initConfig()
+    config = load_config_from_file(CombinedConfig, TESTING_CONFIG)
     faculty = addFaculty_config(name="distinctName", isFullTime="y", dates=['M', 'W', 'F'], courses={"distinctCourse" : 0})
     assert faculty_check_duplicate(config=config, new_faculty=faculty) == False

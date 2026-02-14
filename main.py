@@ -56,18 +56,29 @@ def main():
                 modifyFaculty(config, config_path)
             elif choice == '3':
                 deleteFaculty(config_path)
+            elif choice == '4':
+                available_rooms = config.config.rooms
+                available_labs = config.config.labs
+                available_faculty = [f.name for f in config.config.faculty]
+                course = addCourse(available_rooms, available_labs, available_faculty)
+                if course is not None:
+                    config.config.courses.append(course)
+                    print("Course added successfully.")
+
+                    import json
+                    with open(config_path, 'w') as f:
+                        json.dump(config.model_dump(mode='json'), f, indent = 2)
+                    print(f"Changes saved to {config_path}")
             elif choice == '5':
-                modifyCourse(config_path)   
+                modifyCourse(config_path)  
             elif choice == '6':
-                deleteCourse(config, config_path)    
+                deleteCourse(config, config_path)
             elif choice == '7':
                 addConflict()
             elif choice == '8':
                 modifyconflict_input(config=config, config_path=config_path)
             elif choice == '9':
                 deleteConflict(config, config_path)
-      
-
             elif choice == '11':
                 labs = config.config.labs
                 courses = config.config.courses
@@ -78,8 +89,7 @@ def main():
                 with open(config_path, 'w') as f:
                     json.dump(config.model_dump(mode='json'), f, indent=2)
                 print(f"Changes saved to {config_path}")
-                
-                
+            
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

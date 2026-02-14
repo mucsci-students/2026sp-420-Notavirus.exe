@@ -9,6 +9,7 @@ from conflict import *
 from lab import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
+import ourScheduler
 
 faculty_list = []
 
@@ -91,6 +92,10 @@ def main():
                 print(f"Changes saved to {config_path}")
             elif choice == "12":
                 deleteLab_input(config=config, config_path=config_path)
+            
+            elif choice == '17':
+                ourScheduler.runScheduler(config)
+
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

@@ -89,7 +89,8 @@ def main():
                 with open(config_path, 'w') as f:
                     json.dump(config.model_dump(mode='json'), f, indent=2)
                 print(f"Changes saved to {config_path}")
-            
+            elif choice == "12":
+                deleteLab_input(config=config, config_path=config_path)
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

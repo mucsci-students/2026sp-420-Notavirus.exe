@@ -20,8 +20,6 @@
         ],
         "lab": [],
         "conflicts": [
-          "CMSC 161",
-          "CMSC 162"
         ],
         "faculty": []
       },
@@ -37,7 +35,7 @@
           "Mac",
           "Linux"
         ],
-        "conflicts": [],
+        "s": [],
         "faculty": []
       },
       {
@@ -49,9 +47,7 @@
         "lab": [
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 140"
-        ],
+        "s": [],
         "faculty": [
           "Zoppetti"
         ]
@@ -65,9 +61,7 @@
         "lab": [
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 140"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -82,10 +76,7 @@
           "Linux",
           "Mac"
         ],
-        "conflicts": [
-          "CMSC 362",
-          "CMSC 366"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -100,12 +91,7 @@
           "Mac",
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 380",
-          "CMSC 420",
-          "CMSC 453",
-          "CMSC 476"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -117,10 +103,7 @@
         "lab": [
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 330",
-          "CMSC 366"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -135,11 +118,7 @@
           "Linux",
           "Mac"
         ],
-        "conflicts": [
-          "CMSC 340",
-          "CMSC 362",
-          "CMSC 330"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -152,11 +131,7 @@
           "Mac",
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 420",
-          "CMSC 453",
-          "CMSC 476"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -168,11 +143,7 @@
         "lab": [
           "Mac"
         ],
-        "conflicts": [
-          "CMSC 380",
-          "CMSC 453",
-          "CMSC 476"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -187,11 +158,7 @@
           "Mac",
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 380",
-          "CMSC 420",
-          "CMSC 476"
-        ],
+        "conflicts": [],
         "faculty": []
       },
       {
@@ -203,11 +170,7 @@
         "lab": [
           "Linux"
         ],
-        "conflicts": [
-          "CMSC 380",
-          "CMSC 420",
-          "CMSC 453"
-        ],
+        "conflicts": [],
         "faculty": []
       }
     ],

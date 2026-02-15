@@ -1,243 +1,290 @@
-import pytest
+# test_lab.py
+import unittest
 from unittest.mock import patch, MagicMock
-from io import StringIO
 import sys
-sys.path.insert(0, '..')
-from lab import modifyLab
+import os
+
+# Add project root to Python path so imports work
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from lab import add_lab
+from scheduler import TimeRange
 
 
-def make_mock_course(course_id, labs):
-    """Helper to create a mock CourseConfig for testing."""
-    course = MagicMock()
-    course.course_id = course_id
-    course.lab = labs
-    return course
-
-
-def make_mock_faculty(name, lab_preferences):
-    """Helper to create a mock FacultyConfig for testing."""
-    faculty = MagicMock()
-    faculty.name = name
-    faculty.lab_preferences = lab_preferences
-    return faculty
-
-
-@pytest.fixture
-def labs():
-    return ["LAB101", "LAB102"]
-
-
-@pytest.fixture
-def courses():
-    return [
-        make_mock_course("CMSC161", ["LAB101"]),
-        make_mock_course("CMSC162", ["LAB101"]),
-        make_mock_course("CMSC200", []),
-    ]
-
-
-@pytest.fixture
-def faculty():
-    return [
-        make_mock_faculty("Dr. Smith", {"LAB101": 8}),
-        make_mock_faculty("Dr. Jones", {}),
-    ]
-
-
-def run_modifyLab(inputs, labs, courses, faculty):
-    """Helper to run modifyLab with simulated input."""
-    with patch('builtins.input', side_effect=inputs):
-        return modifyLab(labs, courses, faculty)
-
-
-# ------------------------------------------------------------------ #
-#  Empty lab list tests                                                #
-# ------------------------------------------------------------------ #
-
-def test_empty_labs_returns_unchanged(courses, faculty):
-    """modifyLab should return unchanged lists if no labs exist."""
-    with patch('builtins.input', side_effect=[]):
-        result_labs, _, _ = modifyLab([], courses, faculty)
-    assert result_labs == []
-
-
-def test_empty_labs_prints_message(courses, faculty, capsys):
-    """modifyLab should print a message if no labs exist."""
-    with patch('builtins.input', side_effect=[]):
-        modifyLab([], courses, faculty)
-    captured = capsys.readouterr()
-    assert "No labs available" in captured.out
-
-
-# ------------------------------------------------------------------ #
-#  Cancellation tests                                                  #
-# ------------------------------------------------------------------ #
-
-def test_cancel_on_lab_selection_returns_unchanged(labs, courses, faculty):
-    """modifyLab should return unchanged lists if user cancels."""
-    result_labs, _, _ = run_modifyLab([""], labs.copy(), courses, faculty)
-    assert result_labs == labs
-
-
-def test_cancel_on_confirm_returns_unchanged(labs, courses, faculty):
-    """modifyLab should return unchanged lists if user cancels at confirm."""
-    inputs = [
-        "LAB101",   # select lab
-        "LAB201",   # new name
-        "n",        # cancel
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    assert "LAB101" in result_labs
-    assert "LAB201" not in result_labs
-
-
-# ------------------------------------------------------------------ #
-#  Successful rename tests                                             #
-# ------------------------------------------------------------------ #
-
-def test_rename_lab_updates_labs_list(labs, courses, faculty):
-    """modifyLab should update the lab name in the labs list."""
-    inputs = [
-        "LAB101",
-        "LAB201",
-        "y",
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    assert "LAB201" in result_labs
-    assert "LAB101" not in result_labs
-
-
-def test_rename_lab_updates_course_references(labs, courses, faculty):
-    """modifyLab should update lab references in courses."""
-    inputs = ["LAB101", "LAB201", "y"]
-    _, result_courses, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    for course in result_courses:
-        if course.course_id in ["CMSC161", "CMSC162"]:
-            assert "LAB201" in course.lab
-            assert "LAB101" not in course.lab
-
-
-def test_rename_lab_updates_faculty_preferences(labs, courses, faculty):
-    """modifyLab should update lab preferences in faculty."""
-    inputs = ["LAB101", "LAB201", "y"]
-    _, _, result_faculty = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    dr_smith = next(f for f in result_faculty if f.name == "Dr. Smith")
-    assert "LAB201" in dr_smith.lab_preferences
-    assert "LAB101" not in dr_smith.lab_preferences
-
-
-def test_rename_lab_does_not_affect_faculty_without_preference(labs, courses, faculty):
-    """modifyLab should not affect faculty without lab preferences."""
-    inputs = ["LAB101", "LAB201", "y"]
-    _, _, result_faculty = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    dr_jones = next(f for f in result_faculty if f.name == "Dr. Jones")
-    assert dr_jones.lab_preferences == {}
-
-
-def test_rename_prints_success_message(labs, courses, faculty, capsys):
-    """modifyLab should print success message after rename."""
-    inputs = ["LAB101", "LAB201", "y"]
-    with patch('builtins.input', side_effect=inputs):
-        modifyLab(labs.copy(), courses, faculty)
-    captured = capsys.readouterr()
-    assert "successfully" in captured.out
-
-
-# ------------------------------------------------------------------ #
-#  Validation tests                                                    #
-# ------------------------------------------------------------------ #
-
-def test_nonexistent_lab_makes_no_changes(labs, courses, faculty):
-    """modifyLab should make no changes if lab does not exist."""
-    inputs = ["LAB999", ""]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    assert result_labs == labs
-
-
-def test_duplicate_new_name_rejected(labs, courses, faculty):
-    """modifyLab should reject a new name that already exists."""
-    inputs = [
-        "LAB101",
-        "LAB102",   # already exists - invalid
-        "LAB201",   # valid
-        "y",
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    assert "LAB201" in result_labs
-    assert result_labs.count("LAB102") == 1
-
+class TestAddLab(unittest.TestCase):
+    """Unit tests for the add_lab function."""
     
-# ------------------------------------------------------------------ #
-#  Case and spacing tests                                              #
-# ------------------------------------------------------------------ #
+    @patch('builtins.input')
+    def test_add_lab_successful_with_instructor(self, mock_input):
+        """Test successfully adding a lab with an instructor."""
+        # Mock user inputs
+        mock_input.side_effect = [
+            "Computer Lab 1",           # Lab name
+            "CMSC 161",                  # Course
+            "Dr. Smith",                 # Instructor
+            "MW",                        # Days (Monday, Wednesday)
+            "10:00",                     # MON start time
+            "12:00",                     # MON end time
+            "14:00",                     # WED start time
+            "16:00",                     # WED end time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["name"], "Computer Lab 1")
+        self.assertEqual(result["course"], "CMSC 161")
+        self.assertEqual(result["instructor"], "Dr. Smith")
+        self.assertIn("MON", result["times"])
+        self.assertIn("WED", result["times"])
+        self.assertEqual(len(result["times"]["MON"]), 1)
+        self.assertIsInstance(result["times"]["MON"][0], TimeRange)
+    
+    @patch('builtins.input')
+    def test_add_lab_successful_without_instructor(self, mock_input):
+        """Test successfully adding a lab without an instructor."""
+        mock_input.side_effect = [
+            "Computer Lab 2",           # Lab name
+            "CMSC 140",                  # Course
+            "",                          # No instructor (empty string)
+            "TR",                        # Days (Tuesday, Thursday)
+            "09:00",                     # TUE start time
+            "11:00",                     # TUE end time
+            "09:00",                     # THU start time
+            "11:00",                     # THU end time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["name"], "Computer Lab 2")
+        self.assertEqual(result["course"], "CMSC 140")
+        self.assertIsNone(result["instructor"])
+        self.assertIn("TUE", result["times"])
+        self.assertIn("THU", result["times"])
+    
+    @patch('builtins.input')
+    def test_add_lab_cancelled_by_user(self, mock_input):
+        """Test cancelling lab creation."""
+        mock_input.side_effect = [
+            "Computer Lab 3",           # Lab name
+            "CMSC 330",                  # Course
+            "Dr. Jones",                 # Instructor
+            "F",                         # Days (Friday)
+            "13:00",                     # FRI start time
+            "15:00",                     # FRI end time
+            "n"                          # Decline confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNone(result)
+    
+    @patch('builtins.input')
+    def test_add_lab_with_all_days(self, mock_input):
+        """Test adding a lab that meets every day."""
+        mock_input.side_effect = [
+            "Daily Lab",                # Lab name
+            "CMSC 152",                  # Course
+            "Prof. Daily",               # Instructor
+            "MTWRF",                     # All days
+            "08:00", "09:00",            # MON
+            "08:00", "09:00",            # TUE
+            "08:00", "09:00",            # WED
+            "08:00", "09:00",            # THU
+            "08:00", "09:00",            # FRI
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result["times"]), 5)
+        self.assertIn("MON", result["times"])
+        self.assertIn("TUE", result["times"])
+        self.assertIn("WED", result["times"])
+        self.assertIn("THU", result["times"])
+        self.assertIn("FRI", result["times"])
+    
+    @patch('builtins.input')
+    def test_add_lab_retries_empty_name(self, mock_input):
+        """Test that empty lab name prompts retry."""
+        mock_input.side_effect = [
+            "",                          # Empty name (should retry)
+            "   ",                       # Whitespace only (should retry)
+            "Valid Lab",                 # Valid name
+            "CMSC 420",                  # Course
+            "",                          # No instructor
+            "M",                         # Monday only
+            "10:00",                     # Start time
+            "12:00",                     # End time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["name"], "Valid Lab")
+    
+    @patch('builtins.input')
+    def test_add_lab_retries_empty_course(self, mock_input):
+        """Test that empty course prompts retry."""
+        mock_input.side_effect = [
+            "Lab Name",                  # Lab name
+            "",                          # Empty course (should retry)
+            "   ",                       # Whitespace only (should retry)
+            "CMSC 476",                  # Valid course
+            "Dr. Test",                  # Instructor
+            "W",                         # Wednesday
+            "14:00",                     # Start time
+            "16:00",                     # End time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["course"], "CMSC 476")
+    
+    @patch('builtins.input')
+    def test_add_lab_retries_invalid_days(self, mock_input):
+        """Test that invalid day input prompts retry."""
+        mock_input.side_effect = [
+            "Lab X",                     # Lab name
+            "CMSC 362",                  # Course
+            "",                          # No instructor
+            "XYZ",                       # Invalid days (should retry)
+            "123",                       # Invalid days (should retry)
+            "M",                         # Valid day
+            "11:00",                     # Start time
+            "13:00",                     # End time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertIn("MON", result["times"])
+    
+    @patch('builtins.input')
+    @patch('builtins.print')
+    def test_add_lab_retries_invalid_time_format(self, mock_print, mock_input):
+        """Test that invalid time format prompts retry."""
+        # Create a mock TimeRange that raises exception on bad format
+        with patch('lab.TimeRange') as mock_timerange:
+            mock_timerange.side_effect = [
+                ValueError("Invalid time format"),  # First attempt fails
+                TimeRange(start="10:00", end="12:00")  # Second attempt succeeds
+            ]
+            
+            mock_input.side_effect = [
+                "Lab Y",                 # Lab name
+                "CMSC 340",              # Course
+                "Dr. Time",              # Instructor
+                "T",                     # Tuesday
+                "25:00",                 # Invalid start time (first try)
+                "99:99",                 # Invalid end time (first try)
+                "10:00",                 # Valid start time (second try)
+                "12:00",                 # Valid end time (second try)
+                "y"                      # Confirmation
+            ]
+            
+            result = add_lab()
+            
+            self.assertIsNotNone(result)
+    
+    @patch('builtins.input')
+    def test_add_lab_lowercase_course_converted_to_uppercase(self, mock_input):
+        """Test that course ID is converted to uppercase."""
+        mock_input.side_effect = [
+            "Lab Z",                     # Lab name
+            "cmsc 161",                  # Lowercase course
+            "",                          # No instructor
+            "R",                         # Thursday
+            "15:00",                     # Start time
+            "17:00",                     # End time
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["course"], "CMSC 161")
+    
+    @patch('builtins.input')
+    def test_add_lab_mixed_case_days(self, mock_input):
+        """Test that mixed case days are handled correctly."""
+        mock_input.side_effect = [
+            "Mixed Lab",                 # Lab name
+            "CMSC 453",                  # Course
+            "Prof. Mix",                 # Instructor
+            "mWf",                       # Mixed case days
+            "09:00", "10:00",            # MON
+            "09:00", "10:00",            # WED
+            "09:00", "10:00",            # FRI
+            "y"                          # Confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result["times"]), 3)
+        self.assertIn("MON", result["times"])
+        self.assertIn("WED", result["times"])
+        self.assertIn("FRI", result["times"])
+    
+    @patch('builtins.input')
+    def test_add_lab_confirmation_retry(self, mock_input):
+        """Test that invalid confirmation prompts retry."""
+        mock_input.side_effect = [
+            "Confirm Lab",               # Lab name
+            "CMSC 366",                  # Course
+            "",                          # No instructor
+            "F",                         # Friday
+            "13:00",                     # Start time
+            "15:00",                     # End time
+            "maybe",                     # Invalid confirmation (should retry)
+            "yes",                       # Invalid confirmation (should retry)
+            "y"                          # Valid confirmation
+        ]
+        
+        result = add_lab()
+        
+        self.assertIsNotNone(result)
 
-def test_lowercase_lab_name_without_space_not_found(labs, courses, faculty, capsys):
-    """modifyLab should not find 'lab101' when list contains 'LAB101' - case sensitive."""
-    inputs = [
-        "lab101",   # lowercase - won't match "LAB101"
-        "",         # cancel
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    captured = capsys.readouterr()
-    assert "does not exist" in captured.out
-    assert result_labs == labs  # no changes made
+
+class TestAddLabIntegration(unittest.TestCase):
+    """Integration tests for add_lab with actual TimeRange objects."""
+    
+    @patch('builtins.input')
+    def test_add_lab_creates_valid_timerange_objects(self, mock_input):
+        """Test that TimeRange objects are created correctly."""
+        mock_input.side_effect = [
+            "Integration Lab",
+            "CMSC 380",
+            "Dr. Integration",
+            "MW",
+            "10:30",
+            "12:30",
+            "14:00",
+            "16:00",
+            "y"
+        ]
+        
+        result = add_lab()
+        
+        # Verify TimeRange objects exist and have correct attributes
+        mon_time = result["times"]["MON"][0]
+        wed_time = result["times"]["WED"][0]
+        
+        self.assertIsInstance(mon_time, TimeRange)
+        self.assertIsInstance(wed_time, TimeRange)
+        self.assertEqual(mon_time.start, "10:30")
+        self.assertEqual(mon_time.end, "12:30")
+        self.assertEqual(wed_time.start, "14:00")
+        self.assertEqual(wed_time.end, "16:00")
 
 
-def test_lowercase_lab_name_with_space_not_found(labs, courses, faculty, capsys):
-    """modifyLab should not find 'lab 101' when list contains 'LAB101' - case sensitive."""
-    inputs = [
-        "lab 101",  # lowercase with space - won't match "LAB101"
-        "",         # cancel
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    captured = capsys.readouterr()
-    assert "does not exist" in captured.out
-    assert result_labs == labs  # no changes made
-
-
-def test_lab_with_space_not_found(labs, courses, faculty, capsys):
-    """modifyLab should not find 'LAB 101' when list contains 'LAB101' - exact match only."""
-    inputs = [
-        "LAB 101",  # space between LAB and 101 - won't match "LAB101"
-        "",         # cancel
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs.copy(), courses, faculty)
-    captured = capsys.readouterr()
-    assert "does not exist" in captured.out
-    assert result_labs == labs  # no changes made
-
-
-def test_lab_with_space_works_if_in_list(courses, faculty):
-    """modifyLab should find 'LAB 101' if the list actually contains 'LAB 101'."""
-    labs_with_space = ["LAB 101", "LAB102"]
-    inputs = [
-        "LAB 101",  # exact match
-        "LAB 201",  # new name
-        "y",
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs_with_space, courses, faculty)
-    assert "LAB 201" in result_labs
-    assert "LAB 101" not in result_labs
-
-
-def test_lowercase_lab_works_if_in_list(courses, faculty):
-    """modifyLab should find 'lab101' if the list actually contains 'lab101'."""
-    labs_lowercase = ["lab101", "LAB102"]
-    inputs = [
-        "lab101",   # exact match
-        "lab201",   # new name
-        "y",
-    ]
-    result_labs, _, _ = run_modifyLab(inputs, labs_lowercase, courses, faculty)
-    assert "lab201" in result_labs
-    assert "lab101" not in result_labs
-
-
-# ------------------------------------------------------------------ #
-#  Return value tests                                                  #
-# ------------------------------------------------------------------ #
-
-def test_returns_three_values(labs, courses, faculty):
-    """modifyLab should always return three values."""
-    result = run_modifyLab([""], labs.copy(), courses, faculty)
-    assert len(result) == 3
+if __name__ == '__main__':
+    unittest.main()

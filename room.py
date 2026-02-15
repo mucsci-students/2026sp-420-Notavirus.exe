@@ -161,7 +161,7 @@ def promptRoomBuilding():
 #checks if room already exists
 #returns true if it already exists
 #returns false if it does not exist
-def existCheck(room: scheduler.Room):
+def existCheck(room: str):
     return room in loadedConfig.config.rooms
 
 #prompts the user to add a room

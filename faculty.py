@@ -1,18 +1,143 @@
 # Filename: faculty.py
 # Description: Functions to modify/delete/add a faculty member
-# Authors: Lauryn Gilbert, Luke, ...
-
+# Authors: Lauryn Gilbert, Luke Leopold, ...
 import scheduler
-from scheduler import TimeRange
-
-# Global Variables
+from scheduler import Day, TimeRange, load_config_from_file, CombinedConfig, Scheduler
+#Global Variables
 FULL_TIME_MAX_CREDITS = 12
 ADJUNCT_MAX_CREDITS = 4
-MIN_CREDITS = 3
+MIN_CREDITS = 0
 MIN_DAYS = 1
 MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+# Displays entered information for new faculty for validation
+# Returns a FacultyConfig or Nothing
+def addFaculty_confirm(new_faculty: scheduler.FacultyConfig):
+    if new_faculty.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT:
+        position = "Full Time"
+    else:
+        position = "Adjunct"
+#output entered data
+    print("\nNew Faculty Summary:")
+    print("Name: " + new_faculty.name + "\nPosition Type: " + position + "\nAvailability: ")
+    print(new_faculty.times)
+    print("Preferred courses:")
+    print(new_faculty.course_preferences)
+    #Confirm entered data
+    while(True):
+        confirm = input("\nIs this information correct? [y/n]: ")
+        if confirm.lower() == 'y' or confirm.lower() == 'n':
+            break
+    
+    if confirm.lower() == 'y':
+        return True
+    else:
+        return False
+# Set up FacultyConfig to add a new faculty to the JSON file
+# Returns a FacultyConfig.
+def addFaculty_config(name: str, isFullTime: str, dates: list, courses: dict):
+    #course limit is two or one depending on position
+    if isFullTime.lower() == 'y':
+        unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
+        max_credits = FULL_TIME_MAX_CREDITS
+    else:
+        unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
+        max_credits = ADJUNCT_MAX_CREDITS
+    datesTimes = {}
+    for day in dates:
+        match day.upper():
+            case 'M':
+                day = "MON"
+            case 'T':
+                day = "TUE"
+            case 'W':
+                day = "WED"
+            case 'R':
+                day = "THU"
+            case 'F':
+                day = "FRI"
+            case _: # any letters/characters not matched are skipped
+                continue
+        while(True):
+            timerange = TimeRange(start='09:00', end='17:00')
+            datesTimes[day] = [str(timerange)]
+            if datesTimes[day] != "":
+                break
+    return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=courses, 
+                                    maximum_days=MAX_DAYS, times=datesTimes)
+# Get input for adding new faculty
+# Returns a FacultyConfig
+def addFaculty_input():
+    while(True):
+        name = input("Enter the new faculty's name: ").strip()
+        if name != "":
+            break
+    
+    while(True):
+        isFullTime = input("Does the new faculty have a full-time position? [y/n]: ")
+        if isFullTime.lower() == 'y' or isFullTime.lower() == 'n':
+            break
+    # Add dates/Times to new faculty info
+    while True:
+        raw_dates = input("Enter available dates (MTWRF): ")
+        dates = []
+        for char in raw_dates.upper():
+            if char in {"M", "T", "W", "R", "F"} and char not in dates:
+                dates.append(char)
+        if MIN_DAYS <= len(dates) <= MAX_DAYS:
+            break
+        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
+  
+    #Get preferred courses and weights
+    courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
+    coursesPref = {}
+    if courses != "":
+        for course in str.split(courses, ";"):
+            while True:
+                try:
+                    weight = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
+                except ValueError:
+                    print("Please enter a whole number between 0 and 10.")
+                    continue
+                if 0 <= weight <= 10:
+                    break
+                print("Please enter a whole number between 0 and 10.")
+            coursesPref[course.upper().strip()] = weight
+    return addFaculty_config(name=name, isFullTime=isFullTime, dates=dates, courses=coursesPref)
+# Check to see if adding new faculty will add duplicate information
+# Returns True if duplicate info would be added, otherwise returns false.
+def faculty_check_duplicate(config: CombinedConfig, new_faculty: scheduler.FacultyConfig):
+    for current_faculty in config.config.faculty:
+        if current_faculty.name == new_faculty.name:
+            return True
+    return False
+# Append new faculty to the CombinedConfig
+def addFaculty_JSON(config: CombinedConfig, faculty: scheduler.FacultyConfig, config_path: str):
+    # Update config with new faculty
+    with config.edit_mode() as edit_config:
+        edit_config.config.faculty.append(faculty)
+        
+    # Save updated config to JSON
+    with open(config_path, 'w') as file:
+        file.write(config.model_dump_json(indent=2))
+    print("New faculty information saved!")
+# Wrapper function to contain addFaculty method calls
+def addFaculty(config: CombinedConfig, config_path: str):
+    try:
+        faculty = addFaculty_input()
+        if faculty is None or not addFaculty_confirm(faculty):
+            print("No faculty information saved.")
+            return
+        
+        if faculty_check_duplicate(config, faculty):
+            print("This faculty already exists! Maybe you meant to modify their information?")
+            print("New faculty not added.")
+            return
+        addFaculty_JSON(config=config, faculty=faculty, config_path=config_path)
+    
+    except Exception as exc:
+        print(f"Failed to save faculty: {exc}")
 
 # modifyFaculty takes a config and config path to modify different preferences 
 #  associated with existing faculty. The function uses a CLI and will update 
@@ -36,6 +161,7 @@ ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 # Return: none
 def modifyFaculty(config, config_path: str):
     # Load the config
+    config = load_config_from_file(CombinedConfig, config_path)
     scheduler_config = config.config
 
     # Check if there are any faculty
@@ -229,16 +355,16 @@ def modifyFaculty(config, config_path: str):
 
                         while True:
                             start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
-                            print(f"DEBUG start_time: '{start_time}'")
 
                             end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
-                            print(f"DEBUG end_time: '{end_time}'")
 
+                            # Hitting enter will auto fill to all week or 24 hrs a day
                             if start_time == "":
                                 start_time = "00:00"
                             if end_time == "":
                                 end_time = "23:59"
                             try:
+                                # Ensures start is before end
                                 start_h, start_m = map(int, start_time.split(":"))
                                 end_h, end_m = map(int, end_time.split(":"))
                                 start_minutes = start_h * 60 + start_m
@@ -318,98 +444,111 @@ def modifyFaculty(config, config_path: str):
     return config
 
 
-def addFaculty():
-    while(True):
-        name = input("Enter the new faculty's name: ")
-        if name != "":
-            break
-    
-    while(True):
-        position = input("Does the new faculty have a full-time position? [y/n]: ")
-        if position.lower() == 'y' or position.lower() == 'n':
-            break
+# Delete an existing faculty member from the scheduler.
+# Preconditions: Faculty list is initialized and may contain one or more faculty entries.
+# Postconditions: Removes the faculty with the matching name (case-insensitive)
+#                 from the faculty list if found; otherwise, no changes are made.
+def deleteFaculty(config_path: str):
+    config = load_config_from_file(CombinedConfig, config_path)
+    scheduler_config = config.config
 
-    #course limit is two or one depending on position
-    if position.lower() == 'y':
-        position = "Full-time"
-        unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
-        max_credits = FULL_TIME_MAX_CREDITS
-    else:
-        position = "Adjunct"
-        unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
-        max_credits = ADJUNCT_MAX_CREDITS
+    # Check if there is any faculty to delete
+    if not scheduler_config.faculty:
+        print("No faculty available to delete.")
+        return
 
-    # Add dates/Times to new faculty info
+    # Display current faculty
+    print("\nCurrent Faculty:")
+    for faculty in scheduler_config.faculty:
+        print(f"- {faculty.name}")
+
     while True:
-        raw_dates = input("Enter available dates (MTWRF): ")
-        dates = []
-        for ch in raw_dates.upper():
-            if ch in {"M", "T", "W", "R", "F"} and ch not in dates:
-                dates.append(ch)
-        if MIN_DAYS <= len(dates) <= MAX_DAYS:
+        name = input("\nEnter the name of the faculty to delete: ").strip()
+        if name:
             break
-        print(f"Please enter between {MIN_DAYS} and {MAX_DAYS} valid days (MTWRF).")
 
-    # match char dates to substitute for normal spelling, get availability for each day
-    datesTimes = {}
-    for day in dates:
-        match day.upper():
-            case 'M':
-                day = "MON"
-            case 'T':
-                day = "TUE"
-            case 'W':
-                day = "WED"
-            case 'R':
-                day = "THU"
-            case 'F':
-                day = "FRI"
-            case _: # any letters/characters not matched are skipped
-                continue
+    # Search for matching faculty (case-insensitive)
+    matching = [f for f in scheduler_config.faculty if f.name.lower() == name.lower()]
+    if not matching:
+        print(f"No faculty named '{name}' found.")
+        return
 
-        while(True): #Times should be in TimeRange format (i.e. using military time and assigning start/end times seperately)
-            timerange = TimeRange(start='09:00', end='17:00')
-            datesTimes[day] = [str(timerange)]
-            if datesTimes[day] != "":
-                break
+    faculty_to_delete = matching[0]
 
-    courses = input("Enter preferred courses, seperated with a semicolon (Ex. CMSC 161; CMSC 162): ")
-    coursesPref = {}
-    if courses != "":
-        for course in str.split(courses, ";"):
-            while True:
-                try:
-                    weight = int(input("Enter a weight for " + course.strip() + ". (0 - 10): "))
-                except ValueError:
-                    print("Please enter a whole number between 0 and 10.")
-                    continue
-                if 0 <= weight <= 10:
-                    break
-                print("Please enter a whole number between 0 and 10.")
-            coursesPref[course.upper().strip()] = weight
-
-    #output entered data
-    print("\nNew Faculty Summary:")
-    print("Name: " + name + "\nPosition Type: " + position + "\nAvailability: ")
-    print(datesTimes)
-    print("Preferred courses:")
-    print(coursesPref)
-
-    #Confirm entered data
-    while(True):
-        confirm = input("\nIs this information correct? [y/n]: ")
-        if confirm.lower() == 'y' or confirm.lower() == 'n':
+    while True:
+        confirm = input(f"Delete {faculty_to_delete.name}? [y/n]: ").lower()
+        if confirm in ('y', 'n'):
             break
     
-    if confirm.lower() == 'y':
-        return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=coursesPref, 
-                                    maximum_days=5, times=datesTimes)
+    if confirm != 'y':
+        print("Deletion canceled.")
+        return
+
+    try:
+        with scheduler_config.edit_mode() as editable:
+            editable.faculty = [
+                f for f in editable.faculty
+                if f.name.lower() != name.lower()
+            ]
+
+            # Remove faculty references from courses
+            for course in editable.courses:
+                while faculty_to_delete.name in course.faculty:
+                    course.faculty.remove(faculty_to_delete.name)
+
+    except Exception as e:
+        print(f"Error deleting faculty: {e}")
+        return
+
+    # Save back to the config file
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(config.model_dump_json(indent=2))
+
+    print(f"{faculty_to_delete.name} deleted successfully.")
+
+
+def validate_and_fix_faculty_references(config_path: str):
+    """
+    Validate that all faculty references in courses exist in the faculty list.
+    Remove any invalid faculty references from courses and save the config.
+    
+    Returns the number of invalid references removed.
+    """
+    config = load_config_from_file(CombinedConfig, config_path)
+    scheduler_config = config.config
+    
+    # Get set of valid faculty names
+    valid_faculty_names = {f.name for f in scheduler_config.faculty}
+    
+    invalid_count = 0
+    
+    # Check all courses for invalid faculty references
+    for course in scheduler_config.courses:
+        invalid_refs = [f for f in course.faculty if f not in valid_faculty_names]
+        if invalid_refs:
+            invalid_count += len(invalid_refs)
+            print(f"Course '{course.course_id}' has invalid faculty: {invalid_refs}")
+            course.faculty = [f for f in course.faculty if f in valid_faculty_names]
+            print(f"  Removed invalid references. New faculty: {course.faculty}")
+    
+    if invalid_count > 0:
+        # Save the cleaned config
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write(config.model_dump_json(indent=2))
+        print(f"\nFixed {invalid_count} invalid faculty reference(s).")
     else:
-        while(True):
-            confirm = input("\nWould you like to restart adding new faculty? [y/n]: ")
-            if confirm.lower() == 'y' or confirm.lower() == 'n':
-                break
-        if confirm.lower() == 'y':
-            return addFaculty()
-        else:
-            return None
+        print("All course-faculty references are valid.")
+    
+    return invalid_count
+
+
+# For Testing File:
+
+def deleteFaculty_config(faculty_list, name):
+    # Removes a faculty member by name (case-insensitive).
+    # Returns True if removed, False if not found.
+    for faculty in faculty_list:
+        if faculty.name.lower() == name.lower():
+            faculty_list.remove(faculty)
+            return True
+    return False

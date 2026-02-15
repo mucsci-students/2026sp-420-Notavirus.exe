@@ -23,6 +23,10 @@ def main():
 
     # Load the config file
     config = load_config_from_file(CombinedConfig, config_path)
+    
+    # Validate and fix any invalid faculty references on startup
+    validate_and_fix_faculty_references(config_path)
+    config = load_config_from_file(CombinedConfig, config_path)
 
     while True:
         print("\nScheduler Menu")
@@ -58,6 +62,8 @@ def main():
                 modifyFaculty(config, config_path)
             elif choice == '3':
                 deleteFaculty(config_path)
+                validate_and_fix_faculty_references(config_path)
+                config = load_config_from_file(CombinedConfig, config_path)
             elif choice == '4':
                 available_rooms = config.config.rooms
                 available_labs = config.config.labs

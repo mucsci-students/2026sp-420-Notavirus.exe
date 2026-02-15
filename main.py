@@ -23,6 +23,10 @@ def main():
 
     # Load the config file
     config = load_config_from_file(CombinedConfig, config_path)
+    
+    # Validate and fix any invalid faculty references on startup
+    validate_and_fix_faculty_references(config_path)
+    config = load_config_from_file(CombinedConfig, config_path)
 
     while True:
         print("\nScheduler Menu")
@@ -50,7 +54,7 @@ def main():
         
         try:
             if choice == '1':
-                faculty = addFaculty()
+                faculty = addFaculty(config=config, config_path=config_path)
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
@@ -58,6 +62,8 @@ def main():
                 modifyFaculty(config, config_path)
             elif choice == '3':
                 deleteFaculty(config_path)
+                validate_and_fix_faculty_references(config_path)
+                config = load_config_from_file(CombinedConfig, config_path)
             elif choice == '4':
                 available_rooms = config.config.rooms
                 available_labs = config.config.labs
@@ -76,7 +82,7 @@ def main():
             elif choice == '6':
                 deleteCourse(config, config_path)
             elif choice == '7':
-                addConflict()
+                addConflict(config_path=config_path)
             elif choice == '8':
                 modifyconflict_input(config=config, config_path=config_path)
             elif choice == '9':

@@ -475,7 +475,11 @@ def deleteFaculty(config_path: str):
 
     faculty_to_delete = matching[0]
 
-    confirm = input(f"Delete {faculty_to_delete.name}? [y/n]: ").lower()
+    while True:
+        confirm = input(f"Delete {faculty_to_delete.name}? [y/n]: ").lower()
+        if confirm in ('y', 'n'):
+            break
+    
     if confirm != 'y':
         print("Deletion canceled.")
         return
@@ -501,6 +505,42 @@ def deleteFaculty(config_path: str):
         f.write(config.model_dump_json(indent=2))
 
     print(f"{faculty_to_delete.name} deleted successfully.")
+
+
+def validate_and_fix_faculty_references(config_path: str):
+    """
+    Validate that all faculty references in courses exist in the faculty list.
+    Remove any invalid faculty references from courses and save the config.
+    
+    Returns the number of invalid references removed.
+    """
+    config = load_config_from_file(CombinedConfig, config_path)
+    scheduler_config = config.config
+    
+    # Get set of valid faculty names
+    valid_faculty_names = {f.name for f in scheduler_config.faculty}
+    
+    invalid_count = 0
+    
+    # Check all courses for invalid faculty references
+    for course in scheduler_config.courses:
+        invalid_refs = [f for f in course.faculty if f not in valid_faculty_names]
+        if invalid_refs:
+            invalid_count += len(invalid_refs)
+            print(f"Course '{course.course_id}' has invalid faculty: {invalid_refs}")
+            course.faculty = [f for f in course.faculty if f in valid_faculty_names]
+            print(f"  Removed invalid references. New faculty: {course.faculty}")
+    
+    if invalid_count > 0:
+        # Save the cleaned config
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write(config.model_dump_json(indent=2))
+        print(f"\nFixed {invalid_count} invalid faculty reference(s).")
+    else:
+        print("All course-faculty references are valid.")
+    
+    return invalid_count
+
 
 # For Testing File:
 

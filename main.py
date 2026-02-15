@@ -50,7 +50,7 @@ def main():
         
         try:
             if choice == '1':
-                faculty = addFaculty()
+                faculty = addFaculty(config=config, config_path=config_path)
                 if faculty is not None:
                     faculty_list.append(faculty)
                     print("New faculty information saved.")
@@ -76,7 +76,7 @@ def main():
             elif choice == '6':
                 deleteCourse(config, config_path)
             elif choice == '7':
-                addConflict()
+                addConflict(config_path=config_path)
             elif choice == '8':
                 modifyconflict_input(config=config, config_path=config_path)
             elif choice == '9':

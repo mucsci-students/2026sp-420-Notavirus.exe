@@ -1,10 +1,16 @@
-# main.py
+# Filename: main.py
+# Description: Builds a command line interface for users to run, modify, and display the scheduler
+# Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, Keller
+
 import sys
-import json
-from lab import add_lab
-from room import deleteRoom
+from faculty import *
+from course import *
+from conflict import *
+from lab import *
+from room import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
+import ourScheduler
 
 faculty_list = []
 
@@ -12,12 +18,12 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <config_path>")
         return
-    
+
     config_path = sys.argv[1]
-    
-    # Load the config
+
+    # Load the config file
     config = load_config_from_file(CombinedConfig, config_path)
-    
+
     while True:
         print("\nScheduler Menu")
         print("1.  Add Faculty")
@@ -43,37 +49,74 @@ def main():
         choice = input("Choose an option (number only): ").strip()
         
         try:
-            if choice == "10":
+            if choice == '1':
+                faculty = addFaculty()
+                if faculty is not None:
+                    faculty_list.append(faculty)
+                    print("New faculty information saved.")
+            elif choice == '2':
+                modifyFaculty(config, config_path)
+            elif choice == '3':
+                deleteFaculty(config_path)
+            elif choice == '4':
+                available_rooms = config.config.rooms
+                available_labs = config.config.labs
+                available_faculty = [f.name for f in config.config.faculty]
+                course = addCourse(available_rooms, available_labs, available_faculty)
+                if course is not None:
+                    config.config.courses.append(course)
+                    print("Course added successfully.")
+
+                    import json
+                    with open(config_path, 'w') as f:
+                        json.dump(config.model_dump(mode='json'), f, indent = 2)
+                    print(f"Changes saved to {config_path}")
+            elif choice == '5':
+                modifyCourse(config_path)  
+            elif choice == '6':
+                deleteCourse(config, config_path)
+            elif choice == '7':
+                addConflict()
+            elif choice == '8':
+                modifyconflict_input(config=config, config_path=config_path)
+            elif choice == '9':
+                deleteConflict(config, config_path)
+            elif choice == '10':
                 new_lab = add_lab()
                 if new_lab:
                     lab_name = new_lab["name"]
-                    
+
                     # Check if lab already exists
                     if lab_name in config.config.labs:
                         print(f"\nWarning: Lab '{lab_name}' already exists.")
                     else:
                         # Add lab name to labs list
                         config.config.labs.append(lab_name)
-                        
+
                         # Save to JSON
                         with open(config_path, "w", encoding="utf-8") as f:
                             json.dump(config.model_dump(mode="json"), f, indent=2)
-                        
+
                         print(f"\nLab '{lab_name}' added successfully.")
-            
-            elif choice == "11":
-                print("\nModify Lab functionality not yet implemented.")
-            
-            elif choice == "15":
-                # Delete Room
-                deleteRoom(config_path)
-                # Reload config after deletion
-                config = load_config_from_file(CombinedConfig, config_path)
-            
-            elif choice == "19":
+            elif choice == '11':
+                labs = config.config.labs
+                courses = config.config.courses
+                faculty = config.config.faculty
+                labs, courses, faculty = modifyLab(labs, courses, faculty)
+
+                import json
+                with open(config_path, 'w') as f:
+                    json.dump(config.model_dump(mode='json'), f, indent=2)
+                print(f"Changes saved to {config_path}")
+            elif choice == 15:
+              deleteRoom(config_path)
+              config = load_config_from_file(CombinedConfig, config_path)
+            elif choice == '17':
+                ourScheduler.runScheduler(config)
+
+            elif choice == '19':
                 print("Exiting scheduler.")
                 break
-            
             else:
                 print("Invalid option. Please choose 10, 11, 15, or 19 for now.")
         

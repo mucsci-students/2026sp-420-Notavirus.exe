@@ -110,13 +110,20 @@ def main():
                 print(f"Changes saved to {config_path}")
             elif choice == "12":
                 deleteLab_input(config=config, config_path=config_path)
-            
-            elif choice == 15:
+            elif choice == '13':
+                addRoom()
+            elif choice == '14':
+                modRoom()
+            elif choice == '15':
               deleteRoom(config_path)
               config = load_config_from_file(CombinedConfig, config_path)
+
+            elif choice == '16':#######################################TODO PRINT CONFIG
+                
             elif choice == '17':
                 ourScheduler.runScheduler(config)
-
+            elif choice == '18':###############################TODO DISPLAY CSV
+            
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

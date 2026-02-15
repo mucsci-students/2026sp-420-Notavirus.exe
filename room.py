@@ -1,7 +1,7 @@
 # room.py
 # Functions to add/modify/delete a room
 import json
-from scheduler import load_config_from_file
+from scheduler import load_config_from_file, scheduler
 from scheduler.config import CombinedConfig
 
 def deleteRoom(config_path: str):

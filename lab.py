@@ -2,6 +2,7 @@
 # Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, ...
 # Description: Functions relate to add/modify/delete lab.
 from scheduler import CombinedConfig, TimeRange
+import scheduler
 
 def add_lab():
     # Lab name
@@ -66,7 +67,7 @@ def add_lab():
             name=name,
             course=course.upper(),
             instructor=instructor,
-            times=daysTimes
+            times=times
         )
     else:
         while True:

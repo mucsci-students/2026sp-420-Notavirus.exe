@@ -13,7 +13,7 @@ Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, P
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.13+
 - Dependencies listed in `requirements.txt` (install with `pip install -r requirements.txt`)
 
 ---
@@ -25,6 +25,8 @@ Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, P
 ├── main.py               # Entry point and CLI menu
 ├── faculty/              # Faculty add/modify/delete logic
 ├── course/               # Course add/modify/delete logic
+├── room/                 # Room add/modify/delete logic
+├── lab/                  # Lab add/modify/delete logic
 ├── conflict/             # Conflict add/modify/delete logic
 ├── scheduler/            # Core scheduling engine and config loader
 │   └── config.py         # CombinedConfig and related data models

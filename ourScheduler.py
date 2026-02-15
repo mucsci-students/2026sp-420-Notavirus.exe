@@ -148,6 +148,42 @@ def display_Schedule(schedule: list):
     print("\n" + eq_sep)
 
 
+def display_Schedules_csv(config: scheduler.CombinedConfig, max_schedules: int = 1):
+    """
+    Print up to `max_schedules` schedules in CSV format to the terminal.
+
+    Parameters:
+        config: CombinedConfig containing scheduler configuration
+        max_schedules: maximum number of schedules to print (default 1)
+    """
+    try:
+        schedulerGen = scheduler.Scheduler(config)
+
+        count = 0
+        for model in schedulerGen.get_models():
+            count += 1
+            print(f"\nSchedule {count}")
+            for course in model:
+                try:
+                    print(course.as_csv())
+                except Exception:
+                    # Fallback: print a JSON-ish representation if as_csv unavailable
+                    try:
+                        print(course.model_dump_json())
+                    except Exception:
+                        print(str(course))
+            # blank line between schedules
+            print()
+            if count >= max_schedules:
+                break
+
+        if count == 0:
+            print("No valid schedule could be generated.")
+
+    except Exception as e:
+        print(f"Error displaying schedules in CSV: {e}")
+
+
 # For running the scheduler
 def main():
     """Main entry point for the scheduler application"""

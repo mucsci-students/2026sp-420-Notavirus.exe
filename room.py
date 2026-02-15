@@ -1,7 +1,7 @@
 # room.py
 # Functions to add/modify/delete a room
 import json
-from scheduler import load_config_from_file
+from scheduler import load_config_from_file, scheduler
 from scheduler.config import CombinedConfig
 
 def deleteRoom(config_path: str):
@@ -161,7 +161,7 @@ def promptRoomBuilding():
 #checks if room already exists
 #returns true if it already exists
 #returns false if it does not exist
-def existCheck(room: scheduler.Room):
+def existCheck(room: str):
     return room in loadedConfig.config.rooms
 
 #prompts the user to add a room

@@ -10,7 +10,7 @@ from lab import *
 from room import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
-import ourScheduler
+from ourScheduler import *
 
 faculty_list = []
 
@@ -84,20 +84,18 @@ def main():
             elif choice == '10':
                 new_lab = add_lab()
                 if new_lab:
-                    lab_name = new_lab["name"]
-
                     # Check if lab already exists
-                    if lab_name in config.config.labs:
-                        print(f"\nWarning: Lab '{lab_name}' already exists.")
+                    if new_lab in config.config.labs:
+                        print(f"\nWarning: Lab '{new_lab}' already exists.")
                     else:
                         # Add lab name to labs list
-                        config.config.labs.append(lab_name)
+                        config.config.labs.append(new_lab)
 
                         # Save to JSON
                         with open(config_path, "w", encoding="utf-8") as f:
                             json.dump(config.model_dump(mode="json"), f, indent=2)
 
-                        print(f"\nLab '{lab_name}' added successfully.")
+                        print(f"\nLab '{new_lab}' added successfully.")
             elif choice == '11':
                 labs = config.config.labs
                 courses = config.config.courses
@@ -110,13 +108,42 @@ def main():
                 print(f"Changes saved to {config_path}")
             elif choice == "12":
                 deleteLab_input(config=config, config_path=config_path)
-            
-            elif choice == 15:
+            elif choice == '13':
+                addRoom()
+            elif choice == '14':
+                modRoom()
+            elif choice == '15':
               deleteRoom(config_path)
               config = load_config_from_file(CombinedConfig, config_path)
-            elif choice == '17':
-                ourScheduler.runScheduler(config)
 
+            elif choice == '16':
+                try:
+                    config = load_config_from_file(CombinedConfig, config_path)
+                    s = Scheduler(config)
+                    found = False
+                    for schedule in s.get_models():
+                        display_Schedule(schedule)
+                        found = True
+                        break
+                    if not found:
+                        print("No valid schedule could be generated.")
+                except Exception as exc:
+                    print(f"Failed to display schedule: {exc}")
+            elif choice == '17':
+                runScheduler(config)
+            elif choice == '18':
+                try:
+                    num_input = input("How many schedules to display? (enter 0 for all): ").strip()
+                    num = int(num_input)
+                    if num < 0:
+                        print("Please enter 0 or a positive integer.")
+                    else:
+                        max_schedules = 10**9 if num == 0 else num
+                        display_Schedules_csv(config, max_schedules=max_schedules)
+                except ValueError:
+                    print("Invalid number. Please enter an integer.")
+                except Exception as exc:
+                    print(f"Failed to display CSV schedules: {exc}")
             elif choice == '19':
                 print("Exiting scheduler.")
                 break

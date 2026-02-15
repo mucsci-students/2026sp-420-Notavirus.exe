@@ -153,7 +153,8 @@ def modifyLab(labs, courses, faculty):
 
     return labs, courses, faculty
 
-
+# Delete a lab from the config file.
+# Returns True if the lab was deleted, false otherwise.
 def deleteLab_json(lab: str, config: CombinedConfig, config_path: str):
     try:
         with config.config.edit_mode() as editable:
@@ -178,6 +179,8 @@ def deleteLab_json(lab: str, config: CombinedConfig, config_path: str):
 
     return True
 
+# Get input and confirmation to delete a lab.
+# If there are no labs, print an error message.
 def deleteLab_input(config: CombinedConfig, config_path: str):
     num = int(1)
 

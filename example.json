@@ -314,8 +314,8 @@
         },
         "mandatory_days": [
           "MON",
-          "WED",
-          "FRI"
+          "FRI",
+          "WED"
         ]
       },
       {
@@ -638,52 +638,6 @@
           "Mac": 5,
           "Linux": 1
         },
-        "mandatory_days": []
-      },
-      {
-        "name": "Haldeman",
-        "maximum_credits": 12,
-        "maximum_days": 5,
-        "minimum_credits": 0,
-        "unique_course_limit": 2,
-        "times": {
-          "MON": [
-            {
-              "start": "09:00",
-              "end": "17:00"
-            }
-          ],
-          "TUE": [
-            {
-              "start": "09:00",
-              "end": "17:00"
-            }
-          ],
-          "WED": [
-            {
-              "start": "09:00",
-              "end": "17:00"
-            }
-          ],
-          "THU": [
-            {
-              "start": "09:00",
-              "end": "17:00"
-            }
-          ],
-          "FRI": [
-            {
-              "start": "09:00",
-              "end": "17:00"
-            }
-          ]
-        },
-        "course_preferences": {
-          "CMSC 453": 7,
-          "CMSC 340": 9
-        },
-        "room_preferences": {},
-        "lab_preferences": {},
         "mandatory_days": []
       }
     ]

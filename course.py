@@ -204,7 +204,7 @@ def modifyCourse(config_path: str):
                 editable_course.lab = [l.strip() for l in lab.split(",")]
 
             if faculty:
-                editable_course.faculty = faculty
+                editable_course.faculty = [faculty]
     except Exception as e:
         print(f"Error modifying course: {e}")
         return
@@ -231,7 +231,7 @@ def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None)
         course.lab = lab
 
     if faculty is not None:
-        course.faculty = faculty
+        course.faculty = [faculty]
 
     return course
   

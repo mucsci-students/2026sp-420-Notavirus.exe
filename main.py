@@ -7,6 +7,7 @@ from faculty import *
 from course import *
 from conflict import *
 from lab import *
+from room import *
 from scheduler import load_config_from_file
 from scheduler.config import CombinedConfig
 import ourScheduler
@@ -20,7 +21,7 @@ def main():
 
     config_path = sys.argv[1]
 
-    # load the config file
+    # Load the config file
     config = load_config_from_file(CombinedConfig, config_path)
 
     while True:
@@ -44,9 +45,9 @@ def main():
         print("17. Run the Scheduler")
         print("18. Display Schedules in CSV")
         print("19. Exit")
-
+        
         choice = input("Choose an option (number only): ").strip()
-
+        
         try:
             if choice == '1':
                 faculty = addFaculty()
@@ -80,6 +81,23 @@ def main():
                 modifyconflict_input(config=config, config_path=config_path)
             elif choice == '9':
                 deleteConflict(config, config_path)
+            elif choice == '10':
+                new_lab = add_lab()
+                if new_lab:
+                    lab_name = new_lab["name"]
+
+                    # Check if lab already exists
+                    if lab_name in config.config.labs:
+                        print(f"\nWarning: Lab '{lab_name}' already exists.")
+                    else:
+                        # Add lab name to labs list
+                        config.config.labs.append(lab_name)
+
+                        # Save to JSON
+                        with open(config_path, "w", encoding="utf-8") as f:
+                            json.dump(config.model_dump(mode="json"), f, indent=2)
+
+                        print(f"\nLab '{lab_name}' added successfully.")
             elif choice == '11':
                 labs = config.config.labs
                 courses = config.config.courses
@@ -93,6 +111,9 @@ def main():
             elif choice == "12":
                 deleteLab_input(config=config, config_path=config_path)
             
+            elif choice == 15:
+              deleteRoom(config_path)
+              config = load_config_from_file(CombinedConfig, config_path)
             elif choice == '17':
                 ourScheduler.runScheduler(config)
 
@@ -100,9 +121,12 @@ def main():
                 print("Exiting scheduler.")
                 break
             else:
-                print("Invalid option. Please choose 1-19.")
+                print("Invalid option. Please choose 10, 11, 15, or 19 for now.")
+        
         except Exception as exc:
             print(f"Operation failed: {exc}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
     main()

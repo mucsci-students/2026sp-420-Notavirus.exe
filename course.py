@@ -161,7 +161,7 @@ def modifyCourse(config_path: str):
     credits = input("New credit value: ").strip()
     room = input("New room (comma separated): ").strip()
     lab = input("New lab (comma separated): ").strip()
-
+    faculty = input("New faculty value: ").strip()
 
     # Summary of modification
     print("\nModification Summary:")
@@ -169,6 +169,7 @@ def modifyCourse(config_path: str):
     print(f"Credits: {credits if credits else '[unchanged]'}")
     print(f"Room: {room if room else '[unchanged]'}")
     print(f"Lab: {lab if lab else '[unchanged]'}")
+    print(f"Faculty: {faculty if faculty else '[unchanged]'}")
 
     # Apply or do not apply changes
     while True:
@@ -202,6 +203,8 @@ def modifyCourse(config_path: str):
             if lab:
                 editable_course.lab = [l.strip() for l in lab.split(",")]
 
+            if faculty:
+                editable_course.faculty = faculty
     except Exception as e:
         print(f"Error modifying course: {e}")
         return
@@ -213,7 +216,7 @@ def modifyCourse(config_path: str):
     print(f"Course '{course_id}' updated successfully.")
 
 # Testing function
-def modifyCourse_config(course, credits=None, room=None, lab=None):
+def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None):
 
     if credits is not None:
         if credits < 0:
@@ -226,6 +229,9 @@ def modifyCourse_config(course, credits=None, room=None, lab=None):
 
     if lab is not None:
         course.lab = lab
+
+    if faculty is not None:
+        course.faculty = faculty
 
     return course
   

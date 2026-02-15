@@ -2,7 +2,8 @@ import scheduler
 import json
 
 #get CombinedConfig file, get the config field(SchedulerConfig type), to add room to
-loadedConfig = scheduler.load_config_from_file(scheduler.CombinedConfig, "example.json")
+configFile = "example.json"
+loadedConfig = scheduler.load_config_from_file(scheduler.CombinedConfig, configFile)
 
 def main():
     modRoom("Roddy 140")
@@ -10,30 +11,47 @@ def main():
 #adds room to list in config
 #you can pass a room in the parameter to add the object instead of prompting user input
 def addRoom(room = None):
-    #creates a loop so we can add more than one room
-    while True:
-        #creates room if none was passed into parameter
-        if room is None:
-            newRoom = genRoom()
-        #checks existing, adds to config if it does not exist already
-        if not existCheck(newRoom):
-            try:
-                with loadedConfig.edit_mode() as editableConfig:
-                    #saves to the config loaded in memory
-                    editableConfig.config.rooms.append(newRoom)
-                #writes to the actual config file, saving for later use
-                saveRoomsToFile()
-                #feedback
-                print("Room added")
-            except ValueError:
-                print("failed to add room")
+    print("addRoom called with: ", room)
+    #non interactive section, allows us to skip user prompt
+    if room is not None:
+        print("within non interactive")
+        if not room:   # prevent blank string
+            return False
+
+        if not existCheck(room):
+            with loadedConfig.edit_mode() as editableConfig:
+                editableConfig.config.rooms.append(room)
+            saveRoomsToFile()
+            return True
         else:
-            print("room already exists, do not add")
-        #break the loop if we call with params, allows us to call without any user input
-        #if we created a room, we will prompt the user if they want to add another room
-        if room != None or not promptAddRoom():
-            break
-        newRoom = None
+            return False
+    else:
+    #creates a loop so we can prompt to add more than one room
+        while True:
+            newRoom = genRoom()
+            print("within interactive")
+        #double checks that room is not blank
+            if not newRoom.strip():
+                print("Room cannot be blank")
+                continue
+
+            #checks if room already exists, adds to config if it does not exist in config
+            if not existCheck(newRoom):
+                try:
+                    with loadedConfig.edit_mode() as editableConfig:
+                        #saves to the config loaded in memory
+                        editableConfig.config.rooms.append(newRoom)
+                    #writes to the actual config file, saving for later use
+                    saveRoomsToFile()
+                    #feedback
+                    print("Room added")
+                except ValueError:
+                    print("failed to add room")
+            else:
+                print(f"room: {room} already exists within {loadedConfig.config.rooms}, do not add")
+            #prompts user to add another room, if not then break
+            if not promptAddRoom():
+                break
                 
 
 #combines the prompts to create the Room string
@@ -85,7 +103,7 @@ def existCheck(room: scheduler.Room):
 #returns true if input is y, false otherwise
 def promptAddRoom():
     answer = input("Add another room?(y/n)")
-    return answer == "y"
+    return answer.lower() == "y"
 
 #modify the room function
 #calling modRoom() will prompt the user for the building and number of the room, then information to modify
@@ -115,7 +133,7 @@ def modRoom(room = None):
                     print("match failed, input should be building or number only, this is a fallback")
         #prompts the user to modify another room
         answer = input("Modify another room?(y/n)")
-        if answer == "n":
+        if answer.lower() == "n":
             break
         #if the user wants to modify another room, prompt for the info
         room = genRoom()
@@ -158,12 +176,12 @@ def modifyPrompt():
 
 #saves the changes made from the loaded config(in memory) to the config file
 def saveRoomsToFile():
-    with open("example.json","r") as f:
+    with open(configFile,"r") as f:
         data = json.load(f)
 
     data["config"]["rooms"] = loadedConfig.config.rooms
 
-    with open("example.json","w") as f:
+    with open(configFile,"w") as f:
         json.dump(data,f,indent=4)
 if __name__ == "__main__":
     main()

@@ -1,5 +1,7 @@
 # lab.py
-from scheduler import TimeRange
+# Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, ...
+# Description: Functions relate to add/modify/delete lab.
+from scheduler import CombinedConfig, TimeRange
 
 def add_lab():
     # Lab name
@@ -82,7 +84,6 @@ def add_lab():
  Modifies an existing lab and updates all references.
  returns updated list. 
 """
-
 def modifyLab(labs, courses, faculty):
     if not labs:
         print("No labs available")
@@ -151,3 +152,58 @@ def modifyLab(labs, courses, faculty):
         print(f"Cancelled, no changes made.")
 
     return labs, courses, faculty
+
+
+def deleteLab_json(lab: str, config: CombinedConfig, config_path: str):
+    try:
+        with config.config.edit_mode() as editable:
+            for course in editable.courses:
+                 if lab in course.lab:
+                    course.lab.remove(lab)
+            for faculty in editable.faculty:
+                if lab in faculty.lab_preferences:
+                    del faculty.lab_preferences[lab]
+            
+            editable.labs.remove(lab)
+                    
+    except Exception as e:
+        print(f"\nError: Failed to delete lab due to validation error: {e}")
+        return False
+    
+    # Save back to the config file
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(config.model_dump_json(indent=2))
+    with open(config_path, 'w') as file:
+        file.write(config.model_dump_json(indent=2))
+
+    return True
+
+def deleteLab_input(config: CombinedConfig, config_path: str):
+    num = int(1)
+
+    if len(config.config.labs) == 0:
+        print("No labs exist. Cannot delete a lab.")
+        return
+
+    print("Which lab would you like to delete?")
+    for lab in config.config.labs:
+        print(str(num) + ": " + lab)
+        num += 1
+    
+    while (True):
+        labnum = input("\nEnter the number of the lab you would like to delete (-1 to quit): ")
+        if str.isnumeric(labnum) and int(labnum) >= 1 and int(labnum) <= num:
+            break
+        elif int(labnum) == -1:
+            print("Quitting deleting a lab.")
+            return
+    
+    while(True):
+        confirm = input("Are you sure you want to delete " + config.config.labs[int(labnum) - 1] + "? [y/n]: ").strip()
+        if confirm == 'y':
+            if deleteLab_json(config.config.labs[int(labnum) - 1], config=config, config_path=config_path):
+                print("Lab deleted.")
+            return
+        if confirm == 'n':
+            print("Quitting deleting a lab.")
+            return

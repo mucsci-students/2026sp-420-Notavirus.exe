@@ -108,6 +108,9 @@ def main():
                 with open(config_path, 'w') as f:
                     json.dump(config.model_dump(mode='json'), f, indent=2)
                 print(f"Changes saved to {config_path}")
+            elif choice == "12":
+                deleteLab_input(config=config, config_path=config_path)
+            
             elif choice == 15:
               deleteRoom(config_path)
               config = load_config_from_file(CombinedConfig, config_path)

@@ -197,6 +197,9 @@ def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, new
         
 # Collect input for modifying conflicts.
 def modifyconflict_input(config: CombinedConfig, config_path: str):
+    #reloads config, so it is updated
+    config = load_config_from_file(CombinedConfig, config_path)
+    
     conflictNum = int(0)
     coursesNum = int(0)
     print("Existing Conflicts:")

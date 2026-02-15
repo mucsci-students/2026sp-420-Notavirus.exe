@@ -125,16 +125,9 @@ def main():
             elif choice == '16':
                 try:
                     config = load_config_from_file(CombinedConfig, config_path)
-                    s = Scheduler(config)
-                    found = False
-                    for schedule in s.get_models():
-                        display_Schedule(schedule)
-                        found = True
-                        break
-                    if not found:
-                        print("No valid schedule could be generated.")
+                    display_Configuration(config)
                 except Exception as exc:
-                    print(f"Failed to display schedule: {exc}")
+                    print(f"Failed to display configuration: {exc}")
             elif choice == '17':
                 runScheduler(config)
             elif choice == '18':

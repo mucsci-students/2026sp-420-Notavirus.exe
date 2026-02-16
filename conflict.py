@@ -32,27 +32,19 @@ def addConflict(config_path: str):
     while True:
         # Prompt for the first course
         course_1 = input("\nEnter the first course ID: ").strip().upper()
-        #if duplicate course names, prompt to pick which one
-        #display all duplicates information
-        duplicateCourses = []
-        courseIndex = 0
+        if not course_1:
+            continue
+            
+        # Check if course exists
+        exists = False
         for course in scheduler_config.courses:
-
             if course.course_id == course_1:
-                #add course to our list of duplicate course
-                duplicateCourses.append(courseIndex)
-           
-            #increment index
-            courseIndex += 1
-        for courseNumber in duplicateCourses:
-            #print the course index with the course
-            print(f"{courseNumber}: {scheduler_config.courses[courseNumber]}")
-        correctCourse = int(input("There is more than one Course with that name, which one did you mean(number): "))
-        #sets to the input from correctCourse
-        course_1 = scheduler_config.courses[correctCourse].course_id
-        #set course_1 to the course id associated with correctCourse
-        if course_1:
+                exists = True
+                break
+        
+        if exists:
             break
+        print(f"Course '{course_1}' not found.")
 
     while True:
         # Prompt for the conflicting course
@@ -88,19 +80,18 @@ def addConflict(config_path: str):
     # Add conflict to each course (c1 conflicts with c2, c2 conflicts with c1)
     try:
         with scheduler_config.edit_mode() as editable:
-            #for duplicates, c1 needs to grab the correct index, not match to first course with that course name
-            #c1 = next(c for c in editable.courses if c.course_id == course_1)
-            c1 = scheduler_config.courses[correctCourse]
-            c2 = next(c for c in editable.courses if c.course_id == course_2)
+            # Find ALL courses matching the IDs in the editable config
+            c1_list = [c for c in editable.courses if c.course_id == course_1]
+            c2_list = [c for c in editable.courses if c.course_id == course_2]
 
-            if course_2 not in c1.conflicts:
-                c1.conflicts.append(course_2)
-                print(f"appended to c1 {course_2}")
+            for course in c1_list:
+                if course_2 not in course.conflicts:
+                    course.conflicts.append(course_2)
 
-            if course_1 not in c2.conflicts:
-                c2.conflicts.append(course_1)
+            for course in c2_list:
+                if course_1 not in course.conflicts:
+                    course.conflicts.append(course_1)
 
-            print(f"{c1.conflicts}")
     except Exception as e:
         print(f"Error adding conflict: {e}")
         return

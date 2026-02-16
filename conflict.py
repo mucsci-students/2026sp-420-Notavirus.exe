@@ -32,8 +32,19 @@ def addConflict(config_path: str):
     while True:
         # Prompt for the first course
         course_1 = input("\nEnter the first course ID: ").strip().upper()
-        if course_1:
+        if not course_1:
+            continue
+            
+        # Check if course exists
+        exists = False
+        for course in scheduler_config.courses:
+            if course.course_id == course_1:
+                exists = True
+                break
+        
+        if exists:
             break
+        print(f"Course '{course_1}' not found.")
 
     while True:
         # Prompt for the conflicting course
@@ -69,14 +80,17 @@ def addConflict(config_path: str):
     # Add conflict to each course (c1 conflicts with c2, c2 conflicts with c1)
     try:
         with scheduler_config.edit_mode() as editable:
-            c1 = next(c for c in editable.courses if c.course_id == course_1)
-            c2 = next(c for c in editable.courses if c.course_id == course_2)
+            # Find ALL courses matching the IDs in the editable config
+            c1_list = [c for c in editable.courses if c.course_id == course_1]
+            c2_list = [c for c in editable.courses if c.course_id == course_2]
 
-            if course_2 not in c1.conflicts:
-                c1.conflicts.append(course_2)
+            for course in c1_list:
+                if course_2 not in course.conflicts:
+                    course.conflicts.append(course_2)
 
-            if course_1 not in c2.conflicts:
-                c2.conflicts.append(course_1)
+            for course in c2_list:
+                if course_1 not in course.conflicts:
+                    course.conflicts.append(course_1)
 
     except Exception as e:
         print(f"Error adding conflict: {e}")
@@ -84,6 +98,9 @@ def addConflict(config_path: str):
 
     # Save back to the config file
     with open(config_path, "w", encoding="utf-8") as f:
+        #update config to include the updated scheduler_config
+        with config.edit_mode() as editableConfig:
+            editableConfig.config = scheduler_config
         f.write(config.model_dump_json(indent=2))
 
     print("Conflict added successfully.")

@@ -3,6 +3,7 @@
 # Authors: Lauryn Gilbert, Hailey, Luke Leopold, Brooks, Keller
 
 import sys
+import json
 from faculty import *
 from course import *
 from conflict import *
@@ -73,7 +74,7 @@ def main():
                     config.config.courses.append(course)
                     print("Course added successfully.")
 
-                    import json
+                    # import json
                     with open(config_path, 'w') as f:
                         json.dump(config.model_dump(mode='json'), f, indent = 2)
                     print(f"Changes saved to {config_path}")
@@ -88,7 +89,7 @@ def main():
             elif choice == '9':
                 deleteConflict(config, config_path)
             elif choice == '10':
-                new_lab = add_lab()
+                new_lab = add_lab(existing_labs=config.config.labs)
                 if new_lab:
                     # Check if lab already exists
                     if new_lab in config.config.labs:
@@ -108,7 +109,7 @@ def main():
                 faculty = config.config.faculty
                 labs, courses, faculty = modifyLab(labs, courses, faculty)
 
-                import json
+                # import json
                 with open(config_path, 'w') as f:
                     json.dump(config.model_dump(mode='json'), f, indent=2)
                 print(f"Changes saved to {config_path}")

@@ -37,12 +37,10 @@ def addCourse(available_rooms, available_labs, available_faculty):
     print(f"Available rooms: {', '.join(available_rooms)}")
     rooms = []
     while True:
-        room = input("Enter a room for this course (or press Enter to finish): ").strip()
+        room = input("Enter a room for this course (or press Enter to skip): ").strip()
         if room == "":
             if len(rooms) == 0:
-                print("Please enter at least one room.")
-                continue
-            break
+                break
         if room not in available_rooms:
             print(f"Invalid room. Choose from: {', '.join(available_rooms)}")
             continue

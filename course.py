@@ -342,31 +342,3 @@ def deleteCourse(config, config_path: str):
     
     print(f"\nCourse '{course_id}' has been permanently deleted.")
     
-
-
-
-# listCourses lists all the courses in the command line.
-# ! function not needed, added if I(Lauryn) wanted to display them differently
-#
-# Parameters: 
-#   config - calls load_config_from_file on config_path to load the config file
-#   config_path str - the file to load that is input by the user
-# Precondition: 
-#   - The config file must contain courses 
-# Postcondition: 
-#   - All courses will be listed in the command line displayed to the user
-# Return: none
-def listCourses(config, config_path: str):
-    scheduler_config = config.config
-
-    if not scheduler_config.courses:
-        print("There are no courses in the configuration.")
-        return
-
-    print("\nCourses:")
-    for i, course in enumerate(scheduler_config.courses, 1):
-        print(f"\n{i}. {course.course_id} ({course.credits} credits)")
-        print(f"   Rooms: {', '.join(course.room) if course.room else 'None'}")
-        print(f"   Labs: {', '.join(course.lab) if course.lab else 'None'}")
-        print(f"   Faculty: {', '.join(course.faculty) if course.faculty else 'None'}")
-        print(f"   Conflicts: {', '.join(course.conflicts) if course.conflicts else 'None'}")

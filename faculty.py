@@ -486,15 +486,16 @@ def deleteFaculty(config_path: str):
 
     try:
         with scheduler_config.edit_mode() as editable:
+            # Remove faculty references from courses FIRST
+            for course in editable.courses:
+                if faculty_to_delete.name in course.faculty:
+                    course.faculty.remove(faculty_to_delete.name)
+            
+            # Then remove the faculty from the faculty list
             editable.faculty = [
                 f for f in editable.faculty
                 if f.name.lower() != name.lower()
             ]
-
-            # Remove faculty references from courses
-            for course in editable.courses:
-                while faculty_to_delete.name in course.faculty:
-                    course.faculty.remove(faculty_to_delete.name)
 
     except Exception as e:
         print(f"Error deleting faculty: {e}")

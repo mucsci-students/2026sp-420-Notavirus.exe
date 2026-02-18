@@ -161,7 +161,7 @@ def modifyCourse(config_path: str):
     credits = input("New credit value: ").strip()
     room = input("New room (comma separated): ").strip()
     lab = input("New lab (comma separated): ").strip()
-
+    faculty = input("New faculty value: ").strip()
 
     # Summary of modification
     print("\nModification Summary:")
@@ -169,6 +169,7 @@ def modifyCourse(config_path: str):
     print(f"Credits: {credits if credits else '[unchanged]'}")
     print(f"Room: {room if room else '[unchanged]'}")
     print(f"Lab: {lab if lab else '[unchanged]'}")
+    print(f"Faculty: {faculty if faculty else '[unchanged]'}")
 
     # Apply or do not apply changes
     while True:
@@ -183,25 +184,46 @@ def modifyCourse(config_path: str):
 
     try:
         with scheduler_config.edit_mode() as editable:
-            editable_course = next(c for c in editable.courses if c.course_id == course_id)
+            # Find all matching courses
+            matching_courses = [c for c in editable.courses if c.course_id == course_id]
 
-            if credits:
-                try:
-                    credits_int = int(credits)
-                    if credits_int < 0:
-                        print(f"Error: Credits cannot be negative.")
+            for editable_course in matching_courses:
+                if credits:
+                    try:
+                        credits_int = int(credits)
+                        if credits_int < 0:
+                            print(f"Error: Credits cannot be negative.")
+                            return
+                        editable_course.credits = credits_int
+                    except ValueError:
+                        print(f"Error: '{credits}' is not a valid number.")
                         return
-                    editable_course.credits = credits_int
-                except ValueError:
-                    print(f"Error: '{credits}' is not a valid number.")
-                    return
-            if room:
-                room_list = [r.strip() for r in room.split(",") if r.strip()]
-                editable_course.room = room_list
+                if room:
+                    room_list = [r.strip() for r in room.split(",") if r.strip()]
+                    editable_course.room = room_list
 
-            if lab:
-                editable_course.lab = [l.strip() for l in lab.split(",")]
+                if lab:
+                    editable_course.lab = [l.strip() for l in lab.split(",")]
 
+                if faculty:
+                    # Parse faculty input: supports adding (Name) and removing (-Name)
+                    # Split by comma
+                    changes = [f.strip() for f in faculty.split(",") if f.strip()]
+                    
+                    current_faculty = editable_course.faculty if editable_course.faculty else []
+                    
+                    for change in changes:
+                        if change.startswith("-"):
+                            # Removal
+                            name_to_remove = change[1:].strip()
+                            if name_to_remove in current_faculty:
+                                current_faculty.remove(name_to_remove)
+                        else:
+                            # Addition
+                            if change not in current_faculty:
+                                current_faculty.append(change)
+                    
+                    editable_course.faculty = current_faculty
     except Exception as e:
         print(f"Error modifying course: {e}")
         return
@@ -213,7 +235,7 @@ def modifyCourse(config_path: str):
     print(f"Course '{course_id}' updated successfully.")
 
 # Testing function
-def modifyCourse_config(course, credits=None, room=None, lab=None):
+def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None):
 
     if credits is not None:
         if credits < 0:
@@ -226,6 +248,9 @@ def modifyCourse_config(course, credits=None, room=None, lab=None):
 
     if lab is not None:
         course.lab = lab
+
+    if faculty is not None:
+        course.faculty = [faculty]
 
     return course
   

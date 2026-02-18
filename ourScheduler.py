@@ -21,131 +21,131 @@ configFileName = ""
 saveToFile = True
 
 
-# Display the schedule in a human readable format
-def display_Schedule(schedule: list):
-
-    if not schedule:
-        print("No schedule to display.")
-        return
-
-    from collections import defaultdict
-
-    DAYS_ORDER = ["MON", "TUE", "WED", "THU", "FRI"]
-
-    # All widths calculated from col_w
-    col_w = 20
-    time_w = 12
-    total_w = time_w + (col_w * len(DAYS_ORDER))
-    eq_sep = "=" * total_w
-    dash_sep = "-" * total_w
-    inner_sep = "-" * (total_w - 2)
-
-    # ------------------------------------------------------------------ #
-    #  1. FULL TIMETABLE GRID  (rows = time slots, columns = days)        #
-    # ------------------------------------------------------------------ #
-    print("\n" + eq_sep)
-    print(" FULL TIMETABLE GRID")
-    print(eq_sep)
-
-    grid = defaultdict(list)
-    time_slot_labels = set()
-
-    for ci in schedule:
-        slot_label = str(ci.time).split(",")[0].split(" ", 1)[1].replace("^", "")
-        time_slot_labels.add(slot_label)
-        for time_instance in ci.time.times:
-            day_name = time_instance.day.name
-            room_str = ci.room if ci.room else "No Room"
-            grid[(day_name, slot_label)].append((ci.course.course_id, room_str))
-
-    time_slots_sorted = sorted(time_slot_labels)
-
-    print(f"{'Time':<{time_w}}" + "".join(f"{day:<{col_w}}" for day in DAYS_ORDER))
-    print(dash_sep)
-
-    for slot_label in time_slots_sorted:
-        max_entries = max(
-            len(grid.get((day, slot_label), [])) for day in DAYS_ORDER
-        )
-
-        for i in range(max(1, max_entries)):
-            # Course ID line
-            if i == 0:
-                row = f"{slot_label:<{time_w}}"
-            else:
-                row = f"{'':<{time_w}}"
-            for day in DAYS_ORDER:
-                entries = grid.get((day, slot_label), [])
-                if i < len(entries):
-                    cell = entries[i][0]  # course_id
-                elif i == 0:
-                    cell = "-"
-                else:
-                    cell = ""
-                row += f"{cell:<{col_w}}"
-            print(row)
-
-            # Room line (directly under course)
-            row = f"{'':<{time_w}}"
-            for day in DAYS_ORDER:
-                entries = grid.get((day, slot_label), [])
-                if i < len(entries):
-                    cell = f"({entries[i][1]})"  # room
-                else:
-                    cell = ""
-                row += f"{cell:<{col_w}}"
-            print(row)
-
-        # Dash separator between time slots
-        print(f"{'':<{time_w}}" + "".join(f"{'─' * (col_w - 1):<{col_w}}" for _ in DAYS_ORDER))
-        print()
-
-    # ------------------------------------------------------------------ #
-    #  2. ROOM / TIME SLOT LAYOUT                                         #
-    # ------------------------------------------------------------------ #
-    print("\n" + eq_sep)
-    print(" ROOM / TIME SLOT LAYOUT")
-    print(eq_sep)
-
-    by_room = defaultdict(list)
-    for ci in schedule:
-        room_key = ci.room if ci.room else "No Room"
-        by_room[room_key].append(ci)
-
-    for room in sorted(by_room):
-        print(f"\n  Room: {room}")
-        print(f"  {'Course':<15} {'Section':<10} {'Faculty':<20} {'Days':<15} {'Time'}")
-        print("  " + inner_sep)
-        for ci in sorted(by_room[room], key=lambda x: str(x.time)):
-            days_str = "/".join(ti.day.name for ti in ci.time.times)
-            time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
-            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {ci.faculty:<20} {days_str:<15} {time_str}")
-
-    # ------------------------------------------------------------------ #
-    #  3. FACULTY ASSIGNMENTS  (who teaches what)                         #
-    # ------------------------------------------------------------------ #
-    print("\n" + eq_sep)
-    print(" FACULTY ASSIGNMENTS")
-    print(eq_sep)
-
-    by_faculty = defaultdict(list)
-    for ci in schedule:
-        by_faculty[ci.faculty].append(ci)
-
-    for faculty_name in sorted(by_faculty):
-        courses = by_faculty[faculty_name]
-        total_credits = sum(ci.course.credits for ci in courses)
-        print(f"\n  {faculty_name}  (Total Credits: {total_credits})")
-        print(f"  {'Course':<15} {'Section':<10} {'Room':<15} {'Days':<15} {'Time':<20} {'Credits'}")
-        print("  " + inner_sep)
-
-        for ci in sorted(courses, key=lambda x: str(x.time)):
-            days_str = "/".join(ti.day.name for ti in ci.time.times)
-            room_str = ci.room if ci.room else "No Room"
-            time_str = str(ci.time).split(",")[0].split(" ", 1)[1]
-            print(f"  {ci.course.course_id:<15} {ci.course.section:<10} {room_str:<15} {days_str:<15} {time_str:<20} {ci.course.credits}")
-
-    print("\n" + eq_sep)
+def display_Configuration(config: scheduler.CombinedConfig):
+    """Display the configuration file in a human-readable format"""
+    
+    print("\n" + "=" * 80)
+    print(" CONFIGURATION FILE CONTENTS")
+    print("=" * 80)
+    
+    # Display general settings
+    print("\nGENERAL SETTINGS:")
+    print(f"  Schedule Limit: {config.limit}")
+    if hasattr(config, 'optimizer_flags') and config.optimizer_flags:
+        print(f"  Optimizer Flags: {', '.join(config.optimizer_flags)}")
+    
+    # Display courses
+    print("\nCOURSES:")
+    if config.config.courses:
+        print(f"  {'Course ID':<15} {'Credits':<10} {'Rooms':<30} {'Labs':<20} {'Conflicts'}")
+        print("  " + "-" * 100)
+        for course in config.config.courses:
+            course_id = course.course_id if hasattr(course, 'course_id') else "N/A"
+            credits = course.credits if hasattr(course, 'credits') else "N/A"
+            
+            # Handle rooms
+            rooms = "N/A"
+            if hasattr(course, 'room') and course.room:
+                rooms = ", ".join(course.room) if isinstance(course.room, list) else str(course.room)
+            
+            # Handle labs
+            labs = "N/A"
+            if hasattr(course, 'lab') and course.lab:
+                labs = ", ".join(course.lab) if isinstance(course.lab, list) else str(course.lab)
+            
+            # Handle conflicts
+            conflicts = "None"
+            if hasattr(course, 'conflicts') and course.conflicts:
+                conflicts = ", ".join(course.conflicts) if isinstance(course.conflicts, list) else str(course.conflicts)
+            
+            # Truncate long strings for display
+            rooms_display = rooms[:28] + ".." if len(rooms) > 30 else rooms
+            labs_display = labs[:18] + ".." if len(labs) > 20 else labs
+            conflicts_display = conflicts[:30] + ".." if len(conflicts) > 32 else conflicts
+            
+            print(f"  {course_id:<15} {credits:<10} {rooms_display:<30} {labs_display:<20} {conflicts_display}")
+    else:
+        print("  No courses configured.")
+    
+    # Display faculty
+    print("\nFACULTY:")
+    if config.config.faculty:
+        print(f"  {'Name':<15} {'Max Credits':<12} {'Min Credits':<12} {'Unique Limit':<13} {'Max Days':<10} {'Mandatory Days'}")
+        print("  " + "-" * 100)
+        for faculty in config.config.faculty:
+            name = faculty.name if hasattr(faculty, 'name') else "N/A"
+            max_cred = faculty.maximum_credits if hasattr(faculty, 'maximum_credits') else "N/A"
+            min_cred = faculty.minimum_credits if hasattr(faculty, 'minimum_credits') else "N/A"
+            unique = faculty.unique_course_limit if hasattr(faculty, 'unique_course_limit') else "N/A"
+            max_days = faculty.maximum_days if hasattr(faculty, 'maximum_days') else "N/A"
+            
+            # Handle mandatory days
+            mandatory = "None"
+            if hasattr(faculty, 'mandatory_days') and faculty.mandatory_days:
+                mandatory = ", ".join(faculty.mandatory_days)
+            
+            print(f"  {name:<15} {str(max_cred):<12} {str(min_cred):<12} {str(unique):<13} {str(max_days):<10} {mandatory}")
+        
+        # Display faculty preferences summary
+        print("\n  FACULTY PREFERENCES:")
+        for faculty in config.config.faculty:
+            name = faculty.name if hasattr(faculty, 'name') else "Unknown"
+            print(f"\n    {name}:")
+            
+            # Course preferences
+            if hasattr(faculty, 'course_preferences') and faculty.course_preferences:
+                prefs = ", ".join([f"{k}({v})" for k, v in faculty.course_preferences.items()])
+                print(f"      Courses: {prefs}")
+            
+            # Room preferences
+            if hasattr(faculty, 'room_preferences') and faculty.room_preferences:
+                prefs = ", ".join([f"{k}({v})" for k, v in faculty.room_preferences.items()])
+                print(f"      Rooms: {prefs}")
+            
+            # Lab preferences
+            if hasattr(faculty, 'lab_preferences') and faculty.lab_preferences:
+                prefs = ", ".join([f"{k}({v})" for k, v in faculty.lab_preferences.items()])
+                print(f"      Labs: {prefs}")
+    else:
+        print("  No faculty configured.")
+    
+    # Display rooms
+    print("\nROOMS:")
+    if config.config.rooms:
+        for room in config.config.rooms:
+            print(f"  - {room}")
+    else:
+        print("  No rooms configured.")
+    
+    # Display labs
+    print("\nLABS:")
+    if hasattr(config.config, 'labs') and config.config.labs:
+        for lab in config.config.labs:
+            print(f"  - {lab}")
+    else:
+        print("  No labs configured.")
+    
+    # Display time slot patterns
+    print("\nTIME SLOT PATTERNS:")
+    if hasattr(config, 'time_slot_config') and hasattr(config.time_slot_config, 'classes'):
+        for i, pattern in enumerate(config.time_slot_config.classes, 1):
+            credits = pattern.credits if hasattr(pattern, 'credits') else "N/A"
+            disabled = " [DISABLED]" if hasattr(pattern, 'disabled') and pattern.disabled else ""
+            print(f"  Pattern {i} ({credits} credits){disabled}:")
+            
+            if hasattr(pattern, 'meetings') and pattern.meetings:
+                for meeting in pattern.meetings:
+                    day = meeting.day if hasattr(meeting, 'day') else "N/A"
+                    duration = meeting.duration if hasattr(meeting, 'duration') else "N/A"
+                    lab = " [LAB]" if hasattr(meeting, 'lab') and meeting.lab else ""
+                    print(f"    - {day}: {duration} min{lab}")
+            
+            if hasattr(pattern, 'start_time') and pattern.start_time:
+                print(f"    Start Time: {pattern.start_time}")
+    else:
+        print("  No time slot patterns configured.")
+    
+    print("\n" + "=" * 80)
 
 
 def display_Schedules_csv(config: scheduler.CombinedConfig, max_schedules: int = 1):

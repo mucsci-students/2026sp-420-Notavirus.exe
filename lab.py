@@ -4,7 +4,13 @@
 from scheduler import CombinedConfig, TimeRange
 import scheduler
 
-def add_lab():
+def add_lab(existing_labs=None):
+    # Show current labs
+    if existing_labs:
+        print(f"Current labs: {', '.join(existing_labs)}")
+    else:
+        print("No labs currently exist.")
+
     # Lab name
     while True:
         name = input("Enter the lab name: ").strip()

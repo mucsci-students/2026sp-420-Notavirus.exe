@@ -151,7 +151,9 @@ def deleteLab_input(config: CombinedConfig, config_path: str):
     
     while (True):
         labnum = input("\nEnter the number of the lab you would like to delete (-1 to quit): ")
-        if str.isnumeric(labnum) and int(labnum) >= 1 and int(labnum) <= num:
+        if  not str.isnumeric(labnum):
+            continue
+        elif int(labnum) >= 1 and int(labnum) <= num:
             break
         elif int(labnum) == -1:
             print("Quitting deleting a lab.")

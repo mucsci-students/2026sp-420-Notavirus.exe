@@ -306,11 +306,25 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
 def deleteConflict(config: CombinedConfig, config_path: str):
     scheduler_config = config.config
 
-    # Build list of existing conflicts
-    existing_conflicts = []
+    # Build section counters so duplicate course IDs get .01, .02, etc.
+    section_counter = {}
+    course_section_labels = []  # parallel list to scheduler_config.courses
     for course in scheduler_config.courses:
-        for conflict in course.conflicts:
-            pair = tuple(sorted([course.course_id, conflict]))
+        cid = course.course_id
+        section_counter[cid] = section_counter.get(cid, 0) + 1
+        course_section_labels.append(f"{cid}.{section_counter[cid]:02d}")
+
+    # Build list of unique conflict pairs using section labels
+    existing_conflicts = []
+    for i, course in enumerate(scheduler_config.courses):
+        for conflict_id in course.conflicts:
+            # Find the first section label for the conflicting course ID
+            conflict_label = next(
+                (course_section_labels[j] for j, c in enumerate(scheduler_config.courses)
+                 if c.course_id == conflict_id),
+                conflict_id
+            )
+            pair = tuple(sorted([course_section_labels[i], conflict_label]))
             if pair not in existing_conflicts:
                 existing_conflicts.append(pair)
 
@@ -318,17 +332,16 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         print("There are no conflicts currently in the configuration.")
         return
 
-    # Get all valid course IDs
     valid_courses = {course.course_id for course in scheduler_config.courses}
 
-    # Display existing conflicts
+    # Display with section labels
     print("\nExisting Conflicts:")
     for i, (a, b) in enumerate(existing_conflicts, 1):
         print(f"{i}. {a} <-> {b}")
 
-    # Prompt for the first course and validate it exists
+    # Prompt for first course (still accepts plain ID like CMSC 340)
     while True:
-        course_1 = input("\nEnter the first course ID (e.g. 'CMSC 100'): ").strip().upper()
+        course_1 = input("\nEnter the first course ID (e.g. 'CMSC 340'): ").strip().upper()
         if course_1 == "":
             print("Course ID cannot be empty.")
         elif course_1 not in valid_courses:
@@ -336,25 +349,23 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         else:
             break
 
-    # Prompt for the second course and validate it exists AND conflicts with course_1
+    # Prompt for second course
     while True:
-        course_2 = input("Enter the conflicting course ID (e.g. 'CMSC 100'): ").strip().upper()
+        course_2 = input("Enter the conflicting course ID (e.g. 'CMSC 340'): ").strip().upper()
         if course_2 == "":
             print("Course ID cannot be empty.")
         elif course_2 not in valid_courses:
             print(f"Error: '{course_2}' is not a valid course. Valid courses are: {', '.join(sorted(valid_courses))}")
         elif course_2 == course_1:
             print("Error: A course cannot conflict with itself.")
-        elif tuple(sorted([course_1, course_2])) not in existing_conflicts:
+        elif tuple(sorted([course_1, course_2])) not in [(a.rsplit('.', 1)[0], b.rsplit('.', 1)[0]) for a, b in existing_conflicts]:
             print(f"Error: No conflict exists between '{course_1}' and '{course_2}'.")
         else:
             break
 
-    # Display summary
     print("\nConflict Summary:")
     print(f"- {course_1} <-> {course_2}")
 
-    # Confirm deletion
     while True:
         confirm = input("Delete this conflict? [y/n]: ").lower().strip()
         if confirm in ('y', 'n'):
@@ -364,7 +375,6 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         print("Conflict deletion canceled.")
         return
 
-    # Remove the conflict from both courses
     try:
         with scheduler_config.edit_mode() as editable:
             for course in editable.courses:
@@ -376,9 +386,6 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         print(f"\nError: Failed to remove conflict due to validation error: {e}")
         return
 
-    # Save back to the config file
     with open(config_path, "w", encoding="utf-8") as f:
         f.write(config.model_dump_json(indent=2))
-
     print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")
-

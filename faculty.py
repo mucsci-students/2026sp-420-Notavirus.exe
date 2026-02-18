@@ -3,6 +3,8 @@
 # Authors: Lauryn Gilbert, Luke Leopold, ...
 import scheduler
 from scheduler import Day, TimeRange, load_config_from_file, CombinedConfig, Scheduler
+from safe_save import safe_save
+
 
 #Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -125,8 +127,10 @@ def addFaculty_JSON(config: CombinedConfig, faculty: scheduler.FacultyConfig, co
         edit_config.config.faculty.append(faculty)
         
     # Save updated config to JSON
-    with open(config_path, 'w') as file:
-        file.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
+    
     print("New faculty information saved!")
 
 # Wrapper function to contain addFaculty method calls
@@ -467,9 +471,10 @@ def modifyFaculty(config, config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
-
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
+    
     print(f"\nFaculty '{faculty_name}' has been successfully modified.")
 
     return config
@@ -533,8 +538,9 @@ def deleteFaculty(config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
 
     print(f"{faculty_to_delete.name} deleted successfully.")
 
@@ -565,8 +571,9 @@ def validate_and_fix_faculty_references(config_path: str):
     
     if invalid_count > 0:
         # Save the cleaned config
-        with open(config_path, "w", encoding="utf-8") as f:
-            f.write(config.model_dump_json(indent=2))
+        if not safe_save(config, config_path):
+            print("No changes were written to the file.")
+            return
         print(f"\nFixed {invalid_count} invalid faculty reference(s).")
     else:
         print("All course-faculty references are valid.")

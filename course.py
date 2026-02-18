@@ -4,6 +4,7 @@
 
 from scheduler.config import CombinedConfig
 from scheduler import load_config_from_file, CourseConfig
+from safe_save import safe_save
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -229,8 +230,9 @@ def modifyCourse(config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
 
     print(f"Course '{course_id}' updated successfully.")
 
@@ -338,6 +340,7 @@ def deleteCourse(config, config_path: str):
         print(f"\nError: Failed to delete course due to validation error: {e}")
         return
 
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
     print(f"\nCourse section '{course_input}' has been permanently deleted.")

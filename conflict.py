@@ -3,6 +3,7 @@
 
 from scheduler import load_config_from_file, Day, TimeRange
 from scheduler.config import CombinedConfig, CourseConfig
+from safe_save import safe_save
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -106,11 +107,12 @@ def addConflict(config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        #update config to include the updated scheduler_config
-        with config.edit_mode() as editableConfig:
-            editableConfig.config = scheduler_config
-        f.write(config.model_dump_json(indent=2))
+    with config.edit_mode() as editableConfig:
+        editableConfig.config = scheduler_config
+
+    if not safe_save(config, config_path):
+        print("Conflict not saved.")
+        return
 
     print("Conflict added successfully.")
 
@@ -276,8 +278,9 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
         if modified:
             # Save via runtime import to avoid circular import at module import time
             try:
-                with open(config_path, 'w') as file:
-                    file.write(config.model_dump_json(indent=2))
+                if not safe_save(config, config_path):
+                    print("Conflict not saved.")
+                    return
                 print("Config saved.")
             except Exception:
                 print("Modification applied, but failed to save config automatically.")
@@ -386,6 +389,7 @@ def deleteConflict(config: CombinedConfig, config_path: str):
         print(f"\nError: Failed to remove conflict due to validation error: {e}")
         return
 
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
     print(f"\nConflict between '{course_1}' and '{course_2}' has been permanently deleted.")

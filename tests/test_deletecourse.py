@@ -22,48 +22,47 @@ def config(config_path):
 
 def test_delete_existing_course(config, config_path):
     """Scenario 1: Delete a course that exists."""
-    with patch("builtins.input", side_effect=["CMSC 162", "y"]):
+    with patch("builtins.input", side_effect=["CMSC 162.01", "y"]):
         deleteCourse(config, config_path)
-
     updated = load_config_from_file(CombinedConfig, config_path)
     course_ids = [c.course_id for c in updated.config.courses]
     assert "CMSC 162" not in course_ids
 
-
 def test_delete_course_removes_conflicts(config, config_path):
     """Deleting a course removes it from other courses' conflicts."""
-    with patch("builtins.input", side_effect=["CMSC 161", "y"]):
+    with patch("builtins.input", side_effect=["CMSC 161.01", "y"]):
         deleteCourse(config, config_path)
-
     updated = load_config_from_file(CombinedConfig, config_path)
     cmsc140 = next(c for c in updated.config.courses if c.course_id == "CMSC 140")
     assert "CMSC 161" not in cmsc140.conflicts
 
-
 def test_delete_course_removes_faculty_preferences(config, config_path):
     """Deleting a course removes it from faculty preferences."""
-    with patch("builtins.input", side_effect=["CMSC 161", "y"]):
+    with patch("builtins.input", side_effect=["CMSC 161.01", "y"]):
         deleteCourse(config, config_path)
-
     updated = load_config_from_file(CombinedConfig, config_path)
     zoppetti = next(f for f in updated.config.faculty if f.name == "Zoppetti")
     assert "CMSC 161" not in zoppetti.course_preferences
 
-
 def test_delete_course_canceled(config, config_path):
     """Scenario 1: User cancels — no changes made."""
-    with patch("builtins.input", side_effect=["CMSC 162", "n"]):
+    with patch("builtins.input", side_effect=["CMSC 162.01", "n"]):
         deleteCourse(config, config_path)
-
     updated = load_config_from_file(CombinedConfig, config_path)
     course_ids = [c.course_id for c in updated.config.courses]
     assert "CMSC 162" in course_ids
 
-
 def test_delete_course_not_found(config, config_path, capsys):
-    """Scenario 2: Course doesn't exist."""
-    with patch("builtins.input", side_effect=["CMSC 999"]):
+    """Scenario 2: Invalid section label — re-prompts then valid input cancels."""
+    with patch("builtins.input", side_effect=["CMSC 999.01", "CMSC 162.01", "n"]):
         deleteCourse(config, config_path)
-
     captured = capsys.readouterr()
-    assert "not found" in captured.out.lower() or "No course" in captured.out
+    assert "Invalid section" in captured.out
+
+def test_delete_specific_section(config, config_path):
+    """Deleting CMSC 161.02 should leave CMSC 161.01 intact."""
+    with patch("builtins.input", side_effect=["CMSC 161.02", "y"]):
+        deleteCourse(config, config_path)
+    updated = load_config_from_file(CombinedConfig, config_path)
+    remaining_161 = [c for c in updated.config.courses if c.course_id == "CMSC 161"]
+    assert len(remaining_161) == 1

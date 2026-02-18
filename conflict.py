@@ -29,6 +29,15 @@ def addConflict(config_path: str):
     for course in scheduler_config.courses:
         print(f"- {course.course_id}")
 
+    conflictNum = int(0)
+    coursesNum = int(0)
+    print("Existing Conflicts:")
+    for course in config.config.courses:
+        coursesNum += 1
+        for conflict in course.conflicts:
+            conflictNum += 1
+            print(str(conflictNum) + ": " + str(course.course_id) + " conflicts with " + conflict)  
+
     while True:
         # Prompt for the first course
         course_1 = input("\nEnter the first course ID: ").strip().upper()

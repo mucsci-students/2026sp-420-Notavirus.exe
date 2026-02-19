@@ -9,3 +9,5 @@ tests/__pycache__/test_deleteconflict.cpython-313-pytest-9.0.2.pyc
 tests/__pycache__/test_deletecourse.cpython-313-pytest-9.0.2.pyc
 tests/__pycache__/test_lab.cpython-313-pytest-9.0.2.pyc
 tests/__pycache__/test_modify_course.cpython-313-pytest-9.0.2.pyc
+**/__pycache__
+*.pyc

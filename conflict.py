@@ -1,5 +1,7 @@
 # conflict.py
 # Functions to add/delete/modify conflict
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 
 from scheduler import load_config_from_file, Day, TimeRange
 from scheduler.config import CombinedConfig, CourseConfig

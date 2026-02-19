@@ -1,6 +1,7 @@
 # Filename: course.py
 # Description: Functions to add, delete, modify, and list courses
-# Authors: Lauryn Gilbert, Hailey, Brooks
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 
 from scheduler.config import CombinedConfig
 from scheduler import load_config_from_file, CourseConfig

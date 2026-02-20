@@ -1,4 +1,4 @@
-# tests/test_faculty_model.py
+# tests/test_models/test_faculty_model.py
 """
 Unit tests for Faculty functionality using MVC architecture.
 

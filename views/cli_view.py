@@ -1241,3 +1241,240 @@ class CLIView:
             if answer in ("building", "number"):
                 return answer
             print("Not a valid answer. Please enter 'building' or 'number'.")
+
+    # ================================================================
+    # SCHEDULER-SPECIFIC METHODS
+    # ================================================================
+    
+    def get_schedule_limit(self) -> int:
+        """
+        Prompt for maximum number of schedules to generate.
+        
+        Parameters:
+            None
+        
+        Returns:
+            int: Schedule limit (positive integer)
+        """
+        while True:
+            try:
+                limit_input = input("What is the max number of schedules you want generated? ").strip()
+                limit = int(limit_input)
+                
+                if limit <= 0:
+                    print("Please enter a positive number.")
+                    continue
+                
+                return limit
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+    
+    def get_output_filename(self) -> str:
+        """
+        Prompt for output filename (without extension).
+        
+        Parameters:
+            None
+        
+        Returns:
+            str: Filename entered by user
+        """
+        return input("What do you want to call the output file? (without extension): ").strip()
+    
+    def get_output_format(self) -> bool:
+        """
+        Prompt for output format (CSV or JSON).
+        
+        Parameters:
+            None
+        
+        Returns:
+            bool: True for CSV, False for JSON
+        """
+        while True:
+            format_input = input("What output file format do you prefer? (csv/json): ").strip().lower()
+            if format_input == 'csv':
+                return True
+            elif format_input == 'json':
+                return False
+            print("Invalid input. Please enter 'csv' or 'json'.")
+    
+    def display_configuration(self, config):
+        """
+        Display the configuration file in human-readable format.
+        
+        Parameters:
+            config (CombinedConfig): Configuration to display
+        
+        Returns:
+            None
+        """
+        print("\n" + "=" * 80)
+        print(" CONFIGURATION FILE CONTENTS")
+        print("=" * 80)
+        
+        # Display general settings
+        print("\nGENERAL SETTINGS:")
+        print(f"  Schedule Limit: {config.limit}")
+        if hasattr(config, 'optimizer_flags') and config.optimizer_flags:
+            print(f"  Optimizer Flags: {', '.join(config.optimizer_flags)}")
+        
+        # Display courses
+        print("\nCOURSES:")
+        if config.config.courses:
+            print(f"  {'Course ID':<15} {'Credits':<10} {'Rooms':<30} {'Labs':<20} {'Conflicts'}")
+            print("  " + "-" * 100)
+            for course in config.config.courses:
+                course_id = course.course_id if hasattr(course, 'course_id') else "N/A"
+                credits = course.credits if hasattr(course, 'credits') else "N/A"
+                
+                # Handle rooms
+                rooms = "N/A"
+                if hasattr(course, 'room') and course.room:
+                    rooms = ", ".join(course.room) if isinstance(course.room, list) else str(course.room)
+                
+                # Handle labs
+                labs = "N/A"
+                if hasattr(course, 'lab') and course.lab:
+                    labs = ", ".join(course.lab) if isinstance(course.lab, list) else str(course.lab)
+                
+                # Handle conflicts
+                conflicts = "None"
+                if hasattr(course, 'conflicts') and course.conflicts:
+                    conflicts = ", ".join(course.conflicts) if isinstance(course.conflicts, list) else str(course.conflicts)
+                
+                # Truncate long strings for display
+                rooms_display = rooms[:28] + ".." if len(rooms) > 30 else rooms
+                labs_display = labs[:18] + ".." if len(labs) > 20 else labs
+                conflicts_display = conflicts[:30] + ".." if len(conflicts) > 32 else conflicts
+                
+                print(f"  {course_id:<15} {credits:<10} {rooms_display:<30} {labs_display:<20} {conflicts_display}")
+        else:
+            print("  No courses configured.")
+        
+        # Display faculty
+        print("\nFACULTY:")
+        if config.config.faculty:
+            print(f"  {'Name':<15} {'Max Credits':<12} {'Min Credits':<12} {'Unique Limit':<13} {'Max Days':<10} {'Mandatory Days'}")
+            print("  " + "-" * 100)
+            for faculty in config.config.faculty:
+                name = faculty.name if hasattr(faculty, 'name') else "N/A"
+                max_cred = faculty.maximum_credits if hasattr(faculty, 'maximum_credits') else "N/A"
+                min_cred = faculty.minimum_credits if hasattr(faculty, 'minimum_credits') else "N/A"
+                unique = faculty.unique_course_limit if hasattr(faculty, 'unique_course_limit') else "N/A"
+                max_days = faculty.maximum_days if hasattr(faculty, 'maximum_days') else "N/A"
+                
+                # Handle mandatory days
+                mandatory = "None"
+                if hasattr(faculty, 'mandatory_days') and faculty.mandatory_days:
+                    mandatory = ", ".join(faculty.mandatory_days)
+                
+                print(f"  {name:<15} {str(max_cred):<12} {str(min_cred):<12} {str(unique):<13} {str(max_days):<10} {mandatory}")
+            
+            # Display faculty preferences summary
+            print("\n  FACULTY PREFERENCES:")
+            for faculty in config.config.faculty:
+                name = faculty.name if hasattr(faculty, 'name') else "Unknown"
+                print(f"\n    {name}:")
+                
+                # Course preferences
+                if hasattr(faculty, 'course_preferences') and faculty.course_preferences:
+                    prefs = ", ".join([f"{k}({v})" for k, v in faculty.course_preferences.items()])
+                    print(f"      Courses: {prefs}")
+                
+                # Room preferences
+                if hasattr(faculty, 'room_preferences') and faculty.room_preferences:
+                    prefs = ", ".join([f"{k}({v})" for k, v in faculty.room_preferences.items()])
+                    print(f"      Rooms: {prefs}")
+                
+                # Lab preferences
+                if hasattr(faculty, 'lab_preferences') and faculty.lab_preferences:
+                    prefs = ", ".join([f"{k}({v})" for k, v in faculty.lab_preferences.items()])
+                    print(f"      Labs: {prefs}")
+        else:
+            print("  No faculty configured.")
+        
+        # Display rooms
+        print("\nROOMS:")
+        if config.config.rooms:
+            for room in config.config.rooms:
+                print(f"  - {room}")
+        else:
+            print("  No rooms configured.")
+        
+        # Display labs
+        print("\nLABS:")
+        if hasattr(config.config, 'labs') and config.config.labs:
+            for lab in config.config.labs:
+                print(f"  - {lab}")
+        else:
+            print("  No labs configured.")
+        
+        # Display time slot patterns
+        print("\nTIME SLOT PATTERNS:")
+        if hasattr(config, 'time_slot_config') and hasattr(config.time_slot_config, 'classes'):
+            for i, pattern in enumerate(config.time_slot_config.classes, 1):
+                credits = pattern.credits if hasattr(pattern, 'credits') else "N/A"
+                disabled = " [DISABLED]" if hasattr(pattern, 'disabled') and pattern.disabled else ""
+                print(f"  Pattern {i} ({credits} credits){disabled}:")
+                
+                if hasattr(pattern, 'meetings') and pattern.meetings:
+                    for meeting in pattern.meetings:
+                        day = meeting.day if hasattr(meeting, 'day') else "N/A"
+                        duration = meeting.duration if hasattr(meeting, 'duration') else "N/A"
+                        lab = " [LAB]" if hasattr(meeting, 'lab') and meeting.lab else ""
+                        print(f"    - {day}: {duration} min{lab}")
+                
+                if hasattr(pattern, 'start_time') and pattern.start_time:
+                    print(f"    Start Time: {pattern.start_time}")
+        else:
+            print("  No time slot patterns configured.")
+        
+        print("\n" + "=" * 80)
+    
+    def display_schedules_csv(self, schedules, max_schedules: int):
+        """
+        Display schedules in CSV format to terminal.
+        
+        Parameters:
+            schedules: Generator of schedule models
+            max_schedules (int): Maximum schedules to display
+        
+        Returns:
+            None
+        """
+        count = 0
+        for model in schedules:
+            count += 1
+            print(f"\nSchedule {count}")
+            for course in model:
+                try:
+                    print(course.as_csv())
+                except Exception:
+                    # Fallback
+                    try:
+                        print(course.model_dump_json())
+                    except Exception:
+                        print(str(course))
+            print()  # Blank line between schedules
+            
+            if count >= max_schedules:
+                break
+        
+        if count == 0:
+            print("No valid schedule could be generated.")
+    
+    def display_schedules_terminal(self, schedules):
+        """
+        Display schedules in CSV format to terminal (console-only mode).
+        
+        Parameters:
+            schedules: Generator of schedule models
+        
+        Returns:
+            None
+        """
+        for model in schedules:
+            for course in model:
+                print(course.as_csv())
+            print()  # Blank line between schedules

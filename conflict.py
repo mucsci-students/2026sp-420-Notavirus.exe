@@ -162,68 +162,96 @@ def modifyConflict_getCourses(modifyNum: int, config: CombinedConfig):
 # Modify JSON file to reflect modified conflict
 # Modification handled differently depending on if the modified course is the course_id
 # Returns True on successful modification, False otherwise 
-def modifyConflict_JSON(selectedCourse: CourseConfig, selectedConflict: str, newCourse: str, modifyMode: int, config: CombinedConfig):
+def modifyConflict_JSON(selectedCourse: CourseConfig, targetConflictCourse: CourseConfig, targetNewCourse: CourseConfig, modifyMode: int, config: CombinedConfig):
     """
     modifyMode == 1: Replace the left side course in the pair (A-B -> C-B):
+      - A is selectedCourse
+      - B is targetConflictCourse (conflicting course we want to keep, but move to C)
+      - C is targetNewCourse
       - remove B from A.conflicts
       - add B to C.conflicts (no duplicates)
       - in B.conflicts replace A with C
 
     modifyMode == 2: Replace the right side course in the pair (A-B -> A-C):
+      - A is selectedCourse
+      - B is targetConflictCourse (conflicting course we want to replace)
+      - C is targetNewCourse    
       - in A.conflicts replace B with C
       - remove A from B.conflicts
       - add A to C.conflicts (no duplicates)
     """
     old_course_id = selectedCourse.course_id
+    selectedConflict_id = targetConflictCourse.course_id
+    newCourse_id = targetNewCourse.course_id
 
     # Defensive checks
-    if not isinstance(selectedConflict, str) or not isinstance(newCourse, str):
-        return False
     if modifyMode not in (1, 2):
         return False
     
-    valid_course_ids = {course.course_id for course in config.config.courses}
-    if selectedConflict not in valid_course_ids or newCourse not in valid_course_ids:
-        return False
-    if newCourse in (old_course_id, selectedConflict):
-        return False
-
-    # ensure selectedConflict exists in the selectedCourse
-    if selectedConflict not in selectedCourse.conflicts:
+    # Ensure selectedConflict exists in the selectedCourse
+    if selectedConflict_id not in selectedCourse.conflicts:
         return False
 
     if modifyMode == 1:
-        selectedCourse.conflicts = [c for c in selectedCourse.conflicts if c != selectedConflict]
+        # A-B -> C-B
+        # Remove B from A
+        selectedCourse.conflicts = [c for c in selectedCourse.conflicts if c != selectedConflict_id]
 
-        for course in config.config.courses:
-            if course.course_id == newCourse:
-                if selectedConflict not in course.conflicts:
-                    course.conflicts.append(selectedConflict)
-                break
+        # Add B to C (targetNewCourse)
+        if selectedConflict_id not in targetNewCourse.conflicts:
+            targetNewCourse.conflicts.append(selectedConflict_id)
 
-        for course in config.config.courses:
-            if course.course_id == selectedConflict:
-                updated = [newCourse if c == old_course_id else c for c in course.conflicts]
-                course.conflicts = list(dict.fromkeys(updated))
-                break
+        # In B (targetConflictCourse), replace A with C
+        updated = [newCourse_id if c == old_course_id else c for c in targetConflictCourse.conflicts]
+        targetConflictCourse.conflicts = list(dict.fromkeys(updated))
 
     elif modifyMode == 2:
-        selectedCourse.conflicts = [newCourse if c == selectedConflict else c for c in selectedCourse.conflicts]
+        # A-B -> A-C
+        # In A (selectedCourse), replace B with C
+        # Note: We must be careful if B appears multiple times (unlikely but possible in bad state)
+        # We only want to replace ONE instance if we want to be truly instance specific, but since conflicts are strings,
+        # we have to replace the string. 
+        # However, selectedCourse now points to C instead of B.
+        
+        updated = [newCourse_id if c == selectedConflict_id else c for c in selectedCourse.conflicts]
+        selectedCourse.conflicts = list(dict.fromkeys(updated))
 
-        for course in config.config.courses:
-            if course.course_id == selectedConflict:
-                updated = [newCourse if c == selectedConflict else c for c in selectedCourse.conflicts]
-                selectedCourse.conflicts = list(dict.fromkeys(updated))                
-                break
+        # Remove A from B (targetConflictCourse)
+        targetConflictCourse.conflicts = [c for c in targetConflictCourse.conflicts if c != old_course_id]
 
-        for course in config.config.courses:
-            if course.course_id == newCourse:
-                if old_course_id not in course.conflicts:
-                    course.conflicts.append(old_course_id)
-                break
-    else: # If modifyMode != 1 or 2, return false
-        return False
+        # Add A to C (targetNewCourse)
+        if old_course_id not in targetNewCourse.conflicts:
+            targetNewCourse.conflicts.append(old_course_id)
+
     return True
+
+def select_course_instance(course_id: str, config: CombinedConfig, prompt_msg: str) -> CourseConfig:
+    """Helper to select a specific course instance if duplicates exist."""
+    candidates = [c for c in config.config.courses if c.course_id == course_id]
+    
+    if not candidates:
+        return None
+        
+    if len(candidates) == 1:
+        return candidates[0]
+        
+    print(f"\nMultiple sections found for {course_id}. Please select specific instance:")
+    for i, c in enumerate(candidates, 1):
+        # Try to show distinguishing info if available, otherwise just show index
+        info = f"Credits: {c.credits}"
+        if hasattr(c, 'faculty') and c.faculty:
+             info += f", Faculty: {c.faculty}"
+        print(f"{i}: {c.course_id} ({info})")
+        
+    while True:
+        try:
+            selection = int(input(f"{prompt_msg} [1-{len(candidates)}]: ").strip())
+            if 1 <= selection <= len(candidates):
+                return candidates[selection - 1]
+        except ValueError:
+            pass
+        print("Invalid selection. Please try again.")
+
         
 # Collect input for modifying conflicts.
 def modifyconflict_input(config: CombinedConfig, config_path: str):
@@ -231,29 +259,49 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
     config = load_config_from_file(CombinedConfig, config_path)
     
     conflictNum = int(0)
-    coursesNum = int(0)
     print("Existing Conflicts:")
+    
+    # Flatten conflicts for selection: (CourseObject, ConflictStringIndex, ConflictString)
+    # We need to track the specific course object and which conflict in its list.
+    all_conflicts = [] 
+    
     for course in config.config.courses:
-        coursesNum += 1
         for conflict in course.conflicts:
             conflictNum += 1
-            print(str(conflictNum) + ": " + str(course.course_id) + " conflicts with " + conflict)            
+            all_conflicts.append((course, conflict))
+            print(f"{conflictNum}: {course.course_id} conflicts with {conflict}")            
 
     if conflictNum == 0:
         print("There are no conflicts to modify.")
         return
 
     while(True):
-        modifyNum = input("Which conflict would you like to modify? [1 - " + str(conflictNum) + "]: ").strip()
-        if str.isnumeric(modifyNum) and int(modifyNum) >= 1 and int(modifyNum) <= conflictNum:
+        modifyNum_str = input("Which conflict would you like to modify? [1 - " + str(conflictNum) + "]: ").strip()
+        if str.isnumeric(modifyNum_str) and 1 <= int(modifyNum_str) <= conflictNum:
             break
 
-    # Get selected conflict
-    (selectedCourse, selectedConflict) = modifyConflict_getCourses(modifyNum=int(modifyNum), config=config)
+    # Get selected conflict info
+    selection_idx = int(modifyNum_str) - 1
+    selectedCourse, selectedConflict_str = all_conflicts[selection_idx]
     
+    # Resolve the conflict string to a specific course object (targetConflictCourse)
+    # Since selectedConflict_str is just a name, we might have multiple courses with that name.
+    # We need to ask the user which one is the OTHER SIDE of this conflict.
+    # However, for simply Modifying, we are replacing it.
+    
+    # But wait, modifyConflict_JSON needs the OBJECT of the conflict partner to update its back-reference.
+    # So we MUST identify which specific course object corresponds to 'selectedConflict_str'.
+    # Because the conflicts list only stores strings, we don't know WHICH of the duplicates it refers to.
+    # We have to ask the user "Which 'CMSC 162' is this conflict with?" if duplicates exist.
+    
+    targetConflictCourse = select_course_instance(selectedConflict_str, config, f"Select the specific instance of {selectedConflict_str} involved in this conflict")
+    if not targetConflictCourse:
+         print(f"Error: Course {selectedConflict_str} not found in configuration.")
+         return
+
     print("\nCourses in Conflict:")
     print(f"1: {selectedCourse.course_id}")
-    print(f"2: {selectedConflict}")
+    print(f"2: {targetConflictCourse.course_id}")
     
     #Select which course is modified
     while(True):
@@ -262,11 +310,21 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
             break
 
 
-    modifyCourse = ""
+    targetNewCourse = None
+    newCourse_name = ""
+    
     if modifyNum == "1":
-        modifyCourse = input(f"Replace course {selectedCourse.course_id} with: ").strip()
+        # Replacing selectedCourse (A) with NewCourse (C). A-B -> C-B
+        newCourse_name = input(f"Replace course {selectedCourse.course_id} with (Enter Course ID): ").strip().upper()
     else:
-        modifyCourse = input(f"Replace course {selectedConflict} with: ").strip()
+        # Replacing targetConflictCourse (B) with NewCourse (C). A-B -> A-C
+        newCourse_name = input(f"Replace course {targetConflictCourse.course_id} with (Enter Course ID): ").strip().upper()
+
+    # Now we need the object for NewCourse
+    targetNewCourse = select_course_instance(newCourse_name, config, f"Select the specific instance of {newCourse_name}")
+    if not targetNewCourse:
+        print(f"Course {newCourse_name} does not exist.")
+        return
 
     #Modification confirmation
     while(True):
@@ -276,7 +334,11 @@ def modifyconflict_input(config: CombinedConfig, config_path: str):
 
     #Update json and check for errors with try/catch
     if confirm.lower() == 'y':
-        modified = modifyConflict_JSON(selectedCourse=selectedCourse, selectedConflict=selectedConflict, newCourse=modifyCourse, modifyMode=int(modifyNum), config=config)
+        modified = modifyConflict_JSON(selectedCourse=selectedCourse, 
+                                       targetConflictCourse=targetConflictCourse, 
+                                       targetNewCourse=targetNewCourse, 
+                                       modifyMode=int(modifyNum), 
+                                       config=config)
         if modified:
             # Save via runtime import to avoid circular import at module import time
             try:

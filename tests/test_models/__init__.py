@@ -8,6 +8,7 @@ Tests for all model classes that handle data operations (CRUD):
 - test_conflict_model.py: ConflictModel tests
 - test_lab_model.py: LabModel tests
 - test_room_model.py: RoomModel tests
+- test_config_model.py: ConfigModel tests
 
 These tests verify:
 - Data integrity

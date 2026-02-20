@@ -150,6 +150,7 @@ def test_default_times(config, config_path):
         "Yang",  # faculty name
         "6",     # choice 6
         "MW",    # Monday and Wednesday (WED is mandatory for Yang)
+        "n",     # different times per day
         "",      # default start 00:00 for MON
         "",      # default end 23:59 for MON
         "",      # default start 00:00 for WED
@@ -160,3 +161,41 @@ def test_default_times(config, config_path):
     yang = next(f for f in updated.config.faculty if f.name == "Yang")
     assert yang.times["MON"][0].start == "00:00"
     assert yang.times["MON"][0].end == "23:59"
+
+def test_modify_availability_same_time_all_days(config, config_path):
+    """Choosing same time for all days should apply that time range to every selected day."""
+    with patch("builtins.input", side_effect=[
+        "Yang",   # faculty name
+        "6",      # choice 6 - availability times
+        "MWF",    # Monday, Wednesday, Friday
+        "y",      # same time every day
+        "09:00",  # start time
+        "17:00",  # end time
+    ]):
+        modifyFaculty(config, config_path)
+    updated = load_config_from_file(CombinedConfig, config_path)
+    yang = next(f for f in updated.config.faculty if f.name == "Yang")
+    for day in ["MON", "WED", "FRI"]:
+        assert yang.times[day][0].start == "09:00"
+        assert yang.times[day][0].end == "17:00"
+
+
+def test_modify_availability_different_times_per_day(config, config_path):
+    """Choosing different times per day should apply each time range individually."""
+    with patch("builtins.input", side_effect=[
+        "Yang",   # faculty name
+        "6",      # choice 6 - availability times
+        "MW",     # Monday and Wednesday
+        "n",      # different times per day
+        "08:00",  # MON start
+        "12:00",  # MON end
+        "13:00",  # WED start
+        "17:00",  # WED end
+    ]):
+        modifyFaculty(config, config_path)
+    updated = load_config_from_file(CombinedConfig, config_path)
+    yang = next(f for f in updated.config.faculty if f.name == "Yang")
+    assert yang.times["MON"][0].start == "08:00"
+    assert yang.times["MON"][0].end == "12:00"
+    assert yang.times["WED"][0].start == "13:00"
+    assert yang.times["WED"][0].end == "17:00"

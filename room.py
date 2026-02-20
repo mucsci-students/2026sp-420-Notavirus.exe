@@ -5,6 +5,8 @@
 import json
 from scheduler import load_config_from_file, scheduler
 from scheduler.config import CombinedConfig
+from safe_save import safe_save
+
 
 def deleteRoom(config_path: str):
     # Load configuration
@@ -60,8 +62,9 @@ def deleteRoom(config_path: str):
     
     # Save back to file
     try:
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config.model_dump(mode="json"), f, indent=2)
+        if not safe_save(config, config_path):
+            print("Conflict not saved.")
+            return
         print(f"\nRoom '{room_name}' has been successfully deleted.")
     except Exception as e:
         print(f"\nError: Failed to save configuration: {e}")
@@ -241,12 +244,7 @@ def modifyPrompt():
 
 #saves the changes made from the loaded config(in memory) to the config file
 def saveRoomsToFile():
-    with open(configFile,"r") as f:
-        data = json.load(f)
-
-    data["config"]["rooms"] = loadedConfig.config.rooms
-
-    with open(configFile,"w") as f:
-        json.dump(data,f,indent=4)
+    if not safe_save(loadedConfig, configFile):
+        print("Changes not saved.")
 if __name__ == "__main__":
     main()

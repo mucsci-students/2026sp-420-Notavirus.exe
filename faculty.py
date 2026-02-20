@@ -4,6 +4,9 @@
 
 import scheduler
 from scheduler import Day, TimeRange, load_config_from_file, CombinedConfig, Scheduler
+from safe_save import safe_save
+
+
 #Global Variables
 FULL_TIME_MAX_CREDITS = 12
 ADJUNCT_MAX_CREDITS = 4
@@ -12,6 +15,7 @@ MIN_DAYS = 1
 MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+
 # Displays entered information for new faculty for validation
 # Returns a FacultyConfig or Nothing
 def addFaculty_confirm(new_faculty: scheduler.FacultyConfig):
@@ -35,6 +39,7 @@ def addFaculty_confirm(new_faculty: scheduler.FacultyConfig):
         return True
     else:
         return False
+
 # Set up FacultyConfig to add a new faculty to the JSON file
 # Returns a FacultyConfig.
 def addFaculty_config(name: str, isFullTime: str, dates: list, courses: dict):
@@ -67,6 +72,7 @@ def addFaculty_config(name: str, isFullTime: str, dates: list, courses: dict):
                 break
     return scheduler.FacultyConfig(name=name, maximum_credits=max_credits, minimum_credits=MIN_CREDITS, unique_course_limit=unique_course_limit, course_preferences=courses, 
                                     maximum_days=MAX_DAYS, times=datesTimes)
+
 # Get input for adding new faculty
 # Returns a FacultyConfig
 def addFaculty_input():
@@ -106,6 +112,7 @@ def addFaculty_input():
                 print("Please enter a whole number between 0 and 10.")
             coursesPref[course.upper().strip()] = weight
     return addFaculty_config(name=name, isFullTime=isFullTime, dates=dates, courses=coursesPref)
+
 # Check to see if adding new faculty will add duplicate information
 # Returns True if duplicate info would be added, otherwise returns false.
 def faculty_check_duplicate(config: CombinedConfig, new_faculty: scheduler.FacultyConfig):
@@ -113,6 +120,7 @@ def faculty_check_duplicate(config: CombinedConfig, new_faculty: scheduler.Facul
         if current_faculty.name == new_faculty.name:
             return True
     return False
+
 # Append new faculty to the CombinedConfig
 def addFaculty_JSON(config: CombinedConfig, faculty: scheduler.FacultyConfig, config_path: str):
     # Update config with new faculty
@@ -120,9 +128,12 @@ def addFaculty_JSON(config: CombinedConfig, faculty: scheduler.FacultyConfig, co
         edit_config.config.faculty.append(faculty)
         
     # Save updated config to JSON
-    with open(config_path, 'w') as file:
-        file.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
+    
     print("New faculty information saved!")
+
 # Wrapper function to contain addFaculty method calls
 def addFaculty(config: CombinedConfig, config_path: str):
     try:
@@ -245,7 +256,7 @@ def modifyFaculty(config, config_path: str):
                     break
 
             if choice == '1':
-                # Modify position type
+            # Modify position type
                 while True:
                     print("\nYour input will update the min/max credits, position, and unique course limit accordingly")
                     position = input("Is this faculty full-time? [y/n]: ").lower().strip()
@@ -273,6 +284,7 @@ def modifyFaculty(config, config_path: str):
                 print(f"Unique course limit set to: {editable_faculty.unique_course_limit}")
 
             elif choice == '2':
+            # Modify maximum credits
                 while True:
                     try:
                         new_max = int(input("Enter new maximum credits: "))
@@ -284,6 +296,7 @@ def modifyFaculty(config, config_path: str):
                         print("Please enter a valid number.")
 
             elif choice == '3':
+            # Modify minimum credits
                 while True:
                     try:
                         new_min = int(input("Enter new minimum credits: "))
@@ -295,6 +308,7 @@ def modifyFaculty(config, config_path: str):
                         print("Please enter a valid number.")
 
             elif choice == '4':
+            # Modify unique course limit
                 while True:
                     try:
                         new_limit = int(input("Enter new unique course limit: "))
@@ -306,6 +320,7 @@ def modifyFaculty(config, config_path: str):
                         print("Please enter a valid number.")
 
             elif choice == '5':
+            # Modify maximum days
                 while True:
                     try:
                         new_max_days = int(input("Enter new maximum days (0-5): "))
@@ -317,7 +332,7 @@ def modifyFaculty(config, config_path: str):
                         print("Please enter a valid number.")
 
             elif choice == '6':
-                # Modify availability times
+            # Modify availability times
                 while True:
                     raw_dates = input("Enter available dates (MTWRF), press Enter for all days, or type 'none' for no availability: ")
                     if raw_dates.strip() == "":
@@ -338,34 +353,30 @@ def modifyFaculty(config, config_path: str):
                 if dates == []:
                     editable_faculty.times = {"MON": [], "TUE": [], "WED": [], "THU": [], "FRI": []}
                 else:
+                    # Map day chars to full names first
+                    DAY_MAP = {'M': 'MON', 'T': 'TUE', 'W': 'WED', 'R': 'THU', 'F': 'FRI'}
+                    day_names = [DAY_MAP[d] for d in dates if d in DAY_MAP]
+
+                    # Ask if same time for all days
+                    while True:
+                        same_time = input("Do you want the same times of availability every day? [y/n]: ").lower().strip()
+                        if same_time in ('y', 'n'):
+                            break
+                        print("Please enter 'y' or 'n'.")
+
                     datesTimes = {}
-                    for day in dates:
-                        match day.upper():
-                            case 'M':
-                                day_name = "MON"
-                            case 'T':
-                                day_name = "TUE"
-                            case 'W':
-                                day_name = "WED"
-                            case 'R':
-                                day_name = "THU"
-                            case 'F':
-                                day_name = "FRI"
-                            case _:
-                                continue
 
+                    if same_time == 'y':
+                        # Get one time range and apply to all selected days
+                        print(f"Enter one time range to apply to all days ({', '.join(day_names)}):")
                         while True:
-                            start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
-
-                            end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
-
-                            # Hitting enter will auto fill to all week or 24 hrs a day
+                            start_time = input("Enter start time in military time (HH:MM), or press Enter for 00:00: ").strip()
+                            end_time = input("Enter end time in military time (HH:MM), or press Enter for 23:59: ").strip()
                             if start_time == "":
                                 start_time = "00:00"
                             if end_time == "":
                                 end_time = "23:59"
                             try:
-                                # Ensures start is before end
                                 start_h, start_m = map(int, start_time.split(":"))
                                 end_h, end_m = map(int, end_time.split(":"))
                                 start_minutes = start_h * 60 + start_m
@@ -374,10 +385,34 @@ def modifyFaculty(config, config_path: str):
                                     print("End time must be after start time. Please use military time (e.g. 09:00, 13:00).")
                                     continue
                                 timerange = TimeRange(start=start_time, end=end_time)
-                                datesTimes[day_name] = [timerange]
+                                for day_name in day_names:
+                                    datesTimes[day_name] = [timerange]
                                 break
                             except ValueError:
                                 print("Invalid time format. Please use HH:MM in military time (e.g. 09:00, 13:00).")
+                    else:
+                        # Get individual time range per day
+                        for day_name in day_names:
+                            while True:
+                                start_time = input(f"Enter start time for {day_name} in military time (HH:MM), or press Enter for 00:00: ").strip()
+                                end_time = input(f"Enter end time for {day_name} in military time (HH:MM), or press Enter for 23:59: ").strip()
+                                if start_time == "":
+                                    start_time = "00:00"
+                                if end_time == "":
+                                    end_time = "23:59"
+                                try:
+                                    start_h, start_m = map(int, start_time.split(":"))
+                                    end_h, end_m = map(int, end_time.split(":"))
+                                    start_minutes = start_h * 60 + start_m
+                                    end_minutes = end_h * 60 + end_m
+                                    if end_minutes <= start_minutes:
+                                        print("End time must be after start time. Please use military time (e.g. 09:00, 13:00).")
+                                        continue
+                                    timerange = TimeRange(start=start_time, end=end_time)
+                                    datesTimes[day_name] = [timerange]
+                                    break
+                                except ValueError:
+                                    print("Invalid time format. Please use HH:MM in military time (e.g. 09:00, 13:00).")
 
                     editable_faculty.times = datesTimes
 
@@ -399,7 +434,7 @@ def modifyFaculty(config, config_path: str):
                 editable_faculty.course_preferences = coursesPref
 
             elif choice == '8':
-                # Modify room preferences
+            # Modify room preferences
                 rooms = input("Enter preferred rooms, separated with a semicolon (Ex. Roddy 136; Roddy 140): ")
                 roomsPref = {}
                 if rooms != "":
@@ -416,7 +451,7 @@ def modifyFaculty(config, config_path: str):
                 editable_faculty.room_preferences = roomsPref
 
             elif choice == '9':
-                # Modify lab preferences
+            # Modify lab preferences
                 labs = input("Enter preferred labs, separated with a semicolon (Ex. Linux; Mac): ")
                 labsPref = {}
                 if labs != "":
@@ -437,9 +472,10 @@ def modifyFaculty(config, config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
-
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
+    
     print(f"\nFaculty '{faculty_name}' has been successfully modified.")
 
     return config
@@ -503,8 +539,9 @@ def deleteFaculty(config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
 
     print(f"{faculty_to_delete.name} deleted successfully.")
 
@@ -535,8 +572,9 @@ def validate_and_fix_faculty_references(config_path: str):
     
     if invalid_count > 0:
         # Save the cleaned config
-        with open(config_path, "w", encoding="utf-8") as f:
-            f.write(config.model_dump_json(indent=2))
+        if not safe_save(config, config_path):
+            print("No changes were written to the file.")
+            return
         print(f"\nFixed {invalid_count} invalid faculty reference(s).")
     else:
         print("All course-faculty references are valid.")

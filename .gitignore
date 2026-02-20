@@ -1,11 +1,2 @@
-__pycache__/faculty.cpython-313.pyc
-__pycache__/main.cpython-313.pyc
-tests/__pycache__/test_faculty.cpython-313-pytest-9.0.2.pyc
-__pycache__/conflict.cpython-313.pyc
-__pycache__/course.cpython-313.pyc
-__pycache__/lab.cpython-313.pyc
-tests/__pycache__/test_conflict.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_deleteconflict.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_deletecourse.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_lab.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_modify_course.cpython-313-pytest-9.0.2.pyc
+__pycache__/
+*.pyc

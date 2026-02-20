@@ -1,9 +1,11 @@
 # Filename: course.py
 # Description: Functions to add, delete, modify, and list courses
-# Authors: Lauryn Gilbert, Hailey, Brooks
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 
 from scheduler.config import CombinedConfig
 from scheduler import load_config_from_file, CourseConfig
+from safe_save import safe_save
 
 # Global Variables
 FULL_TIME_MAX_CREDITS = 12
@@ -37,12 +39,10 @@ def addCourse(available_rooms, available_labs, available_faculty):
     print(f"Available rooms: {', '.join(available_rooms)}")
     rooms = []
     while True:
-        room = input("Enter a room for this course (or press Enter to finish): ").strip()
+        room = input("Enter a room for this course (or press Enter to skip): ").strip()
         if room == "":
             if len(rooms) == 0:
-                print("Please enter at least one room.")
-                continue
-            break
+                break
         if room not in available_rooms:
             print(f"Invalid room. Choose from: {', '.join(available_rooms)}")
             continue
@@ -229,8 +229,9 @@ def modifyCourse(config_path: str):
         return
 
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
+        return
 
     print(f"Course '{course_id}' updated successfully.")
 
@@ -274,99 +275,71 @@ def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None)
 #      config file
 # Return: none
 def deleteCourse(config, config_path: str):
-    # Load the config 
     scheduler_config = config.config
-    
-    # Check if there are any courses
+
     if not scheduler_config.courses:
         print("There are no courses in the configuration.")
         return
-    
-    # Display existing courses
+
+    # Build section labels
+    section_counter = {}
+    course_section_labels = []
+    for course in scheduler_config.courses:
+        cid = course.course_id
+        section_counter[cid] = section_counter.get(cid, 0) + 1
+        course_section_labels.append(f"{cid}.{section_counter[cid]:02d}")
+
+    # Display with section labels
     print("\nExisting Courses:")
-    for i, course in enumerate(scheduler_config.courses, 1):
-        print(f"{i}. {course.course_id} ({course.credits} credits)")
-    
-    # Prompt for the course to delete
+    for i, label in enumerate(course_section_labels, 1):
+        course = scheduler_config.courses[i - 1]
+        print(f"{i}. {label} ({course.credits} credits)")
+
+    # Prompt for section label (e.g. CMSC 340.01)
+    valid_labels = {label: i for i, label in enumerate(course_section_labels)}
     while True:
-        course_id = input("\nEnter the full course ID to delete (including spaces e.g. CMSC 100): ").strip().upper()
-        if course_id != "":
+        course_input = input("\nEnter the course section to delete (e.g. CMSC 340.01): ").strip().upper()
+        if course_input in valid_labels:
             break
-    
-    # Check if the course exists
-    matching = [c for c in scheduler_config.courses if c.course_id == course_id]
-    if not matching:
-        print(f"\nError: No course '{course_id}' found. No changes were made.")
-        return
-    
-    # Print summary
+        print(f"Invalid section. Please enter a section exactly as shown above.")
+
+    target_index = valid_labels[course_input]
+    target_course = scheduler_config.courses[target_index]
+    course_id = target_course.course_id
+
     print("\nCourse Summary:")
-    for course in matching:
-        print(f"- {course.course_id} ({course.credits} credits)")
-    
-    # Confirm deletion
+    print(f"- {course_input} ({target_course.credits} credits)")
+
     while True:
-        confirm = input("Delete this course everywhere? [y/n]: ").lower().strip()
+        confirm = input("Delete this course section? [y/n]: ").lower().strip()
         if confirm in ('y', 'n'):
             break
-    
+
     if confirm == 'n':
         print("Course deletion canceled.")
         return
-    
-    # Remove the course and all references to it
+
     try:
         with scheduler_config.edit_mode() as editable:
-            # First, clean up references in OTHER courses
+            # Clean up conflict references in other courses
             for course in editable.courses:
-                if course.course_id != course_id:  # Don't process the course we're deleting
-                    # Remove course_id from conflicts using list methods
+                if course.course_id != course_id:
                     while course_id in course.conflicts:
                         course.conflicts.remove(course_id)
-            
+
             # Clean up faculty preferences
             for faculty in editable.faculty:
                 if course_id in faculty.course_preferences:
                     del faculty.course_preferences[course_id]
-            
-            # Last, remove the actual course
-            editable.courses = [c for c in editable.courses if c.course_id != course_id]
-                    
+
+            # Remove only the specific section by index
+            editable.courses = [c for i, c in enumerate(editable.courses) if i != target_index]
+
     except Exception as e:
         print(f"\nError: Failed to delete course due to validation error: {e}")
         return
-    
-    # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
-    
-    print(f"\nCourse '{course_id}' has been permanently deleted.")
-    
 
-
-
-# listCourses lists all the courses in the command line.
-# ! function not needed, added if I(Lauryn) wanted to display them differently
-#
-# Parameters: 
-#   config - calls load_config_from_file on config_path to load the config file
-#   config_path str - the file to load that is input by the user
-# Precondition: 
-#   - The config file must contain courses 
-# Postcondition: 
-#   - All courses will be listed in the command line displayed to the user
-# Return: none
-def listCourses(config, config_path: str):
-    scheduler_config = config.config
-
-    if not scheduler_config.courses:
-        print("There are no courses in the configuration.")
+    if not safe_save(config, config_path):
+        print("No changes were written to the file.")
         return
-
-    print("\nCourses:")
-    for i, course in enumerate(scheduler_config.courses, 1):
-        print(f"\n{i}. {course.course_id} ({course.credits} credits)")
-        print(f"   Rooms: {', '.join(course.room) if course.room else 'None'}")
-        print(f"   Labs: {', '.join(course.lab) if course.lab else 'None'}")
-        print(f"   Faculty: {', '.join(course.faculty) if course.faculty else 'None'}")
-        print(f"   Conflicts: {', '.join(course.conflicts) if course.conflicts else 'None'}")
+    print(f"\nCourse section '{course_input}' has been permanently deleted.")

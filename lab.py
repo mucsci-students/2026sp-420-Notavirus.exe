@@ -3,6 +3,8 @@
 # Description: Functions relate to add/modify/delete lab.
 from scheduler import CombinedConfig, TimeRange
 import scheduler
+from safe_save import safe_save
+
 
 def add_lab(existing_labs=None):
     # Show current labs
@@ -128,10 +130,9 @@ def deleteLab_json(lab: str, config: CombinedConfig, config_path: str):
         return False
     
     # Save back to the config file
-    with open(config_path, "w", encoding="utf-8") as f:
-        f.write(config.model_dump_json(indent=2))
-    with open(config_path, 'w') as file:
-        file.write(config.model_dump_json(indent=2))
+    if not safe_save(config, config_path):
+        print("Lab not saved.")
+        return False
 
     return True
 

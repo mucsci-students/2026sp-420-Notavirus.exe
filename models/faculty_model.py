@@ -50,7 +50,7 @@ class FacultyModel:
         Returns:
             bool: True if successful, False if faculty already exists
         """
-        # Check if faculty already exists
+        # Check if faculty already exists using consistent helper
         if self.faculty_exists(faculty.name):
             return False
         
@@ -75,10 +75,12 @@ class FacultyModel:
         Returns:
             bool: True if successful, False if faculty not found
         """
-        # Find the faculty
-        faculty_to_delete = self.get_faculty_by_name(name)
-        if not faculty_to_delete:
+        # Check if faculty exists using consistent helper
+        if not self.faculty_exists(name):
             return False
+        
+        # Get the faculty object to delete
+        faculty_to_delete = self.get_faculty_by_name(name)
         
         try:
             with self.config_model.config.config.edit_mode() as editable:
@@ -113,6 +115,10 @@ class FacultyModel:
         Returns:
             bool: True if successful, False otherwise
         """
+        # Check if faculty exists using consistent helper
+        if not self.faculty_exists(faculty_name):
+            return False
+        
         try:
             with self.config_model.config.config.edit_mode() as editable:
                 # Find faculty in editable config
@@ -120,8 +126,6 @@ class FacultyModel:
                     if faculty.name == faculty_name:
                         setattr(faculty, field, new_value)
                         break
-                else:
-                    return False
             
             # Save changes
             self.config_model.safe_save()

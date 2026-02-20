@@ -43,7 +43,7 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course already exists
         """
-        # Check if course already exists
+        # Check if course already exists using consistent helper
         if self.course_exists(course.course_id):
             return False
         
@@ -70,6 +70,10 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course not found
         """
+        # Check if course exists using consistent helper
+        if not self.course_exists(course_id):
+            return False
+        
         try:
             with self.config_model.config.config.edit_mode() as editable:
                 # Clean up conflict references in other courses
@@ -122,10 +126,13 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course not found
         """
+        # Check if course exists using consistent helper
+        if not self.course_exists(course_id):
+            return False
+        
         try:
             with self.config_model.config.config.edit_mode() as editable:
-                # Find all courses with this ID
-                modified = False
+                # Find all courses with this ID and apply updates
                 for course in editable.courses:
                     if course.course_id == course_id:
                         # Apply updates
@@ -142,11 +149,6 @@ class CourseModel:
                         
                         if 'faculty' in updates:
                             course.faculty = updates['faculty']
-                        
-                        modified = True
-                
-                if not modified:
-                    return False
             
             # Save changes
             if not self.config_model.safe_save():

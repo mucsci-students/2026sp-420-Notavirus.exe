@@ -319,6 +319,45 @@ def test_add_course_invalid_faculty_rejected(available):
     assert "Dr. Smith" in result.faculty
     assert "Dr. Nobody" not in result.faculty
 
+def test_add_course_no_room_with_lab(available):
+    """addCourse should allow no room but with a lab."""
+    inputs = [
+        "CMSC300",
+        "4",
+        "",           # room (empty)
+        "LAB101",     # lab
+        "",           # finish labs
+        "Dr. Jones",
+        "",
+        "",
+        "y",
+    ]
+    result = run_addCourse(inputs, available)
+    assert result is not None
+    assert result.room == []
+    assert result.lab == ["LAB101"]
+
+def test_add_course_minimal_required_fields_only(available):
+    """addCourse should allow a course with only required fields (no room, no lab)."""
+    inputs = [
+        "CMSC100",
+        "3",
+        "",          # room (empty)
+        "",          # lab (empty)
+        "Dr. Smith", # faculty (required - at least one)
+        "",
+        "",
+        "y",
+    ]
+    result = run_addCourse(inputs, available)
+    assert result is not None
+    assert result.course_id == "CMSC100"
+    assert result.credits == 3
+    assert result.room == []
+    assert result.lab == []
+    assert result.faculty == ["Dr. Smith"]
+    assert result.conflicts == []
+
 
 def test_add_course_self_conflict_rejected(available):
     """addCourse should reject a course conflicting with itself."""

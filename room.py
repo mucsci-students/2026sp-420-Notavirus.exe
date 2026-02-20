@@ -1,5 +1,7 @@
 # room.py
 # Functions to add/modify/delete a room
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 import json
 from scheduler import load_config_from_file, scheduler
 from scheduler.config import CombinedConfig

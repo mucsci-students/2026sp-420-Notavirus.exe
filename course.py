@@ -1,6 +1,7 @@
 # Filename: course.py
 # Description: Functions to add, delete, modify, and list courses
-# Authors: Lauryn Gilbert, Hailey, Brooks
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 
 from scheduler.config import CombinedConfig
 from scheduler import load_config_from_file, CourseConfig
@@ -38,12 +39,10 @@ def addCourse(available_rooms, available_labs, available_faculty):
     print(f"Available rooms: {', '.join(available_rooms)}")
     rooms = []
     while True:
-        room = input("Enter a room for this course (or press Enter to finish): ").strip()
+        room = input("Enter a room for this course (or press Enter to skip): ").strip()
         if room == "":
             if len(rooms) == 0:
-                print("Please enter at least one room.")
-                continue
-            break
+                break
         if room not in available_rooms:
             print(f"Invalid room. Choose from: {', '.join(available_rooms)}")
             continue

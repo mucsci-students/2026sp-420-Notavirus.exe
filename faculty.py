@@ -1,6 +1,7 @@
 # Filename: faculty.py
 # Description: Functions to modify/delete/add a faculty member
-# Authors: Lauryn Gilbert, Luke Leopold, ...
+# Authors: Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, Phinehas Maina, Keller Emswiler.
+
 import scheduler
 from scheduler import Day, TimeRange, load_config_from_file, CombinedConfig, Scheduler
 from safe_save import safe_save

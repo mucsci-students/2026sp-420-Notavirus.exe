@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+venv/
+test_copy.json
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store

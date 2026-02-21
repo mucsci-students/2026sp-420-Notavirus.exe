@@ -1,0 +1,11 @@
+{
+  "config": {
+    "rooms": ["Roddy 136", "Roddy 140"],
+    "labs": ["Linux", "Mac"],
+    "faculty": [],
+    "courses": []
+  },
+  "constraints": {
+    "num_schedules": 1
+  }
+}

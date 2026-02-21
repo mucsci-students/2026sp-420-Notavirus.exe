@@ -416,14 +416,9 @@ def test_get_all_rooms(room_model):
 
 
 def test_get_affected_courses(room_model):
-    """
-    Test getting courses affected by a room.
-    
-    Parameters:
-        room_model (RoomModel): Room model fixture
-    """
-    # Add room and courses
+    # Add rooms first
     room_model.add_room("Affected Room")
+    room_model.add_room("Other Room")  # ADD THIS LINE
     
     config_model = room_model.config_model
     course1 = CourseConfig(
@@ -453,7 +448,7 @@ def test_get_affected_courses(room_model):
     assert len(affected) == 1
     assert affected[0].course_id == "AFF 101"
 
-
+    
 def test_get_affected_faculty(room_model):
     """
     Test getting faculty affected by a room.

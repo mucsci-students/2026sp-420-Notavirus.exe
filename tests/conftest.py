@@ -70,77 +70,72 @@ def config_model(test_config):
 # ================================================================
 
 @pytest.fixture
-def faculty_model(test_config):
+def faculty_model(config_model):
     """
     Create a FacultyModel with test configuration.
     
     Parameters:
-        test_config (str): Path to test config (from test_config fixture)
+        config_model (ConfigModel): Shared config model fixture
     
     Returns:
         FacultyModel: Initialized faculty model
     """
-    config_model = ConfigModel(test_config)
     return FacultyModel(config_model)
 
 
 @pytest.fixture
-def course_model(test_config):
+def course_model(config_model):
     """
     Create a CourseModel with test configuration.
     
     Parameters:
-        test_config (str): Path to test config (from test_config fixture)
+        config_model (ConfigModel): Shared config model fixture
     
     Returns:
         CourseModel: Initialized course model
     """
-    config_model = ConfigModel(test_config)
     return CourseModel(config_model)
 
 
 @pytest.fixture
-def conflict_model(test_config):
+def conflict_model(config_model):
     """
     Create a ConflictModel with test configuration.
     
     Parameters:
-        test_config (str): Path to test config (from test_config fixture)
+        config_model (ConfigModel): Shared config model fixture
     
     Returns:
         ConflictModel: Initialized conflict model
     """
-    config_model = ConfigModel(test_config)
     return ConflictModel(config_model)
 
 
 @pytest.fixture
-def lab_model(test_config):
+def lab_model(config_model):
     """
     Create a LabModel with test configuration.
     
     Parameters:
-        test_config (str): Path to test config (from test_config fixture)
+        config_model (ConfigModel): Shared config model fixture
     
     Returns:
         LabModel: Initialized lab model
     """
-    config_model = ConfigModel(test_config)
     return LabModel(config_model)
 
 
 @pytest.fixture
-def room_model(test_config):
+def room_model(config_model):
     """
     Create a RoomModel with test configuration.
     
     Parameters:
-        test_config (str): Path to test config (from test_config fixture)
+        config_model (ConfigModel): Shared config model fixture
     
     Returns:
         RoomModel: Initialized room model
     """
-    config_model = ConfigModel(test_config)
     return RoomModel(config_model)
 
 

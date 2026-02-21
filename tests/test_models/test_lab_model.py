@@ -452,14 +452,9 @@ def test_get_all_labs(lab_model):
 
 
 def test_get_affected_courses(lab_model):
-    """
-    Test getting courses affected by a lab.
-    
-    Parameters:
-        lab_model (LabModel): Lab model fixture
-    """
-    # Add lab and courses
+    # Add labs first
     lab_model.add_lab("Affected Lab")
+    lab_model.add_lab("Other Lab")  # ADD THIS LINE
     
     config_model = lab_model.config_model
     course1 = CourseConfig(

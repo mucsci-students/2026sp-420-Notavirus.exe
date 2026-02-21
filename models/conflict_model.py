@@ -48,6 +48,9 @@ class ConflictModel:
         if course_id_1 == course_id_2:
             return False
         
+        # Reload to ensure we have latest data
+        self.config_model.reload()
+        
         try:
             with self.config_model.config.config.edit_mode() as editable:
                 # Find ALL courses matching the IDs
@@ -89,6 +92,9 @@ class ConflictModel:
         Returns:
             bool: True if successful, False if conflict doesn't exist
         """
+        # Reload to ensure we have latest data
+        self.config_model.reload()
+        
         try:
             with self.config_model.config.config.edit_mode() as editable:
                 found = False

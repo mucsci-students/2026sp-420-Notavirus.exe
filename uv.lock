@@ -10,14 +10,24 @@ dependencies = [
     { name = "course-constraint-scheduler" },
 ]
 
-[package.metadata]
-requires-dist = [{ name = "course-constraint-scheduler", specifier = ">=2.6.1" }]
+[package.dev-dependencies]
+dev = [
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
+    { name = "pygments" },
     { name = "pytest" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "course-constraint-scheduler", specifier = ">=2.6.1" },
+requires-dist = [{ name = "course-constraint-scheduler", specifier = ">=2.6.1" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "iniconfig", specifier = ">=2.3.0" },
+    { name = "packaging", specifier = ">=26.0" },
+    { name = "pluggy", specifier = ">=1.6.0" },
+    { name = "pygments", specifier = ">=2.19.2" },
     { name = "pytest", specifier = ">=9.0.2" },
 ]
 

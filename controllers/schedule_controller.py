@@ -128,8 +128,9 @@ class ScheduleController:
                 self.view.display_message("Filename cannot be empty.")
                 continue
             
-            # Remove any extension user might have added
-            filename = Path(filename).stem
+            # Keep directory but remove extension
+            p = Path(filename)
+            filename = str(p.parent / p.stem)
             
             # Get format
             format_is_csv = self.view.get_output_format()

@@ -41,32 +41,26 @@ def test_config():
 
 
 @pytest.fixture
-def conflict_model(test_config):
+def config_model(test_config):
+    """
+    Create a shared ConfigModel for the test.
+    """
+    return ConfigModel(test_config)
+
+
+@pytest.fixture
+def conflict_model(config_model):
     """
     Create a ConflictModel with test configuration.
-    
-    Parameters:
-        test_config (str): Path to test config (from test_config fixture)
-    
-    Returns:
-        ConflictModel: Initialized conflict model
     """
-    config_model = ConfigModel(test_config)
     return ConflictModel(config_model)
 
 
 @pytest.fixture
-def course_model(test_config):
+def course_model(config_model):
     """
     Create a CourseModel for setting up test data.
-    
-    Parameters:
-        test_config (str): Path to test config (from test_config fixture)
-    
-    Returns:
-        CourseModel: Initialized course model
     """
-    config_model = ConfigModel(test_config)
     return CourseModel(config_model)
 
 

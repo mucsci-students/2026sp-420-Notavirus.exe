@@ -163,6 +163,9 @@ def test_add_conflict_mutual(conflict_model, course_model):
     # Add conflict
     conflict_model.add_conflict("MUTUAL A", "MUTUAL B")
     
+    # Reload course model to get updated data
+    course_model.config_model.reload()
+    
     # Check both directions
     course_a_updated = course_model.get_course_by_id("MUTUAL A")
     course_b_updated = course_model.get_course_by_id("MUTUAL B")
@@ -268,7 +271,10 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD1 A", "MOD1 B")
     
-    # Get course objects for modify
+    # Reload to get updated course objects with conflicts
+    conflict_model.config_model.reload()
+    
+    # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD1 A")
     target_conflict_course = course_model.get_course_by_id("MOD1 B")
     target_new_course = course_model.get_course_by_id("MOD1 C")
@@ -283,6 +289,9 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     
     # Assert
     assert result == True
+    
+    # Reload again to verify changes
+    course_model.config_model.reload()
     
     # Verify: A no longer conflicts with B
     course_a_updated = course_model.get_course_by_id("MOD1 A")
@@ -360,7 +369,10 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD2 A", "MOD2 B")
     
-    # Get course objects
+    # Reload to get updated course objects with conflicts
+    conflict_model.config_model.reload()
+    
+    # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD2 A")
     target_conflict_course = course_model.get_course_by_id("MOD2 B")
     target_new_course = course_model.get_course_by_id("MOD2 C")
@@ -375,6 +387,9 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
     
     # Assert
     assert result == True
+    
+    # Reload again to verify changes
+    course_model.config_model.reload()
     
     # Verify: A no longer conflicts with B, now conflicts with C
     course_a_updated = course_model.get_course_by_id("MOD2 A")

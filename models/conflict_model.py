@@ -150,41 +150,50 @@ class ConflictModel:
             return False
         
         try:
-            if modify_mode == 1:
-                # A-B -> C-B
-                # Remove B from A
-                selected_course.conflicts = [
-                    c for c in selected_course.conflicts if c != conflict_id
-                ]
+            with self.config_model.config.config.edit_mode() as editable:
+                # Find matching courses in editable context to ensure mutation works
+                s_edit = next((c for c in editable.courses if c.course_id == old_course_id), None)
+                t_edit = next((c for c in editable.courses if c.course_id == conflict_id), None)
+                n_edit = next((c for c in editable.courses if c.course_id == new_course_id), None)
                 
-                # Add B to C
-                if conflict_id not in target_new_course.conflicts:
-                    target_new_course.conflicts.append(conflict_id)
+                if not s_edit or not t_edit or not n_edit:
+                    return False
+
+                if modify_mode == 1:
+                    # A-B -> C-B
+                    # Remove B from A
+                    s_edit.conflicts = [
+                        c for c in s_edit.conflicts if c != conflict_id
+                    ]
+                    
+                    # Add B to C
+                    if conflict_id not in n_edit.conflicts:
+                        n_edit.conflicts.append(conflict_id)
+                    
+                    # In B, replace A with C
+                    updated = [
+                        new_course_id if c == old_course_id else c
+                        for c in t_edit.conflicts
+                    ]
+                    t_edit.conflicts = list(dict.fromkeys(updated))
                 
-                # In B, replace A with C
-                updated = [
-                    new_course_id if c == old_course_id else c
-                    for c in target_conflict_course.conflicts
-                ]
-                target_conflict_course.conflicts = list(dict.fromkeys(updated))
-            
-            elif modify_mode == 2:
-                # A-B -> A-C
-                # In A, replace B with C
-                updated = [
-                    new_course_id if c == conflict_id else c
-                    for c in selected_course.conflicts
-                ]
-                selected_course.conflicts = list(dict.fromkeys(updated))
-                
-                # Remove A from B
-                target_conflict_course.conflicts = [
-                    c for c in target_conflict_course.conflicts if c != old_course_id
-                ]
-                
-                # Add A to C
-                if old_course_id not in target_new_course.conflicts:
-                    target_new_course.conflicts.append(old_course_id)
+                elif modify_mode == 2:
+                    # A-B -> A-C
+                    # In A, replace B with C
+                    updated = [
+                        new_course_id if c == conflict_id else c
+                        for c in s_edit.conflicts
+                    ]
+                    s_edit.conflicts = list(dict.fromkeys(updated))
+                    
+                    # Remove A from B
+                    t_edit.conflicts = [
+                        c for c in t_edit.conflicts if c != old_course_id
+                    ]
+                    
+                    # Add A to C
+                    if old_course_id not in n_edit.conflicts:
+                        n_edit.conflicts.append(old_course_id)
             
             # Save changes
             if not self.config_model.safe_save():

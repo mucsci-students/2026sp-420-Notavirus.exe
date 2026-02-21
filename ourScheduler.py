@@ -1,4 +1,5 @@
 # In ourScheduler.py, make sure you have:
+import json
 import scheduler
 from scheduler import Day, TimeRange, Scheduler
 from scheduler.config import ClassPattern, Meeting, TimeBlock
@@ -221,7 +222,7 @@ def generateSchedule(config: scheduler.CombinedConfig, outputFile: str = None):
     """
     try:
         schedulerGen = scheduler.Scheduler(config)
-        
+
         if outputFile:
             # Save to file
             with open(outputFile, "w") as f:
@@ -236,15 +237,25 @@ def generateSchedule(config: scheduler.CombinedConfig, outputFile: str = None):
                         print()
                 else:
                     # JSON format - output to file only, CSV to console
+                    scheduleList = []
+                    jsonSchedule = []
                     for model in schedulerGen.get_models():
+                        
                         for course in model:
-                            json_data = course.model_dump_json()
-                            f.write(json_data + "\n")
+                            #dump the course as a dictionary
+                            json_data = course.model_dump()
+                            #add the course to jsonSchedule, a list to hold all generated classes for the schedule
+                            jsonSchedule.append(json_data)
                             # Always show CSV in terminal
                             print(course.as_csv())
-                        f.write("\n")
+                        #add jsonSchedule to scheduleList, adding the generated schedule to the list of schedules
+                        scheduleList.append(jsonSchedule)
+                        #sets jsonSchedule to an empty list, preparing to add classes for the next generated schedule
+                        jsonSchedule = []
+                        
                         print()
-            
+                    #write the generated schedules to the outputfile
+                    json.dump({"generatedSchedules": scheduleList}, f, indent=4)
             print(f"\nSchedules successfully written to {outputFile}")
         else:
             # Console output only - always use CSV format

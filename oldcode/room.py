@@ -81,10 +81,10 @@ def main():
 #adds room to list in config
 #you can pass a room in the parameter to add the object instead of prompting user input
 def addRoom(room = None):
-    print("addRoom called with: ", room)
+    
     #non interactive section, allows us to skip user prompt
     if room is not None:
-        print("within non interactive")
+        
         if not room:   # prevent blank string
             return False
 
@@ -96,10 +96,12 @@ def addRoom(room = None):
         else:
             return False
     else:
+    #print existing rooms
+        printExistingRooms(loadedConfig)
     #creates a loop so we can prompt to add more than one room
         while True:
             newRoom = genRoom()
-            print("within interactive")
+            
         #double checks that room is not blank
             if not newRoom.strip():
                 print("Room cannot be blank")
@@ -180,6 +182,7 @@ def promptAddRoom():
 #calling modRoom("BuildingName RoomNumber") will check if that is a room in the config, and prompt the user for information to modify if it exists
 #note: assuming modifying the room will leave the config valid, replaceRoom(oldRoom,newRoom) will skip all user input
 def modRoom(room = None):
+    printExistingRooms(loadedConfig)
     if room == None:
         room = genRoom()
     #check to make sure the room already exists
@@ -241,6 +244,12 @@ def modifyPrompt():
         elif(answer == "number"):
             return answer
         print("not a valid answer")
+
+def printExistingRooms(config: CombinedConfig):
+    scheduler_config = config.config
+    print("\nExisting Rooms:")
+    for i, room in enumerate(scheduler_config.rooms, 1):
+        print(f"{i}. {room}")
 
 #saves the changes made from the loaded config(in memory) to the config file
 def saveRoomsToFile():

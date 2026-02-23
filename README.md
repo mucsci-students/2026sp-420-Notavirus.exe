@@ -1,4 +1,5 @@
 # Notavirus.exe
+
 # Course Scheduler
 
 A command-line tool for managing and generating academic course schedules. Built to handle faculty assignments, course configurations, scheduling conflicts, labs, and rooms — all driven by a JSON config file.
@@ -38,12 +39,14 @@ Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, P
 ## Setup
 
 1. Clone the repository:
+
    ```bash
    git clone <repo-url>
    cd <repo-folder>
    ```
 
 2. Install dependencies:
+
    ```bash
    uv init
    uv add course-constraint-scheduler
@@ -64,6 +67,7 @@ python main.py <config_path>
 ```
 
 **Example:**
+
 ```bash
 python main.py example.json
 ```
@@ -102,6 +106,7 @@ Enter the number of the action you want to perform and follow the prompts.
 The scheduler is driven by a JSON config file. Below is an overview of the key sections:
 
 ### Faculty
+
 Each faculty entry defines a faculty member's teaching preferences and availability.
 
 ```json
@@ -115,13 +120,12 @@ Each faculty entry defines a faculty member's teaching preferences and availabil
     "CMSC 340": 5
   },
   "maximum_days": 5,
-  "times": [
-    { "days": ["M", "W", "F"], "start": "09:00", "end": "10:00" }
-  ]
+  "times": [{ "days": ["M", "W", "F"], "start": "09:00", "end": "10:00" }]
 }
 ```
 
 ### Courses
+
 Each course entry defines a course offered in the schedule.
 
 ```json
@@ -134,6 +138,7 @@ Each course entry defines a course offered in the schedule.
 ```
 
 ### Conflicts
+
 Conflicts indicate pairs of courses that cannot be scheduled at the same time — typically because students in the same cohort are likely enrolled in both.
 
 ```json
@@ -170,3 +175,4 @@ When adding new menu options, follow the existing pattern in `main.py`:
 ```python
 elif choice == 'X':
     yourFunction(config, config_path)
+```

@@ -1,4 +1,9 @@
 # views/room_gui_view.py
+"""
+RoomGUIView - Graphical-user interface for room interactions
+
+This view class handles all files for the GUI that are related to rooms.
+"""
 from nicegui import ui
 from gui_theme import GUITheme
 
@@ -42,7 +47,7 @@ class RoomGUIView:
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/modify')
     @staticmethod
@@ -59,7 +64,7 @@ class RoomGUIView:
         ui.query('body').style('background-color: var(--q-modify)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/delete')
     @staticmethod
@@ -76,7 +81,7 @@ class RoomGUIView:
         ui.query('body').style('background-color: var(--q-delete)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/view')
     @staticmethod
@@ -93,4 +98,4 @@ class RoomGUIView:
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))

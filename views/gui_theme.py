@@ -1,4 +1,9 @@
 #views/gui_theme.py
+"""
+GUITheme - Graphical-user interface theme
+
+This view class handles all files for the GUI that are related to themes.
+"""
 from nicegui import ui
 
 class GUITheme:

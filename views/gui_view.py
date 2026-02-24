@@ -2,8 +2,9 @@
 """
 GUIView - Graphical-user interface for all user interactions
 
-This view class handles all user input/output for the GUI across
-all features: faculty, courses, conflicts, labs, courses, and scheduling.
+This view class handles all files for the GUI that don't have
+their own files (i.e. the landing page, the navigation page, and currently including
+print config, run scheduler, and display schedules)
 """
 
 from nicegui import ui
@@ -65,39 +66,15 @@ class GUIView:
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
-
-    @ui.page('/run_scheduler')
+    
     @staticmethod
-    def run_scheduler():
+    def runGUI():
         """
-        Displays the GUI for running the scheduler.
+        Runs the GUI.
                 
         Parameters:
             None        
-        Returns:
+        Returns:        
             None
         """
-        GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
-
-    @ui.page('/display_schedules')
-    @staticmethod
-    def display_schedules():
-        """
-        Displays the GUI for displaying schedules.
-                
-        Parameters:
-            None        
-        Returns:
-            None
-        """
-        GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
-
-ui.run()
+        ui.run()

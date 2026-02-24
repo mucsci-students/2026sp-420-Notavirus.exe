@@ -1,4 +1,9 @@
 # views/faculty_gui_view.py
+"""
+FacultyGUIView - Graphical-user interface for faculty interactions
+
+This view class handles all files for the GUI that are related to faculty.
+"""
 from nicegui import ui
 from gui_theme import GUITheme
 
@@ -43,7 +48,7 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/modify')
     @staticmethod
@@ -60,7 +65,7 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-modify)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/delete')
     @staticmethod
@@ -77,7 +82,7 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-delete)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/view')
     @staticmethod
@@ -94,4 +99,4 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))

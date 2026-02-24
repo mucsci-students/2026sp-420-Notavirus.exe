@@ -1,13 +1,13 @@
-# views/lab_gui_view.py
+# views/room_gui_view.py
 from nicegui import ui
 from gui_theme import GUITheme
 
-class LabGUIView:
-    @ui.page('/lab')
+class RoomGUIView:
+    @ui.page('/room')
     @staticmethod
-    def lab():
+    def room():
         """
-        Displays the GUI for Lab.
+        Displays the GUI for room.
                 
         Parameters:
             None        
@@ -18,20 +18,20 @@ class LabGUIView:
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             # Title
-            ui.label('Lab').classes('text-4xl mb-10 text-black')
+            ui.label('Room').classes('text-4xl mb-10 text-black')
 
-            ui.button('Add Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/add'))
-            ui.button('Modify Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/modify'))
-            ui.button('Delete Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/delete'))
-            ui.button('View Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/view'))
+            ui.button('Add Room').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room/add'))
+            ui.button('Modify Room').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room/modify'))
+            ui.button('Delete Room').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room/delete'))
+            ui.button('View Room').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room/view'))
             ui.space()
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
-    @ui.page('/lab/add')
+    @ui.page('/room/add')
     @staticmethod
-    def lab_add():
+    def room_add():
         """
-        Displays the GUI for adding a lab.
+        Displays the GUI for adding a room.
                 
         Parameters:
             None        
@@ -44,11 +44,11 @@ class LabGUIView:
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
-    @ui.page('/lab/modify')
+    @ui.page('/room/modify')
     @staticmethod
-    def lab_modify():
+    def room_modify():
         """
-        Displays the GUI for modifying a lab.
+        Displays the GUI for modifying a room.
                 
         Parameters:
             None        
@@ -61,11 +61,11 @@ class LabGUIView:
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
-    @ui.page('/lab/delete')
+    @ui.page('/room/delete')
     @staticmethod
-    def lab_delete():
+    def room_delete():
         """
-        Displays the GUI for deleting a lab.
+        Displays the GUI for deleting a room.
                 
         Parameters:
             None        
@@ -78,11 +78,11 @@ class LabGUIView:
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
-    @ui.page('/lab/view')
+    @ui.page('/room/view')
     @staticmethod
-    def lab_view():
+    def room_view():
         """
-        Displays the GUI for viewing a lab.
+        Displays the GUI for viewing a room.
                 
         Parameters:
             None        

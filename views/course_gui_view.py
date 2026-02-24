@@ -20,12 +20,12 @@ class CourseGUIView:
             # Title
             ui.label('Course').classes('text-4xl mb-10 text-black')
 
-            ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/add'))
-            ui.button('Modify Course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/modify'))
-            ui.button('Delete Course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/delete'))
-            ui.button('View Course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/view'))
+            ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/add'))
+            ui.button('Modify Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/modify'))
+            ui.button('Delete Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/delete'))
+            ui.button('View Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/course/add')
     @staticmethod
@@ -40,7 +40,9 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/course/modify')
     @staticmethod
@@ -55,7 +57,9 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/course/delete')
     @staticmethod
@@ -70,7 +74,9 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/course/view')
     @staticmethod
@@ -85,4 +91,6 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))

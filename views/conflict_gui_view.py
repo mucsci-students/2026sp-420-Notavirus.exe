@@ -20,12 +20,12 @@ class ConflictGUIView:
             # Title
             ui.label('Conflict').classes('text-4xl mb-10 text-black')
 
-            ui.button('Add Conflict').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/add'))
-            ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/modify'))
-            ui.button('Delete Conflict').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/delete'))
-            ui.button('View Conflict').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/view'))
+            ui.button('Add Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/add'))
+            ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/modify'))
+            ui.button('Delete Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/delete'))
+            ui.button('View Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/conflict/add')
     @staticmethod
@@ -40,7 +40,9 @@ class ConflictGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/conflict/modify')
     @staticmethod
@@ -55,7 +57,9 @@ class ConflictGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/conflict/delete')
     @staticmethod
@@ -70,7 +74,9 @@ class ConflictGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/conflict/view')
     @staticmethod
@@ -85,4 +91,6 @@ class ConflictGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))

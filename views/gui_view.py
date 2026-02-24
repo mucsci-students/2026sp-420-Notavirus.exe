@@ -13,6 +13,7 @@ from conflict_gui_view import ConflictGUIView
 from lab_gui_view import LabGUIView
 from schedule_gui_view import ScheduleGUIView
 from faculty_gui_view import FacultyGUIView
+from room_gui_view import RoomGUIView
 from gui_theme import GUITheme
 
 class GUIView:
@@ -31,7 +32,7 @@ class GUIView:
             # Row 1
             with ui.row().classes('gap-12 mb-4'):
                 ui.button('Faculty').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
-                ui.button('course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+                ui.button('Room').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
                 
             # Row 2
             with ui.row().classes('gap-12 mb-4'):
@@ -62,7 +63,9 @@ class GUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/run_scheduler')
     @staticmethod
@@ -77,7 +80,9 @@ class GUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/display_schedules')
     @staticmethod
@@ -92,6 +97,8 @@ class GUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        pass
+        with ui.column().classes('gap-6 items-center w-full'):
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
 ui.run()

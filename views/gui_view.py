@@ -12,7 +12,6 @@ from course_gui_view import CourseGUIView
 from conflict_gui_view import ConflictGUIView
 from lab_gui_view import LabGUIView
 from schedule_gui_view import ScheduleGUIView
-from faculty_gui_view import FacultyGUIView
 from room_gui_view import RoomGUIView
 from gui_theme import GUITheme
 

@@ -5,7 +5,7 @@ ScheduleGUIView - Graphical-user interface for schedule interactions
 This view class handles all files for the GUI that are related to schedules.
 """
 from nicegui import ui
-from gui_theme import GUITheme
+from views.gui_theme import GUITheme
 
 class ScheduleGUIView:
     @ui.page('/run_scheduler')

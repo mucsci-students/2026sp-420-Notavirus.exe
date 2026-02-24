@@ -5,7 +5,7 @@ LabGUIView - Graphical-user interface for lab interactions
 This view class handles all files for the GUI that are related to labs.
 """
 from nicegui import ui
-from gui_theme import GUITheme
+from views.gui_theme import GUITheme
 
 class LabGUIView:
     @ui.page('/lab')

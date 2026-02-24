@@ -72,32 +72,9 @@ python main.py <config_path>
 python main.py example.json
 ```
 
-Once running, you'll see an interactive menu:
+Once running, you'll see an interactive menu.
 
-```
-Scheduler Menu
-1.  Add Faculty
-2.  Modify Faculty
-3.  Delete Faculty
-4.  Add Course
-5.  Modify Course
-6.  Delete Course
-7.  Add Conflict
-8.  Modify Conflict
-9.  Delete Conflict
-10. Add Lab
-11. Modify Lab
-12. Delete Lab
-13. Add Room
-14. Modify Room
-15. Delete Room
-16. Print the Configuration File
-17. Run the Scheduler
-18. Display Schedules in CSV
-19. Exit
-```
-
-Enter the number of the action you want to perform and follow the prompts.
+Click the button of the action (or group of actions) you want to perform and follow the prompts.
 
 ---
 
@@ -170,9 +147,22 @@ An `example.json` file is included in the repository to help you get started. It
 
 ## Contributing
 
-When adding new menu options, follow the existing pattern in `main.py`:
+When adding new menu options, follow the existing hierarchical pattern in `views/gui_view.py` and `views/X_gui_view.py`:
 
 ```python
-elif choice == 'X':
-    yourFunction(config, config_path)
+@ui.page('/feature_group/feature')
+@staticmethod
+def your_function():
+    """
+    Displays the GUI for your function.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
+    GUITheme.applyTheming()
+    ui.query('body').style('background-color: var(--q-primary)')
+    with ui.column().classes('gap-6 items-center w-full'):
+        # Your GUI code here
 ```

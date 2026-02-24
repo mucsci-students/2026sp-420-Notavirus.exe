@@ -8,13 +8,13 @@ print config, run scheduler, and display schedules)
 """
 
 from nicegui import ui
-from faculty_gui_view import FacultyGUIView
-from course_gui_view import CourseGUIView
-from conflict_gui_view import ConflictGUIView
-from lab_gui_view import LabGUIView
-from schedule_gui_view import ScheduleGUIView
-from room_gui_view import RoomGUIView
-from gui_theme import GUITheme
+from views.faculty_gui_view import FacultyGUIView
+from views.course_gui_view import CourseGUIView
+from views.conflict_gui_view import ConflictGUIView
+from views.lab_gui_view import LabGUIView
+from views.schedule_gui_view import ScheduleGUIView
+from views.room_gui_view import RoomGUIView
+from views.gui_theme import GUITheme
 
 class GUIView:
     @ui.page('/')
@@ -78,3 +78,6 @@ class GUIView:
             None
         """
         ui.run()
+
+if __name__ in {"__main__", "__mp_main__"}:
+    GUIView.runGUI()

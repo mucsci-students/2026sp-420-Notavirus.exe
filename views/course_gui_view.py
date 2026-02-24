@@ -5,7 +5,7 @@ CourseGUIView - Graphical-user interface for course interactions
 This view class handles all files for the GUI that are related to courses.
 """
 from nicegui import ui
-from gui_theme import GUITheme
+from views.gui_theme import GUITheme
 
 class CourseGUIView:
     @ui.page('/course')

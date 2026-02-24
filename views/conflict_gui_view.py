@@ -5,7 +5,7 @@ ConflictGUIView - Graphical-user interface for conflict interactions
 This view class handles all files for the GUI that are related to conflicts.
 """
 from nicegui import ui
-from gui_theme import GUITheme
+from views.gui_theme import GUITheme
 
 class ConflictGUIView:
     @ui.page('/conflict')

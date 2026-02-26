@@ -91,4 +91,10 @@ class SchedulerController:
         Returns:
             None
         """
-        ui.run(title='Scheduler')
+        print("\n" + "="*60)
+        print("  🚀 GUI SERVER STARTING")
+        print("="*60)
+        print("  🌐 Open your browser to: http://localhost:8080")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal")
+        print("="*60 + "\n")
+        ui.run(title='Scheduler', reload=False)

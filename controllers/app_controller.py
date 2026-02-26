@@ -22,6 +22,8 @@ from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
 
 from views.cli_view import CLIView
+from views.gui_view import GUIView
+from nicegui import ui
 
 
 class SchedulerController:
@@ -81,8 +83,7 @@ class SchedulerController:
         """
         Main application loop.
         
-        Displays menu, gets user choice, and routes to appropriate controller.
-        Continues until user chooses to exit.
+        Displays the GUI.
         
         Parameters:
             None
@@ -90,83 +91,4 @@ class SchedulerController:
         Returns:
             None
         """
-        while True:
-            # Display menu
-            self.view.display_main_menu()
-            
-            # Get user choice
-            choice = self.view.get_menu_choice()
-            
-            # Route to appropriate controller
-            try:
-                if choice == '1':
-                    self.faculty_controller.add_faculty()
-                
-                elif choice == '2':
-                    self.faculty_controller.modify_faculty()
-                
-                elif choice == '3':
-                    self.faculty_controller.delete_faculty()
-                
-                elif choice == '4':
-                    self.course_controller.add_course()
-                
-                elif choice == '5':
-                    self.course_controller.modify_course()
-                
-                elif choice == '6':
-                    self.course_controller.delete_course()
-                
-                elif choice == '7':
-                    self.conflict_controller.add_conflict()
-                
-                elif choice == '8':
-                    self.conflict_controller.modify_conflict()
-                
-                elif choice == '9':
-                    self.conflict_controller.delete_conflict()
-                
-                elif choice == '10':
-                    self.lab_controller.add_lab()
-                
-                elif choice == '11':
-                    self.lab_controller.modify_lab()
-                
-                elif choice == '12':
-                    self.lab_controller.delete_lab()
-                
-                elif choice == '13':
-                    self.room_controller.add_room()
-                
-                elif choice == '14':
-                    self.room_controller.modify_room()
-                
-                elif choice == '15':
-                    self.room_controller.delete_room()
-                
-                elif choice == '16':
-                    self.schedule_controller.display_configuration()
-                
-                elif choice == '17':
-                    self.schedule_controller.run_scheduler()
-                
-                elif choice == '18':
-                    # Get number of schedules to display
-                    max_schedules = self.view.get_integer_input(
-                        "How many schedules to display?: ",
-                        min_val=1
-                    )
-                    self.schedule_controller.display_schedules_csv(max_schedules)
-                
-                elif choice == '19':
-                    self.view.display_message("Exiting scheduler. Goodbye!")
-                    break
-                
-                else:
-                    self.view.display_error("Invalid option. Please choose a number between 1 and 19.")
-            
-            except Exception as e:
-                self.view.display_error(f"An error occurred: {e}")
-                # Optionally, ask if they want to continue
-                if not self.view.confirm("Would you like to continue?"):
-                    break
+        ui.run(title='Scheduler')

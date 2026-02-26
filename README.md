@@ -1,4 +1,5 @@
 # Notavirus.exe
+
 # Course Scheduler
 
 A command-line tool for managing and generating academic course schedules. Built to handle faculty assignments, course configurations, scheduling conflicts, labs, and rooms — all driven by a JSON config file.
@@ -38,12 +39,14 @@ Lauryn Gilbert, Hailey Haldeman, Luke Leopold, Brooks Stouffer, Ashton Kunkle, P
 ## Setup
 
 1. Clone the repository:
+
    ```bash
    git clone <repo-url>
    cd <repo-folder>
    ```
 
 2. Install dependencies:
+
    ```bash
    uv init
    uv add course-constraint-scheduler
@@ -64,36 +67,14 @@ python main.py <config_path>
 ```
 
 **Example:**
+
 ```bash
 python main.py example.json
 ```
 
-Once running, you'll see an interactive menu:
+Once running, you'll see an interactive menu.
 
-```
-Scheduler Menu
-1.  Add Faculty
-2.  Modify Faculty
-3.  Delete Faculty
-4.  Add Course
-5.  Modify Course
-6.  Delete Course
-7.  Add Conflict
-8.  Modify Conflict
-9.  Delete Conflict
-10. Add Lab
-11. Modify Lab
-12. Delete Lab
-13. Add Room
-14. Modify Room
-15. Delete Room
-16. Print the Configuration File
-17. Run the Scheduler
-18. Display Schedules in CSV
-19. Exit
-```
-
-Enter the number of the action you want to perform and follow the prompts.
+Click the button of the action (or group of actions) you want to perform and follow the prompts.
 
 ---
 
@@ -102,6 +83,7 @@ Enter the number of the action you want to perform and follow the prompts.
 The scheduler is driven by a JSON config file. Below is an overview of the key sections:
 
 ### Faculty
+
 Each faculty entry defines a faculty member's teaching preferences and availability.
 
 ```json
@@ -115,13 +97,12 @@ Each faculty entry defines a faculty member's teaching preferences and availabil
     "CMSC 340": 5
   },
   "maximum_days": 5,
-  "times": [
-    { "days": ["M", "W", "F"], "start": "09:00", "end": "10:00" }
-  ]
+  "times": [{ "days": ["M", "W", "F"], "start": "09:00", "end": "10:00" }]
 }
 ```
 
 ### Courses
+
 Each course entry defines a course offered in the schedule.
 
 ```json
@@ -134,6 +115,7 @@ Each course entry defines a course offered in the schedule.
 ```
 
 ### Conflicts
+
 Conflicts indicate pairs of courses that cannot be scheduled at the same time — typically because students in the same cohort are likely enrolled in both.
 
 ```json
@@ -165,8 +147,22 @@ An `example.json` file is included in the repository to help you get started. It
 
 ## Contributing
 
-When adding new menu options, follow the existing pattern in `main.py`:
+When adding new menu options, follow the existing hierarchical pattern in `views/gui_view.py` and `views/X_gui_view.py`:
 
 ```python
-elif choice == 'X':
-    yourFunction(config, config_path)
+@ui.page('/feature_group/feature')
+@staticmethod
+def your_function():
+    """
+    Displays the GUI for your function.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
+    GUITheme.applyTheming()
+    ui.query('body').style('background-color: var(--q-primary)')
+    with ui.column().classes('gap-6 items-center w-full'):
+        # Your GUI code here
+```

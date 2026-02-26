@@ -79,5 +79,5 @@ def get_config_path() -> str:
             sys.exit(0)
 
 
-if __name__ == "__main__":
+if __name__ in {"__main__", "__mp_main__"}:
     main()

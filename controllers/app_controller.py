@@ -91,4 +91,4 @@ class SchedulerController:
         Returns:
             None
         """
-        ui.run(title='Scheduler')
+        ui.run(title='Scheduler', reload= False)

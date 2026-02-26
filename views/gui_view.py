@@ -77,7 +77,7 @@ class GUIView:
         Returns:        
             None
         """
-        ui.run()
+        ui.run(reload= False)
 
 if __name__ in {"__main__", "__mp_main__"}:
     GUIView.runGUI()

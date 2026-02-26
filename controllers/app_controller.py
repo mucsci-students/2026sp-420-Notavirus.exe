@@ -78,7 +78,6 @@ class SchedulerController:
         self.lab_controller = LabController(self.lab_model, self.view)
         self.room_controller = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
-    
     def run(self):
         """
         Main application loop.
@@ -91,4 +90,4 @@ class SchedulerController:
         Returns:
             None
         """
-        ui.run(title='Scheduler')
+        ui.run(title='Scheduler', storage_secret='scheduler_secret_key')

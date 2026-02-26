@@ -11,3 +11,4 @@ test_copy.json
 .vscode/
 .idea/
 .DS_Store
+.nicegui/

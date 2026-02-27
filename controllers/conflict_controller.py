@@ -39,7 +39,7 @@ class ConflictController:
         self.view = view
 
 
-    def gui_get_all_conflicts(self) -> list[tuple[str, str]]:
+    def gui_get_all_conflicts(self) -> list[tuple[str, str, int, int]]:
         """
         Get all config-level conflict pairs for display.
 
@@ -93,7 +93,7 @@ class ConflictController:
 
         return True, ""
 
-    def gui_delete_conflict(self, section_id_1: str, section_id_2: str) -> tuple[bool, str]:
+    def gui_delete_conflict(self, section_id_1: str, section_id_2: str, index_1: int, index_2: int) -> tuple[bool, str]:
         """
         Delete a conflict by section ID or base course ID.
 
@@ -106,7 +106,7 @@ class ConflictController:
         """
         base1 = self._strip_section(section_id_1)
         base2 = self._strip_section(section_id_2)
-        success = self.model.delete_conflict(base1, base2)
+        success = self.model.delete_conflict(base1, base2, index_1, index_2)
         if success:
             return True, f"Conflict between '{section_id_1}' and '{section_id_2}' has been permanently deleted."
         return False, "Failed to delete conflict."

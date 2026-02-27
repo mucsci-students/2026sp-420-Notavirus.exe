@@ -1,14 +1,34 @@
 # views/faculty_gui_view.py
+"""
+FacultyGUIView - Graphical-user interface for faculty interactions
+
+This view class handles all GUI pages related to faculty management:
+- /faculty       : Faculty hub with navigation buttons
+- /faculty/add   : Add a new faculty member (Under Construction)
+- /faculty/modify: Modify an existing faculty member (Under Construction)
+- /faculty/delete: Delete an existing faculty member
+- /faculty/view  : View all faculty members
+"""
 from nicegui import ui
 from views.gui_theme import GUITheme
 
+
 class FacultyGUIView:
+    # Injected by main.py before ui.run()
     faculty_model      = None
     faculty_controller = None
 
     @ui.page('/faculty')
     @staticmethod
     def faculty():
+        """
+        Displays the Faculty hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
@@ -28,6 +48,14 @@ class FacultyGUIView:
     @ui.page('/faculty/add')
     @staticmethod
     def faculty_add():
+        """
+        Displays the GUI for adding a faculty member.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
@@ -38,6 +66,14 @@ class FacultyGUIView:
     @ui.page('/faculty/modify')
     @staticmethod
     def faculty_modify():
+        """
+        Displays the GUI for modifying a faculty member.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)')
         with ui.column().classes('gap-6 items-center w-full'):
@@ -48,6 +84,19 @@ class FacultyGUIView:
     @ui.page('/faculty/delete')
     @staticmethod
     def faculty_delete():
+        """
+        Displays the GUI for deleting a faculty member.
+
+        Loads all faculty from FacultyModel and displays them as cards.
+        Each card has a Delete button that opens a confirmation dialog
+        before calling model.delete_faculty(). The list refreshes after
+        each deletion.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')
 
@@ -58,6 +107,7 @@ class FacultyGUIView:
             status    = ui.label('').classes('text-sm')
 
             def build(c):
+                """Clears and rebuilds the faculty card list."""
                 c.clear()
                 model        = FacultyGUIView.faculty_model
                 faculty_list = model.get_all_faculty() if model else []
@@ -81,6 +131,16 @@ class FacultyGUIView:
                                     ).classes('text-xs text-gray-500')
 
                                 def make_handler(name, m, sl):
+                                    """
+                                    Returns a delete handler for the given faculty name.
+
+                                    Parameters:
+                                        name (str): Faculty name to delete
+                                        m: FacultyModel instance
+                                        sl: Status label to update after deletion
+                                    Returns:
+                                        function: Click handler that opens confirmation dialog
+                                    """
                                     def _delete():
                                         with ui.dialog() as dlg, ui.card().classes('p-8 gap-4 items-center text-center'):
                                             ui.label(f"Delete '{name}'?").classes('text-xl font-bold')
@@ -91,6 +151,7 @@ class FacultyGUIView:
                                                     .props('rounded color=black text-color=white no-caps')
 
                                                 def confirm(d=dlg, n=name, mod=m, s=sl):
+                                                    """Confirms deletion and refreshes the list."""
                                                     ok = mod.delete_faculty(n)
                                                     d.close()
                                                     s.set_text(f"✓ '{n}' deleted." if ok
@@ -112,6 +173,17 @@ class FacultyGUIView:
     @ui.page('/faculty/view')
     @staticmethod
     def faculty_view():
+        """
+        Displays the GUI for viewing all faculty members.
+
+        Loads all faculty from FacultyModel and displays each as an
+        expandable card showing position, credits, course limit, and preferences.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
         model = FacultyGUIView.faculty_model

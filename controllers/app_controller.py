@@ -74,7 +74,7 @@ class SchedulerController:
         
         # Initialize all feature controllers
         self.faculty_controller = FacultyController(self.faculty_model, self.view)
-        self.course_controller = CourseController(self.course_model, self.view, self.config_model)
+        self.course_controller = CourseController(self.course_model, self.config_model)
         self.conflict_controller = ConflictController(self.conflict_model, self.view)
         self.lab_controller = LabController(self.lab_model, self.view)
         self.room_controller = RoomController(self.room_model, self.view)

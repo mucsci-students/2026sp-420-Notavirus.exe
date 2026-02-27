@@ -207,3 +207,33 @@ class LabController:
         
         except Exception as e:
             self.view.display_error(f"Failed to modify lab: {e}")
+
+
+    def gui_modify_lab(self, old_name: str, new_name: str,) -> tuple[bool, str]:
+        """
+        GUI workflow for modifying a lab
+
+        Parameters:
+            old_name(str): Current lab name
+            new_name(str): New lab name
+
+        Returns: 
+            tuple[bool, str]: (success, message)
+        """
+        if not new_name:
+            return False, f'All labs must have a name.'
+        if not old_name:
+            return False, f'Please select a lab to modify.'
+
+        #Check if name already exists(case-insensitive)
+        all_labs = self.model.get_all_labs()
+        for lab in all_labs:
+            if lab.lower() == new_name.lower() and lab.lower() != old_name.lower():
+                return False, f'Failed: "{lab}" already exists.'
+        
+        success = self.model.modify_lab(old_name, new_name)
+        
+        if success:
+            return True, f'lab "{old_name}" renamed to "{new_name}".'
+        
+        return False, f'Failed: "{new_name}" already exists.'

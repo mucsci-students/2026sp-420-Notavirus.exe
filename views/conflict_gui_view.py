@@ -115,6 +115,7 @@ class ConflictGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             ui.label('Delete Conflict').classes('text-4xl mb-4 text-black')
+            ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg text-black text-center max-w-xl')
 
             if not existing_conflicts:
                 ui.label('There are no conflicts currently in the configuration.').classes('text-xl text-black')
@@ -163,7 +164,7 @@ class ConflictGUIView:
                         s2 = section_label_map.get(i2, c2) if i2 is not None else c2
                         success, message = controller.gui_delete_conflict(s1, s2, i1, i2)
                         feedback.set_text(message)
-                        feedback.classes(replace=f'text-lg {"text-green-600" if success else "text-red-600"}')
+                        feedback.classes(replace=f'text-lg {"text-black-600" if success else "text-red-600"}')
                         confirm_card.set_visibility(False)
                         if success:
                             existing_conflicts.clear()

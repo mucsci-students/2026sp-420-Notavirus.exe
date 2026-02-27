@@ -69,6 +69,19 @@ class CourseGUIView:
     @ui.page('/course/delete')
     @staticmethod
     def course_delete():
+        """
+        Displays the GUI for deleting a course.
+
+        Presents a dropdown of all course sections (e.g. CMSC 140.01, CMSC 140.02)
+        derived from the current configuration. Deleting a specific section removes
+        only that section from the JSON, and remaining sections are renumbered
+        automatically on reload.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -79,6 +92,7 @@ class CourseGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             ui.label('Delete Course').classes('text-4xl mb-4 text-black')
+            ui.label('Select a course to delete from the drop down below, but remember all references to the course will be permanently gone!').classes('text-lg text-black text-center max-w-xl')
 
             if not existing_courses:
                 ui.label('There are no courses currently in the configuration.').classes('text-xl text-black')

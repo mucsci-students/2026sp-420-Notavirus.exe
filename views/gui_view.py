@@ -17,6 +17,9 @@ from views.room_gui_view import RoomGUIView
 from views.gui_theme import GUITheme
 
 class GUIView:
+    config_path: str = '' 
+    controller = None 
+
     @ui.page('/')
     @staticmethod
     def home():
@@ -77,7 +80,7 @@ class GUIView:
         Returns:        
             None
         """
-        ui.run(reload= False)
+        ui.run(reload=False)
 
 if __name__ in {"__main__", "__mp_main__"}:
     GUIView.runGUI()

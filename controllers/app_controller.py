@@ -21,7 +21,6 @@ from controllers.lab_controller import LabController
 from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
 
-from views.cli_view import CLIView
 from views.gui_view import GUIView
 from views.lab_gui_view import LabGUIView   
 from nicegui import ui
@@ -58,7 +57,9 @@ class SchedulerController:
             None
         """
         # Initialize view
-        self.view = CLIView()
+        self.view = GUIView()
+        GUIView.config_path = config_path
+        GUIView.controller = self
         
         # Initialize config model
         self.config_path = config_path
@@ -94,4 +95,10 @@ class SchedulerController:
         Returns:
             None
         """
-        ui.run(title='Scheduler', reload= False)
+        print("\n" + "="*60)
+        print("  🚀 GUI SERVER STARTING")
+        print("="*60)
+        print("  🌐 Open your browser to: http://localhost:8080")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal")
+        print("="*60 + "\n")
+        ui.run(title='Scheduler', reload=False)

@@ -191,6 +191,7 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 
 ## Features
 
+### Sprint 1
 - **Faculty Management** — Add, modify, and delete faculty members including their name, position type, credit limits, course preferences (weighted 0–10), and availability by day and time.
 - **Course Management** — Add, modify, and delete courses from the configuration.
 - **Conflict Management** — Define course pairs that must not overlap. The scheduler automatically avoids room, faculty, and time conflicts; the conflicts list is specifically for student co-enrollment constraints.
@@ -198,6 +199,29 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 - **Room Management** — Add, modify, and delete rooms available for scheduling.
 - **Run Scheduler** — Generate an optimized schedule based on the current configuration using a constraint solver.
 - **Export to CSV** — Display or export generated schedules in CSV format.
+
+### Sprint 2
+#### Scheduler Config Editor
+- **Save Configuration** — Save the current configuration to a JSON file from within the GUI.
+- **Load Configuration** — Load a JSON configuration file from within the GUI without restarting.
+- Sometimes you may see changes in sections that you did not make because of the JSON reloading after modifications.
+
+#### Schedule Generator
+- **Limit Override** — Input field to override the schedule generation limit from the configuration file.
+- **Optimization Selection** — Checkboxes to enable/disable individual optimizer flags, overriding the configuration file.
+- **Generate Button** — Trigger schedule generation from the GUI with current settings.
+
+#### Schedule Viewer
+- **Schedule Navigation** — Browse between multiple generated schedules using previous/next controls.
+- **By Room View** — Tabular display of generated schedules organized by room and lab.
+- **By Faculty View** — Tabular display of generated schedules organized by faculty member.
+- **Export Schedules** — Save generated schedules to a file from the viewer.
+- **Import Schedules** — Load previously exported schedules directly into the schedule viewer.
+
+#### Build System
+- **pyproject.toml** — Project metadata and dependencies managed via `pyproject.toml`.
+- **uv tooling** — Full `uv` support for dependency management and virtual environments.
+- **pytest** — Test suite runs via `pytest` with coverage reporting.
 
 ---
 

@@ -38,11 +38,8 @@ class ConflictController:
         self.model = conflict_model
         self.view = view
 
-    # -------------------------
-    # GUI methods
-    # -------------------------
 
-    def gui_get_all_conflicts(self) -> list[tuple[str, str]]:
+    def gui_get_all_conflicts(self) -> list[tuple[str, str, int, int]]:
         """
         Get all config-level conflict pairs for display.
 
@@ -71,7 +68,7 @@ class ConflictController:
                 section_map.setdefault(base, set()).add(course.course_str)
         return section_map
 
-    def gui_validate_delete(self, section_id_1: str, section_id_2: str) -> tuple[bool, str]:
+    def gui_validate_delete(self, index_1: str, index_2: str, existing_conflicts: list) -> tuple[bool, str]:
         """
         Validate a delete conflict request from the GUI.
 
@@ -82,21 +79,17 @@ class ConflictController:
         Returns:
             tuple[bool, str]: (is_valid, error_message) — error_message is '' if valid
         """
-        if not section_id_1 or not section_id_2:
-            return False, "Please enter both section IDs."
-
-        base1 = self._strip_section(section_id_1)
-        base2 = self._strip_section(section_id_2)
-
-        if base1 == base2:
-            return False, "A course cannot conflict with itself."
-
-        if not self.model.conflict_exists(base1, base2):
-            return False, f"No conflict exists between '{section_id_1}' and '{section_id_2}'."
-
+        key = (min(index_1, index_2), max(index_1, index_2))
+        match = next(
+            ((c1, c2, i1, i2) for c1, c2, i1, i2 in existing_conflicts
+            if (min(i1, i2), max(i1, i2)) == key),
+            None
+        )
+        if not match:
+            return False, "No conflict found for the selected pair."
         return True, ""
 
-    def gui_delete_conflict(self, section_id_1: str, section_id_2: str) -> tuple[bool, str]:
+    def gui_delete_conflict(self, section_id_1: str, section_id_2: str, index_1: int, index_2: int) -> tuple[bool, str]:
         """
         Delete a conflict by section ID or base course ID.
 
@@ -109,7 +102,7 @@ class ConflictController:
         """
         base1 = self._strip_section(section_id_1)
         base2 = self._strip_section(section_id_2)
-        success = self.model.delete_conflict(base1, base2)
+        success = self.model.delete_conflict(base1, base2, index_1, index_2)
         if success:
             return True, f"Conflict between '{section_id_1}' and '{section_id_2}' has been permanently deleted."
         return False, "Failed to delete conflict."
@@ -131,199 +124,21 @@ class ConflictController:
             parts[-1] = parts[-1].rsplit('.', 1)[0]
         return ' '.join(parts)
 
-    # -------------------------
-    # CLI methods (unchanged)
-    # -------------------------
+    def gui_get_conflict_labels(self, existing_conflicts: list, section_label_map: dict) -> dict[str, tuple[str, str, int, int]]:
+        """
+        Build a label -> (c1, c2, i1, i2) map for GUI dropdowns.
 
-    def add_conflict(self):
-        """
-        Complete workflow for adding a new conflict.
-        
-        Steps:
-        1. Display existing courses and conflicts
-        2. Get two course IDs from user
-        3. Validate courses exist and aren't the same
-        4. Display summary and confirm
-        5. Add via Model
-        6. Display result
-        
         Parameters:
-            None
-        
+            existing_conflicts (list): Output of gui_get_all_conflicts()
+            section_label_map (dict): index -> section label, e.g. {0: 'CMSC 140.01', 1: 'CMSC 140.02'}
+
         Returns:
-            None
+            dict[str, tuple]: label string -> conflict tuple
         """
-        try:
-            all_courses = self.model.config_model.get_all_courses()
-            if not all_courses:
-                self.view.display_message("There are no courses in the configuration.")
-                return
-            
-            existing_conflicts = self.model.get_all_conflicts()
-            self.view.display_conflict_list(all_courses, existing_conflicts)
-            
-            course_id_1, course_id_2 = self.view.get_conflict_input(all_courses)
-            
-            if course_id_1 == course_id_2:
-                self.view.display_error("A course cannot conflict with itself.")
-                return
-            
-            if not self.model.get_course_by_id(course_id_1):
-                self.view.display_error(f"Course '{course_id_1}' not found.")
-                return
-            
-            if not self.model.get_course_by_id(course_id_2):
-                self.view.display_error(f"Course '{course_id_2}' not found.")
-                return
-            
-            self.view.display_conflict_summary(course_id_1, course_id_2)
-            if not self.view.confirm("Add this conflict?"):
-                self.view.display_message("Conflict addition cancelled.")
-                return
-            
-            success = self.model.add_conflict(course_id_1, course_id_2)
-            
-            if success:
-                self.view.display_message("Conflict added successfully.")
-            else:
-                self.view.display_error("Failed to add conflict.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to add conflict: {e}")
-    
-    def delete_conflict(self):
-        """
-        Complete workflow for deleting a conflict.
-        
-        Steps:
-        1. Display existing conflicts
-        2. Get two course IDs from user
-        3. Validate conflict exists
-        4. Confirm deletion
-        5. Delete via Model
-        6. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            existing_conflicts = self.model.get_all_conflicts()
-            
-            if not existing_conflicts:
-                self.view.display_message("There are no conflicts currently in the configuration.")
-                return
-            
-            all_courses = self.model.config_model.get_all_courses()
-            self.view.display_existing_conflicts(existing_conflicts)
-            
-            course_id_1 = self.view.get_course_id_for_conflict("first")
-            course_id_2 = self.view.get_course_id_for_conflict("conflicting")
-            
-            if course_id_1 == course_id_2:
-                self.view.display_error("A course cannot conflict with itself.")
-                return
-            
-            if not self.model.conflict_exists(course_id_1, course_id_2):
-                self.view.display_error(f"No conflict exists between '{course_id_1}' and '{course_id_2}'.")
-                return
-            
-            self.view.display_conflict_summary(course_id_1, course_id_2)
-            if not self.view.confirm("Delete this conflict?"):
-                self.view.display_message("Conflict deletion cancelled.")
-                return
-            
-            success = self.model.delete_conflict(course_id_1, course_id_2)
-            
-            if success:
-                self.view.display_message(f"Conflict between '{course_id_1}' and '{course_id_2}' has been permanently deleted.")
-            else:
-                self.view.display_error("Failed to delete conflict.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to delete conflict: {e}")
-    
-    def modify_conflict(self):
-        """
-        Complete workflow for modifying a conflict.
-        
-        Steps:
-        1. Display existing conflicts
-        2. Get conflict selection from user
-        3. Ask which side to modify
-        4. Get new course ID
-        5. Confirm modification
-        6. Apply via Model
-        7. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            all_courses = self.model.config_model.get_all_courses()
-            all_conflicts_flat = []
-            
-            for course in all_courses:
-                for conflict_id in course.conflicts:
-                    all_conflicts_flat.append((course, conflict_id))
-            
-            if not all_conflicts_flat:
-                self.view.display_message("There are no conflicts to modify.")
-                return
-            
-            self.view.display_numbered_conflicts(all_conflicts_flat)
-            
-            selection_idx = self.view.get_conflict_selection(len(all_conflicts_flat))
-            selected_course, conflict_str = all_conflicts_flat[selection_idx]
-            
-            target_conflict_course = self.view.select_course_instance(
-                conflict_str,
-                self.model.get_course_by_id(conflict_str),
-                f"Select the specific instance of {conflict_str} involved in this conflict"
-            )
-            
-            if not target_conflict_course:
-                self.view.display_error(f"Course {conflict_str} not found.")
-                return
-            
-            self.view.display_conflict_pair(selected_course.course_id, target_conflict_course.course_id)
-            modify_mode = self.view.get_modify_side_choice()
-            
-            if modify_mode == 1:
-                new_course_id = self.view.get_replacement_course_id(selected_course.course_id)
-            else:
-                new_course_id = self.view.get_replacement_course_id(target_conflict_course.course_id)
-            
-            target_new_course = self.view.select_course_instance(
-                new_course_id,
-                self.model.get_course_by_id(new_course_id),
-                f"Select the specific instance of {new_course_id}"
-            )
-            
-            if not target_new_course:
-                self.view.display_error(f"Course {new_course_id} does not exist.")
-                return
-            
-            if not self.view.confirm("Are you sure you want to modify this conflict?"):
-                self.view.display_message("Conflict modification cancelled.")
-                return
-            
-            success = self.model.modify_conflict(
-                selected_course,
-                target_conflict_course,
-                target_new_course,
-                modify_mode
-            )
-            
-            if success:
-                self.view.display_message("Config saved.")
-            else:
-                self.view.display_error("No changes applied (validation failed or conflict not present).")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to modify conflict: {e}")
+        result = {}
+        for c1, c2, i1, i2 in existing_conflicts:
+            label1 = section_label_map.get(i1, c1)
+            label2 = section_label_map.get(i2, c2)
+            label = f"{label1}  ↔  {label2}"
+            result[label] = (c1, c2, i1, i2)
+        return result

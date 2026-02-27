@@ -65,12 +65,8 @@ def test_faculty_controller_instantiation(config_model):
 
 
 def test_course_controller_instantiation(config_model):
-    """Test that CourseController can be instantiated."""
     course_model = CourseModel(config_model)
-    mock_view = Mock()
-    
-    # CourseController takes 3 params: course_model, view, config_model
-    controller = CourseController(course_model, mock_view, config_model)
+    controller = CourseController(course_model, config_model)
     assert controller is not None
 
 
@@ -130,13 +126,9 @@ def test_faculty_controller_has_methods(config_model):
 
 
 def test_course_controller_has_methods(config_model):
-    """Test that CourseController has expected methods."""
     course_model = CourseModel(config_model)
-    mock_view = Mock()
-    controller = CourseController(course_model, mock_view, config_model)
-    
+    controller = CourseController(course_model, config_model)
     assert hasattr(controller, 'course_model') or hasattr(controller, 'model')
-    assert hasattr(controller, 'view') or hasattr(controller, 'cli_view')
 
 
 def test_conflict_controller_has_methods(config_model):
@@ -183,10 +175,8 @@ def test_schedule_controller_has_methods(config_model):
 # ================================================================
 
 def test_controllers_accept_mock_view(config_model):
-    """Test that all controllers accept a Mock view without errors."""
     mock_view = Mock()
     
-    # All of these should succeed
     faculty_model = FacultyModel(config_model)
     course_model = CourseModel(config_model)
     conflict_model = ConflictModel(config_model)
@@ -195,13 +185,13 @@ def test_controllers_accept_mock_view(config_model):
     
     controllers = [
         FacultyController(faculty_model, mock_view),
-        CourseController(course_model, mock_view, config_model),  # Takes 3 params
+        CourseController(course_model, config_model),  # no view
         ConflictController(conflict_model, mock_view),
         LabController(lab_model, mock_view),
         RoomController(room_model, mock_view),
         ScheduleController(config_model, mock_view),
     ]
     
-    # All should be instantiated
     assert len(controllers) == 6
     assert all(c is not None for c in controllers)
+    

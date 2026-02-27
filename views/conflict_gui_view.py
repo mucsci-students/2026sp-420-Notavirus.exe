@@ -72,21 +72,46 @@ class ConflictGUIView:
     def conflict_delete():
         """
         Displays the GUI for deleting a conflict.
-                
+        
+        By default, displays conflicts as section pairs (e.g. CMSC 140.01 ↔ CMSC 161.01)
+        and deletes only that specific section pair's conflict.
+        When the 'Sort course conflicts without section preference' toggle is enabled,
+        conflicts are collapsed to base course pairs (e.g. CMSC 140 ↔ CMSC 161)
+        and deleting will remove that conflict across all sections.
+
         Parameters:
             None        
         Returns:        
             None
         """
         from views.gui_view import GUIView
-        from models.scheduler_model import SchedulerModel
 
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')
 
         controller = GUIView.controller.conflict_controller
-        scheduler_model = SchedulerModel(GUIView.controller.config_model)
+        course_model = GUIView.controller.course_model
+
+        courses_with_sections = course_model.get_courses_with_sections()
+        section_label_map = {i: label for label, i, _ in courses_with_sections}
+
         existing_conflicts = controller.gui_get_all_conflicts()
+
+        def build_section_options():
+            return controller.gui_get_conflict_labels(existing_conflicts, section_label_map)
+
+        def build_base_options():
+            seen = set()
+            result = {}
+            for c1, c2, i1, i2 in existing_conflicts:
+                key = tuple(sorted([c1, c2]))
+                if key not in seen:
+                    seen.add(key)
+                    label = f"{key[0]}  ↔  {key[1]}"
+                    result[label] = (key[0], key[1], None, None)
+            return result
+
+        conflict_options = build_section_options()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             ui.label('Delete Conflict').classes('text-4xl mb-4 text-black')
@@ -96,62 +121,31 @@ class ConflictGUIView:
                 ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
                 return
 
-            sections_loaded = {'done': False}
-            scheduler_status = ui.label('').classes('text-lg text-black')
-
-            with ui.expansion('View Existing Conflicts', icon='today').classes('w-full max-w-xl') as expansion:
-                section_grid = ui.grid(columns=2).classes('w-full gap-2 p-4')
-
-            # Async function to populate conflicts in the grid
-            async def on_expand():
-                if sections_loaded['done']:
-                    return
-                section_grid.clear()
-                await asyncio.sleep(0.1)  # allow UI to render
-
-                try:
-                    scheduler_status.set_text('⏳ Running scheduler to load sections...')
-                    scheduler_status.update()
-                    await asyncio.sleep(0.5)
-
-                    section_map = controller.gui_get_section_map(scheduler_model)
-
-                    printed_pairs = set()
-                    with section_grid:
-                        ui.label('Course 1 Sections').classes('font-bold text-black')
-                        ui.label('Course 2 Sections').classes('font-bold text-black')
-
-                    for c1, c2, i1, i2 in existing_conflicts:
-                        pair = tuple(sorted([c1, c2]))
-                        if pair in printed_pairs:
-                            continue
-                        printed_pairs.add(pair)
-
-                        sections1 = ', '.join(sorted(section_map.get(c1, {c1})))
-                        sections2 = ', '.join(sorted(section_map.get(c2, {c2})))
-
-                        with section_grid:
-                            ui.label(sections1).classes('text-black')
-                            ui.label(sections2).classes('text-black')
-
-                    scheduler_status.set_text('Sections loaded successfully!')
-                    scheduler_status.classes(replace='text-sm')
-                    sections_loaded['done'] = True
-                except Exception as e:
-                    scheduler_status.set_text(f'⚠️ Could not load sections: {e}')
-
-            # Handle expansion open/close as boolean
-            def handle_expand(is_open: bool):
-                if is_open:
-                    asyncio.create_task(on_expand())
-
-            expansion.on('update:model-value', handle_expand)
-
-            ui.label('Enter section IDs to delete a conflict (e.g. CMSC 140.01):').classes('text-lg text-black')
-            course_id_1 = ui.input('First Section ID').props('rounded outlined').classes('w-80')
-            course_id_2 = ui.input('Conflicting Section ID').props('rounded outlined').classes('w-80')
-
             feedback = ui.label('').classes('text-lg')
+            selected = {'value': None}
+
+            select = ui.select(
+                options=list(conflict_options.keys()),
+                label='Select Conflict to Delete',
+                on_change=lambda e: selected.update({'value': conflict_options.get(e.value)})
+            ).classes('w-full max-w-xl text-xl')
+
+            def on_toggle(e):
+                selected['value'] = None
+                select.value = None
+                conflict_options.clear()
+                if e.value:
+                    conflict_options.update(build_base_options())
+                else:
+                    conflict_options.update(build_section_options())
+                select.options = list(conflict_options.keys())
+                select.update()
+                feedback.set_text('')
+
+            ui.switch(
+                'Sort course conflicts without section preference',
+                on_change=on_toggle
+            ).classes('text-black')
 
             confirm_card = ui.card().classes('w-full max-w-xl items-center bg-transparent shadow-none')
             confirm_card.set_visibility(False)
@@ -161,20 +155,12 @@ class ConflictGUIView:
                 with ui.row().classes('gap-4 justify-center mt-2'):
 
                     def on_confirm():
-                        s1 = course_id_1.value.strip()
-                        s2 = course_id_2.value.strip()
-                        # Find matching indices from existing_conflicts
-                        match = next(
-                            ((c1, c2, i1, i2) for c1, c2, i1, i2 in existing_conflicts
-                             if controller._strip_section(s1) == c1 and controller._strip_section(s2) == c2
-                             or controller._strip_section(s2) == c1 and controller._strip_section(s1) == c2),
-                            None
-                        )
-                        if not match:
-                            feedback.set_text(f"No conflict found between '{s1}' and '{s2}'.")
-                            feedback.classes(replace='text-lg text-red-600')
+                        if not selected['value']:
                             return
-                        c1, c2, i1, i2 = match
+                        c1, c2, i1, i2 = selected['value']
+                        label = select.value
+                        s1 = section_label_map.get(i1, c1) if i1 is not None else c1
+                        s2 = section_label_map.get(i2, c2) if i2 is not None else c2
                         success, message = controller.gui_delete_conflict(s1, s2, i1, i2)
                         feedback.set_text(message)
                         feedback.classes(replace=f'text-lg {"text-green-600" if success else "text-red-600"}')
@@ -182,12 +168,16 @@ class ConflictGUIView:
                         if success:
                             existing_conflicts.clear()
                             existing_conflicts.extend(controller.gui_get_all_conflicts())
-                            sections_loaded['done'] = False
-                            expansion.close()
-                            scheduler_status.set_text('⏳ Running scheduler to load sections...')
+                            new_options = build_base_options() if i1 is None else build_section_options()
+                            conflict_options.clear()
+                            conflict_options.update(new_options)
+                            select.options = list(new_options.keys())
+                            select.value = None
+                            select.update()
+                            selected['value'] = None
 
                     def on_cancel():
-                        feedback.set_text("Conflict deletion cancelled.")
+                        feedback.set_text('Conflict deletion cancelled.')
                         feedback.classes(replace='text-lg text-black')
                         confirm_card.set_visibility(False)
 
@@ -195,15 +185,19 @@ class ConflictGUIView:
                     ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-12 text-lg').on('click', on_cancel)
 
             def on_validate():
-                s1 = course_id_1.value.strip()
-                s2 = course_id_2.value.strip()
-                valid, error = controller.gui_validate_delete(s1, s2)
+                if not selected['value']:
+                    feedback.set_text('Please select a conflict to delete.')
+                    feedback.classes(replace='text-lg text-red-600')
+                    confirm_card.set_visibility(False)
+                    return
+                c1, c2, i1, i2 = selected['value']
+                valid, error = controller.gui_validate_delete(i1, i2, existing_conflicts) if i1 is not None else (True, '')
                 if not valid:
                     feedback.set_text(error)
                     feedback.classes(replace='text-lg text-red-600')
                     confirm_card.set_visibility(False)
                     return
-                confirm_label.set_text(f"Delete conflict between '{s1}' and '{s2}'?")
+                confirm_label.set_text(f"Delete conflict: {select.value}?")
                 feedback.set_text('')
                 confirm_card.set_visibility(True)
 
@@ -215,7 +209,7 @@ class ConflictGUIView:
     def conflict_view():
         """
         Displays the GUI for viewing a conflict.
-                
+                    
         Parameters:
             None        
         Returns:        

@@ -68,7 +68,7 @@ class ConflictController:
                 section_map.setdefault(base, set()).add(course.course_str)
         return section_map
 
-    def gui_validate_delete(self, section_id_1: str, section_id_2: str) -> tuple[bool, str]:
+    def gui_validate_delete(self, index_1: str, index_2: str, existing_conflicts: list) -> tuple[bool, str]:
         """
         Validate a delete conflict request from the GUI.
 
@@ -79,18 +79,14 @@ class ConflictController:
         Returns:
             tuple[bool, str]: (is_valid, error_message) — error_message is '' if valid
         """
-        if not section_id_1 or not section_id_2:
-            return False, "Please enter both section IDs."
-
-        base1 = self._strip_section(section_id_1)
-        base2 = self._strip_section(section_id_2)
-
-        if base1 == base2:
-            return False, "A course cannot conflict with itself."
-
-        if not self.model.conflict_exists(base1, base2):
-            return False, f"No conflict exists between '{section_id_1}' and '{section_id_2}'."
-
+        key = (min(index_1, index_2), max(index_1, index_2))
+        match = next(
+            ((c1, c2, i1, i2) for c1, c2, i1, i2 in existing_conflicts
+            if (min(i1, i2), max(i1, i2)) == key),
+            None
+        )
+        if not match:
+            return False, "No conflict found for the selected pair."
         return True, ""
 
     def gui_delete_conflict(self, section_id_1: str, section_id_2: str, index_1: int, index_2: int) -> tuple[bool, str]:
@@ -127,3 +123,22 @@ class ConflictController:
         if parts and '.' in parts[-1]:
             parts[-1] = parts[-1].rsplit('.', 1)[0]
         return ' '.join(parts)
+
+    def gui_get_conflict_labels(self, existing_conflicts: list, section_label_map: dict) -> dict[str, tuple[str, str, int, int]]:
+        """
+        Build a label -> (c1, c2, i1, i2) map for GUI dropdowns.
+
+        Parameters:
+            existing_conflicts (list): Output of gui_get_all_conflicts()
+            section_label_map (dict): index -> section label, e.g. {0: 'CMSC 140.01', 1: 'CMSC 140.02'}
+
+        Returns:
+            dict[str, tuple]: label string -> conflict tuple
+        """
+        result = {}
+        for c1, c2, i1, i2 in existing_conflicts:
+            label1 = section_label_map.get(i1, c1)
+            label2 = section_label_map.get(i2, c2)
+            label = f"{label1}  ↔  {label2}"
+            result[label] = (c1, c2, i1, i2)
+        return result

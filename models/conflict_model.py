@@ -79,52 +79,60 @@ class ConflictModel:
         except Exception:
             return False
     
-    def delete_conflict(self, course_id_1: str, course_id_2: str, section_index_1: int, section_index_2: int) -> bool:
-        """
-        Delete mutual conflict between two specific course sections.
-        
-        Parameters:
-            course_id_1 (str): First course ID
-            course_id_2 (str): Second course ID
-            section_index_1 (int): Global index of the first course section
-            section_index_2 (int): Global index of the second course section
-        
-        Returns:
-            bool: True if successful, False if conflict doesn't exist
-        """
+    def delete_conflict(self, course_id_1: str, course_id_2: str, section_index_1: int = None, section_index_2: int = None) -> bool:
         self.config_model.reload()
-            
+
         try:
-            with self.config_model.config.config.edit_mode() as editable:                    
-                found = False
-                courses = editable.courses
-                    
+            courses = self.config_model.config.config.courses
+
+            if section_index_1 is not None and section_index_2 is not None:
+                # Delete only the specific section pair
                 c1 = courses[section_index_1] if section_index_1 < len(courses) else None
                 c2 = courses[section_index_2] if section_index_2 < len(courses) else None
-                    
+
                 if not c1 or not c2:
                     return False
-                    
+                if c1.course_id != course_id_1 or c2.course_id != course_id_2:
+                    return False
+                
+                found = False
+
                 if c1.course_id == course_id_1 and course_id_2 in c1.conflicts:
-                    c1.conflicts.remove(course_id_2)
+                    c1.conflicts = [x for x in c1.conflicts if x != course_id_2]
                     found = True
-                    
+
                 if c2.course_id == course_id_2 and course_id_1 in c2.conflicts:
-                    c2.conflicts.remove(course_id_1)
+                    c2.conflicts = [x for x in c2.conflicts if x != course_id_1]
                     found = True
 
                 if not found:
                     return False
-            
-                if not self.config_model.safe_save():
+
+            else:
+                # Delete all instances of this conflict across all sections
+                found = False
+
+                for course in courses:
+                    if course.course_id == course_id_1 and course_id_2 in course.conflicts:
+                        course.conflicts = [x for x in course.conflicts if x != course_id_2]
+                        found = True
+
+                    elif course.course_id == course_id_2 and course_id_1 in course.conflicts:
+                        course.conflicts = [x for x in course.conflicts if x != course_id_1]
+                        found = True
+
+                if not found:
                     return False
 
-                self.config_model.reload()
-                return True
+            if not self.config_model.safe_save():
+                return False
 
-        except Exception:
+            self.config_model.reload()
+            return True
+
+        except Exception as e:
+            print(f"DEBUG delete_conflict exception: {e}")
             return False
-        
 
     def modify_conflict(self, selected_course: CourseConfig, 
                        target_conflict_course: CourseConfig,
@@ -218,26 +226,30 @@ class ConflictModel:
         """
         Get all unique conflict pairs with section indices.
 
+        Each pair (i, j) represents a specific section of course_id_1 at index i
+        conflicting with a specific section of course_id_2 at index j.
+        Duplicates are avoided using a seen set keyed on (min(i,j), max(i,j)).
+
         Parameters:
             None
 
         Returns:
             list[tuple[str, str, int, int]]: List of (course_id_1, course_id_2, index_1, index_2)
         """
+        self.config_model.reload()
         conflicts = []
+        seen = set()
         courses = self.config_model.config.config.courses
         for i, course in enumerate(courses):
             for conflict_id in course.conflicts:
-                # Find the first matching section index for the conflict partner
+                # Find ALL sections of the conflict partner (removed `break`)
                 for j, other in enumerate(courses):
                     if other.course_id == conflict_id:
-                        pair_key = tuple(sorted([(course.course_id, i), (conflict_id, j)]))
-                        entry = (course.course_id, conflict_id, i, j)
-                        reverse = (conflict_id, course.course_id, j, i)
-                        if entry not in conflicts and reverse not in conflicts:
-                            conflicts.append(entry)
-                        break
-        return conflicts
+                        key = (min(i, j), max(i, j))
+                        if key not in seen:
+                            seen.add(key)
+                            conflicts.append((course.course_id, conflict_id, i, j))
+        return conflicts 
     
     def conflict_exists(self, course_id_1: str, course_id_2: str) -> bool:
         """

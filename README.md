@@ -129,11 +129,11 @@ Press Ctrl+C in the terminal
 ** Example:
 python main.py example.json
 
-# Output:
-# Loading configuration from: example.json
-# 🚀 Starting Scheduler GUI...
-# 🌐 Browser will open at: http://localhost:8080
-# 🛑 To stop: Press Ctrl+C in this terminal
+Output:
+Loading configuration from: example.json
+🚀 Starting Scheduler GUI...
+🌐 Browser will open at: http://localhost:8080
+🛑 To stop: Press Ctrl+C in this terminal
 
 ---
 

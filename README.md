@@ -117,10 +117,10 @@ Once running, you'll see an interactive menu.
 
 What happens:
 
-Configuration loads from the JSON file
-GUI server starts on port 8080
-Your browser opens automatically to http://localhost:8080
-Use the graphical interface to manage schedules
+- Configuration loads from the JSON file
+- GUI server starts on port 8080
+- Your browser opens automatically to http://localhost:8080
+- Use the graphical interface to manage schedules
 
 To stop the server:
 
@@ -130,10 +130,10 @@ Press Ctrl+C in the terminal
 python main.py example.json
 
 Output:
-Loading configuration from: example.json
-🚀 Starting Scheduler GUI...
-🌐 Browser will open at: http://localhost:8080
-🛑 To stop: Press Ctrl+C in this terminal
+- Loading configuration from: example.json
+- 🚀 Starting Scheduler GUI...
+- 🌐 Browser will open at: http://localhost:8080
+- 🛑 To stop: Press Ctrl+C in this terminal
 
 ---
 

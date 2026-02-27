@@ -107,7 +107,7 @@ class CourseGUIView:
             select = ui.select(
                 options=list(section_options.keys()),
                 label='Select Course Section',
-                on_change=lambda e: selected.update({'value': section_options[e.value]})
+                on_change=lambda e: selected.update({'value': section_options[e.value]}) if e.value in section_options else selected.update({'value': None})
             ).classes('w-full max-w-xl text-xl')
 
 

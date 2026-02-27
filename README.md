@@ -204,6 +204,7 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 #### Scheduler Config Editor
 - **Save Configuration** — Save the current configuration to a JSON file from within the GUI.
 - **Load Configuration** — Load a JSON configuration file from within the GUI without restarting.
+- Sometimes you may see changes in sections that you did not make because of the JSON reloading after modifications.
 
 #### Schedule Generator
 - **Limit Override** — Input field to override the schedule generation limit from the configuration file.

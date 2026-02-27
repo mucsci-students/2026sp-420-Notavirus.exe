@@ -16,7 +16,6 @@ from scheduler import load_config_from_file, CombinedConfig, FacultyConfig, Time
 from models.config_model import ConfigModel
 from models.faculty_model import FacultyModel
 from controllers.faculty_controller import FacultyController
-from views.cli_view import CLIView
 
 # Constants (from old faculty.py)
 FULL_TIME_MAX_CREDITS = 12

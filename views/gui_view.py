@@ -17,6 +17,9 @@ from views.room_gui_view import RoomGUIView
 from views.gui_theme import GUITheme
 
 class GUIView:
+    config_path: str = '' 
+    controller = None 
+
     @ui.page('/')
     @staticmethod
     def home():

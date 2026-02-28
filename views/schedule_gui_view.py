@@ -20,10 +20,9 @@ class ScheduleGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/display_schedules')
     @staticmethod
@@ -37,7 +36,6 @@ class ScheduleGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))

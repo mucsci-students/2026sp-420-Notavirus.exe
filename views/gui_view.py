@@ -17,40 +17,36 @@ from views.room_gui_view import RoomGUIView
 from views.gui_theme import GUITheme
 
 class GUIView:
-    config_path: str = '' 
-    controller = None 
-
     @ui.page('/')
     @staticmethod
     def home():
         # Set light blue background matching the mockup
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')        
         # Center the main column
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             
             # Title
-            ui.label('Scheduler').classes('text-4xl mb-10 text-black')
+            ui.label('Scheduler').classes('text-4xl mb-10 !text-black dark:!text-white')
             
             # Row 1
             with ui.row().classes('gap-12 mb-4'):
-                ui.button('Faculty').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
-                ui.button('Room').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
+                ui.button('Faculty').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
+                ui.button('Room').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
                 
             # Row 2
             with ui.row().classes('gap-12 mb-4'):
-                ui.button('Course').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
-                ui.button('Conflict').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
+                ui.button('Course').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
+                ui.button('Conflict').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/conflict'))
                 
             # Row 3 (Lab)
             with ui.row().classes('mb-12'):
-                ui.button('Lab').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
+                ui.button('Lab').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
                 
             # Wide buttons vertically stacked
             with ui.column().classes('gap-6 items-center w-full'):
-                ui.button('Print Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/print_config'))
-                ui.button('Run Scheduler').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/run_scheduler'))
-                ui.button('Display Schedules').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/display_schedules'))
+                ui.button('Print Config').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/print_config'))
+                ui.button('Run Scheduler').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/run_scheduler'))
+                ui.button('Display Schedules').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/display_schedules'))
 
 
     @ui.page('/print_config')
@@ -65,10 +61,9 @@ class GUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
     
     @staticmethod
     def runGUI():
@@ -80,7 +75,7 @@ class GUIView:
         Returns:        
             None
         """
-        ui.run(reload=False)
+        ui.run(title='Scheduler', storage_secret='scheduler_secret_key')
 
 if __name__ in {"__main__", "__mp_main__"}:
     GUIView.runGUI()

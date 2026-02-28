@@ -78,6 +78,10 @@ class SchedulerController:
         self.lab_controller = LabController(self.lab_model, self.view)
         self.room_controller = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
+
+        # Connect GUI View to the Controllers
+        from views.lab_gui_view import LabGUIView
+        LabGUIView.setup(self.lab_controller)
     
     def run(self):
         """

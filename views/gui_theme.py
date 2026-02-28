@@ -24,14 +24,14 @@ class GUITheme:
             primary='#FFFFFF',
             backbtn= '#a0a0a0', #Grey
             backHover='#808080', #Darker grey
-            facultyBegin='#a855f7', #Light Purple
-            facultyEnd='#7c3aed', #Dark Purple
-            courseBegin='#f0be41', #Orange/Gold
-            courseEnd='#c48f08', #Orange/Gold
-            roomBegin='#4cede7', #Cyan
-            roomEnd='#3fbab4', #Cyan
-            conflictBegin='#eb0e19', #Red
-            conflictEnd='#a80a12', #Red
-            labBegin='#19fa11', #Green
-            labEnd='#13b80d', #Green
+            facultyBegin='#8095e4', #Light Purple
+            facultyEnd='#a855f7', #Dark Purple
+            courseBegin='#EDC54E', #Orange
+            courseEnd='#ED764E', #Orange
+            roomBegin='#4EEDA0', #Cyan/Green
+            roomEnd='#4EEAED', #Cyan
+            conflictBegin='#f94680', #Red
+            conflictEnd='#eb0e19', #Red
+            labBegin='#1bc0ba', #Green
+            labEnd='#19fa11', #Green
         )

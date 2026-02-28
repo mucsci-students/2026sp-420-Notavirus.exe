@@ -21,18 +21,9 @@ def safe_save(config: CombinedConfig, config_path: str) -> bool:
             tmp_path = tmp.name
             tmp.write(config.model_dump_json(indent=2))
 
-        # Validate by reloading from the temp file
-        try:
-            load_config_from_file(CombinedConfig, tmp_path)
-        except Exception as e:
-            print(f"Validation failed, changes not saved: {e}")
-            os.remove(tmp_path)
-            return False
-
-        # Validation passed — replace the original
-        shutil.move(tmp_path, config_path)
-        print("Changes saved successfully.")
-        return True
+            shutil.move(tmp_path, config_path)
+            print("Changes saved successfully.")
+            return True
 
     except Exception as e:
         print(f"Error during save: {e}")

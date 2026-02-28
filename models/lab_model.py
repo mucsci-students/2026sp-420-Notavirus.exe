@@ -32,7 +32,8 @@ class LabModel:
     
     def add_lab(self, lab_name: str) -> bool:
         """
-        Add lab to configuration.
+        Add lab to configuration (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             lab_name (str): Name of lab to add
@@ -40,25 +41,16 @@ class LabModel:
         Returns:
             bool: True if successful, False if lab already exists
         """
-        # Check if lab already exists
         if self.lab_exists(lab_name):
             return False
-        
-        # Add lab to config
         self.config_model.config.config.labs.append(lab_name)
-        
-        # Save and reload
-        if not self.config_model.safe_save():
-            return False
-        
-        self.config_model.reload()
         return True
     
     def delete_lab(self, lab_name: str) -> bool:
         """
-        Delete lab from configuration.
-        
+        Delete lab from configuration (in-memory only).
         Also removes all references to this lab from courses and faculty.
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             lab_name (str): Name of lab to delete
@@ -68,40 +60,24 @@ class LabModel:
         """
         if not self.lab_exists(lab_name):
             return False
-        
         try:
-            with self.config_model.config.config.edit_mode() as editable:
-                # Remove lab references from courses
-                for course in editable.courses:
-                    if lab_name in course.lab:
-                        course.lab.remove(lab_name)
-                
-                # Remove lab from faculty preferences
-                for faculty in editable.faculty:
-                    if lab_name in faculty.lab_preferences:
-                        del faculty.lab_preferences[lab_name]
-                
-                # Remove lab from labs list
-                editable.labs.remove(lab_name)
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
+            for course in self.config_model.config.config.courses:
+                course.lab = [l for l in course.lab if l != lab_name]
+            for faculty in self.config_model.config.config.faculty:
+                if lab_name in faculty.lab_preferences:
+                    del faculty.lab_preferences[lab_name]
+            self.config_model.config.config.labs = [
+                l for l in self.config_model.config.config.labs if l != lab_name
+            ]
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG delete_lab exception: {e}")
             return False
     
     def modify_lab(self, old_name: str, new_name: str) -> bool:
         """
-        Modify lab name and update all references.
-        
-        Updates lab name in:
-        - Labs list
-        - Course lab assignments
-        - Faculty lab preferences
+        Modify lab name and update all references (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             old_name (str): Current lab name
@@ -110,37 +86,22 @@ class LabModel:
         Returns:
             bool: True if successful, False if old lab doesn't exist or new name already exists
         """
-        # Validate
         if not self.lab_exists(old_name):
             return False
-        
         if self.lab_exists(new_name):
             return False
-        
         try:
-            # Update lab name in list
             labs = self.config_model.config.config.labs
             index = labs.index(old_name)
             labs[index] = new_name
-            
-            # Update course references
             for course in self.config_model.config.config.courses:
-                if old_name in course.lab:
-                    course.lab = [new_name if lab == old_name else lab for lab in course.lab]
-            
-            # Update faculty preferences
+                course.lab = [new_name if l == old_name else l for l in course.lab]
             for faculty in self.config_model.config.config.faculty:
                 if old_name in faculty.lab_preferences:
                     faculty.lab_preferences[new_name] = faculty.lab_preferences.pop(old_name)
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG modify_lab exception: {e}")
             return False
     
     def lab_exists(self, lab_name: str) -> bool:

@@ -62,7 +62,8 @@ class FacultyModel:
         self.config_model.reload()
         
         return True
-    
+
+
     def delete_faculty(self, name: str) -> bool:
         """
         Delete faculty by name (case-insensitive).

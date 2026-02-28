@@ -91,4 +91,6 @@ class SchedulerController:
         Returns:
             None
         """
+        from views.gui_view import GUIView
+        GUIView.set_controller(self)
         ui.run(title='Scheduler')

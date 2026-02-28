@@ -21,8 +21,8 @@ from controllers.lab_controller import LabController
 from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
 
-from views.cli_view import CLIView
 from views.gui_view import GUIView
+from views.lab_gui_view import LabGUIView   
 from nicegui import ui
 
 
@@ -57,7 +57,9 @@ class SchedulerController:
             None
         """
         # Initialize view
-        self.view = CLIView()
+        self.view = GUIView()
+        GUIView.config_path = config_path
+        GUIView.controller = self
         
         # Initialize config model
         self.config_path = config_path
@@ -70,14 +72,17 @@ class SchedulerController:
         self.lab_model = LabModel(self.config_model)
         self.room_model = RoomModel(self.config_model)
         self.scheduler_model = SchedulerModel(self.config_model)
-        
+
         # Initialize all feature controllers
         self.faculty_controller = FacultyController(self.faculty_model, self.view)
-        self.course_controller = CourseController(self.course_model, self.view, self.config_model)
+        self.course_controller = CourseController(self.course_model, self.config_model)
         self.conflict_controller = ConflictController(self.conflict_model, self.view)
         self.lab_controller = LabController(self.lab_model, self.view)
         self.room_controller = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
+
+        LabGUIView._lab_controller = self.lab_controller
+    
     def run(self):
         """
         Main application loop.
@@ -90,4 +95,10 @@ class SchedulerController:
         Returns:
             None
         """
-        ui.run(title='Scheduler', storage_secret='scheduler_secret_key')
+        print("\n" + "="*60)
+        print("  🚀 GUI SERVER STARTING")
+        print("="*60)
+        print("  🌐 Open your browser to: http://localhost:8080")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal")
+        print("="*60 + "\n")
+        ui.run(title='Scheduler', reload=False, storage_secret='scheduler_secret_key')

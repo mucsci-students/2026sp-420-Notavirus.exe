@@ -542,8 +542,7 @@ def test_get_all_conflicts(conflict_model, course_model):
     assert len(all_conflicts) >= 2  # At least our two conflicts
     
     # Check conflicts are unique pairs (sorted tuples)
-    assert ("ALL A", "ALL B") in all_conflicts or ("ALL B", "ALL A") in all_conflicts
-
+    assert any((c1 == "ALL A" and c2 == "ALL B") or (c1 == "ALL B" and c2 == "ALL A") for c1, c2, i1, i2 in all_conflicts)
 
 def test_conflict_exists_true(conflict_model, course_model):
     """

@@ -16,7 +16,7 @@ def safe_save(config: CombinedConfig, config_path: str) -> bool:
     """
     try:
         # Write to a temp file in the same directory as the original
-        dir_name = os.path.dirname(config_path)
+        dir_name = os.path.dirname(os.path.abspath(config_path))
         with tempfile.NamedTemporaryFile(mode='w', dir=dir_name, delete=False, suffix='.tmp') as tmp:
             tmp_path = tmp.name
             tmp.write(config.model_dump_json(indent=2))

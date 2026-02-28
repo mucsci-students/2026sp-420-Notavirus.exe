@@ -70,16 +70,27 @@ class GUIView:
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
     
+    _controller = None
+
+    @classmethod
+    def set_controller(cls, controller):
+        """
+        Sets the main application controller reference.
+        """
+        cls._controller = controller
+
     @staticmethod
-    def runGUI():
+    def runGUI(controller=None):
         """
         Runs the GUI.
                 
         Parameters:
-            None        
+            controller: The main SchedulerController instance
         Returns:        
             None
         """
+        if controller:
+            GUIView.set_controller(controller)
         ui.run(reload=False)
 
 if __name__ in {"__main__", "__mp_main__"}:

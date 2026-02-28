@@ -46,51 +46,54 @@ class FacultyController:
         self.model = faculty_model
         self.view = view
     
-    def add_faculty(self):
+    def add_faculty(self, faculty_data: dict = None):
         """
         Complete workflow for adding a new faculty member.
         
-        Steps:
-        1. Get user input via View
-        2. Build FacultyConfig object
-        3. Display summary and get confirmation
-        4. Add via Model
-        5. Display result
-        
         Parameters:
-            None
+            faculty_data (dict, optional): Data from GUI to add directly. If None, it will prompt via CLI view.
         
         Returns:
-            None
+            bool: True if added successfully, False otherwise
         """
         try:
-            # Step 1: Get input from user
-            faculty_data = self.view.get_faculty_input()
-            
+            # If no data provided, get it from CLI (original behavior)
+            if faculty_data is None:
+                if not hasattr(self, 'view') or self.view is None:
+                    print("Error: No view available to get input.")
+                    return False
+                    
+                # Step 1: Get input from user (CLI)
+                faculty_data = self.view.get_faculty_input()
+                position = "Full Time" if faculty_data['is_full_time'] else "Adjunct"
+                self.view.display_faculty_summary(faculty_data, position)
+                if not self.view.confirm("Is this information correct?"):
+                    self.view.display_message("Faculty addition cancelled.")
+                    return False
+
             # Step 2: Build FacultyConfig from raw data
             faculty_config = self._build_faculty_config(faculty_data)
             
-            # Determine position string for display
-            position = "Full Time" if faculty_data['is_full_time'] else "Adjunct"
-            
-            # Step 3: Show summary and get confirmation
-            self.view.display_faculty_summary(faculty_data, position)
-            if not self.view.confirm("Is this information correct?"):
-                self.view.display_message("Faculty addition cancelled.")
-                return
-            
-            # Step 4: Add via model
+            # Step 3: Add via model
             success = self.model.add_faculty(faculty_config)
             
-            # Step 5: Show result
+            # Step 4: Show result
             if success:
-                self.view.display_message(f"Faculty '{faculty_data['name']}' added successfully!")
+                if hasattr(self, 'view') and self.view is not None:
+                    self.view.display_message(f"Faculty '{faculty_data['name']}' added successfully!")
+                return True
             else:
-                self.view.display_error(f"Faculty '{faculty_data['name']}' already exists.")
+                if hasattr(self, 'view') and self.view is not None:
+                    self.view.display_error(f"Faculty '{faculty_data['name']}' already exists.")
+                return False
         
         except Exception as e:
-            self.view.display_error(f"Failed to add faculty: {e}")
-    
+            if hasattr(self, 'view') and self.view is not None:
+                self.view.display_error(f"Failed to add faculty: {e}")
+            else:
+                print(f"Failed to add faculty: {e}")
+            return False
+            
     def delete_faculty(self):
         """
         Complete workflow for deleting a faculty member.
@@ -240,11 +243,20 @@ class FacultyController:
         
         # Build availability times
         times = {}
-        day_map = {'M': 'MON', 'T': 'TUE', 'W': 'WED', 'R': 'THU', 'F': 'FRI'}
-        for day in data['days']:
-            day_name = day_map[day]
-            # Default to 9am-5pm availability
-            times[day_name] = [TimeRange(start='09:00', end='17:00')]
+        day_map = {'M': 'MON', 'T': 'TUE', 'W': 'WED', 'R': 'THU', 'F': 'FRI',
+                   'Monday': 'MON', 'Tuesday': 'TUE', 'Wednesday': 'WED', 'Thursday': 'THU', 'Friday': 'FRI'}
+        
+        # Check if we have the advanced GUI format dictionary
+        if 'times' in data:
+            # Data from GUI that gives direct time lists
+            for day, day_times in data['times'].items():
+                if day in day_map:
+                    times[day_map[day]] = [TimeRange(start=t['start'], end=t['end']) for t in day_times]
+        else:
+            # Fallback to CLI basic behavior
+            for day in data.get('days', []):
+                day_name = day_map.get(day, day)
+                times[day_name] = [TimeRange(start='09:00', end='17:00')]
         
         # Create and return FacultyConfig
         return FacultyConfig(
@@ -252,7 +264,7 @@ class FacultyController:
             maximum_credits=max_credits,
             minimum_credits=MIN_CREDITS,
             unique_course_limit=unique_course_limit,
-            course_preferences=data['course_preferences'],
+            course_preferences=data.get('course_preferences', {}),
             maximum_days=MAX_DAYS,
             times=times,
             room_preferences={},

@@ -23,6 +23,7 @@ from controllers.schedule_controller import ScheduleController
 
 from views.gui_view import GUIView
 from views.lab_gui_view import LabGUIView   
+from views.room_gui_view import RoomGUIView
 from nicegui import ui
 
 
@@ -82,6 +83,7 @@ class SchedulerController:
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
 
         LabGUIView._lab_controller = self.lab_controller
+        self.room_view = RoomGUIView(self.room_controller)
     
     def run(self):
         """

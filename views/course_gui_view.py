@@ -6,7 +6,6 @@ This view class handles all files for the GUI that are related to courses.
 """
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_view import GUIView
 
 class CourseGUIView:
     @ui.page('/course')
@@ -46,6 +45,8 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
+
+        from views.gui_view import GUIView
 
         controller = GUIView.controller.course_controller
         resources = controller.get_available_resources()

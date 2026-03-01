@@ -55,7 +55,7 @@ class CourseGUIView:
             ui.label('Add Course').classes('text-4xl mb-4 text-black')
 
             course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined').classes('w-80')
-            credits_input = ui.input(label='Credits: ', min=0, value=4).props('rounded outlined').classes('w-80')
+            credits_input = ui.number(label='Credits ', min=0, value=4).props('rounded outlined').classes('w-80')
             room_select = ui.select(resources['rooms'], label='Rooms', multiple=True).props('rounded outlined').classes('w-80')
             lab_select = ui.select(resources ['labs'], label='Labs', multiple=True).props('rounded outlined').classes('w-80')
             faculty_select = ui.select(resources ['faculty'], label='Faculty', multiple=True).props('rounded outlined').classes('w-80')

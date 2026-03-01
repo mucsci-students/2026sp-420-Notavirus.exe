@@ -43,9 +43,6 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course already exists
         """
-        # Check if course already exists using consistent helper
-        if self.course_exists(course.course_id):
-            return False
         
         # Add course to config
         self.config_model.config.config.courses.append(course)

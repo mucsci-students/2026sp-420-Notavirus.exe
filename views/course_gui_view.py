@@ -6,6 +6,7 @@ This view class handles all files for the GUI that are related to courses.
 """
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_view import GUIView
 
 class CourseGUIView:
     @ui.page('/course')
@@ -93,7 +94,7 @@ class CourseGUIView:
                         faculty_select.set_value([])
 
                 except Exception as e:
-                    result_label.set_text(f'Eroor: {e}')
+                    result_label.set_text(f'Error: {e}')
 
             ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_add)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))

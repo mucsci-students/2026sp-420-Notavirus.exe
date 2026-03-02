@@ -49,6 +49,11 @@ def config_model(test_config):
     """Create ConfigModel with test configuration."""
     return ConfigModel(test_config)
 
+@pytest.fixture
+def course_controller(config_model):
+    """Create CourseController with test configuration."""
+    course_model = CourseModel(config_model)
+    return CourseController(course_model, config_model)
 
 # ================================================================
 # SMOKE TESTS: Controller Instantiation
@@ -194,4 +199,63 @@ def test_controllers_accept_mock_view(config_model):
     
     assert len(controllers) == 6
     assert all(c is not None for c in controllers)
+
+
+# ================================================================
+# TESTS: CourseController.add_course
+# ================================================================
+
+def test_course_controller_add_course_success(course_controller):
+    """Test adding a valid new course via controller returns success."""
+    data = {
+        'course_id': 'TEST 999',
+        'credits': 3,
+        'room': [],
+        'lab': [],
+        'faculty': [],
+        'conflicts': []
+    }
+    success, message = course_controller.add_course(data)
+    assert success == True
+    assert 'TEST 999' in message
+
+
+def test_course_controller_add_course_second_section(course_controller):
+    """Test adding a second section of an existing course succeeds."""
+    data = {
+        'course_id': 'SECT 101',
+        'credits': 3,
+        'room': [],
+        'lab': [],
+        'faculty': [],
+        'conflicts': []
+    }
+    course_controller.add_course(data)
+    success, message = course_controller.add_course(data)
+    assert success == True
+
+
+def test_course_controller_add_course_zero_credits(course_controller):
+    """Test adding a course with 0 credits succeeds."""
+    data = {
+        'course_id': 'ZERO 101',
+        'credits': 0,
+        'room': [],
+        'lab': [],
+        'faculty': [],
+        'conflicts': []
+    }
+    success, message = course_controller.add_course(data)
+    assert success == True
+
+
+def test_course_controller_get_available_resources(course_controller):
+    """Test get_available_resources returns correct structure."""
+    resources = course_controller.get_available_resources()
+    assert 'rooms' in resources
+    assert 'labs' in resources
+    assert 'faculty' in resources
+    assert isinstance(resources['rooms'], list)
+    assert isinstance(resources['labs'], list)
+    assert isinstance(resources['faculty'], list)
     

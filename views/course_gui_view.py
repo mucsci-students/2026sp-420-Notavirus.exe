@@ -54,10 +54,62 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+
+        from views.gui_view import GUIView
+
+        controller = GUIView.controller.course_controller
+        resources = controller.get_available_resources()
+
+        with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
+            ui.label('Add Course').classes('text-4xl mb-4 text-black')
+
+            course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined').classes('w-80')
+            credits_input = ui.number(label='Credits ', min=0, value=4).props('rounded outlined').classes('w-80')
+            room_select = ui.select(resources['rooms'], label='Rooms', multiple=True).props('rounded outlined').classes('w-80')
+            lab_select = ui.select(resources ['labs'], label='Labs', multiple=True).props('rounded outlined').classes('w-80')
+            faculty_select = ui.select(resources ['faculty'], label='Faculty', multiple=True).props('rounded outlined').classes('w-80')
+
+            result_label = ui.label('').classes('text-base')
+
+            def handle_add():
+                try:
+                    course_id = course_id_input.value.strip() if course_id_input.value else ''
+                    if not course_id:
+                        result_label.set_text('Course ID is required.')
+                        return
+                    
+                    try:
+                        credits = int(credits_input.value)
+                    except (ValueError, TypeError):
+                        result_label.set_text('Credits must be a valid number.')
+                        return
+                    
+                    data = {
+                        'course_id': course_id,
+                        'credits': credits,
+                        'room': room_select.value or [],
+                        'lab': lab_select.value or [],
+                        'faculty': faculty_select.value or [],
+                        'conflicts': []
+                    }
+
+                    success, message = controller.add_course(data)
+                    result_label.set_text(message)
+
+                    if success:
+                        course_id_input.set_value('')
+                        credits_input.set_value(4)
+                        room_select.set_value([])
+                        lab_select.set_value([])
+                        faculty_select.set_value([])
+
+                except Exception as e:
+                    result_label.set_text(f'Error: {e}')
+
+            ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_add)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+
+        
 
     @ui.page('/course/modify')
     @staticmethod

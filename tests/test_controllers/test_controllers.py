@@ -55,6 +55,13 @@ def course_controller(config_model):
     course_model = CourseModel(config_model)
     return CourseController(course_model, config_model)
 
+@pytest.fixture
+def course_controller(config_model):
+    """Create CourseController with test configuration."""
+    course_model = CourseModel(config_model)
+    return CourseController(course_model, config_model)
+
+
 # ================================================================
 # SMOKE TESTS: Controller Instantiation
 # ================================================================

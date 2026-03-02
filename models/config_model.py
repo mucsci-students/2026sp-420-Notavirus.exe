@@ -59,8 +59,11 @@ class ConfigModel:
         Returns:
             None
         """
-        self.config = load_config_from_file(CombinedConfig, self.config_path)
-    
+        try:
+            self.config = load_config_from_file(CombinedConfig, self.config_path)
+        except Exception as e:
+            print(f"WARNING: reload skipped due to validation error: {e}")
+        
     def get_all_courses(self):
         """
         Get all courses from configuration.

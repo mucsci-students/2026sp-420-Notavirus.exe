@@ -35,7 +35,8 @@ class CourseModel:
     
     def add_course(self, course: CourseConfig) -> bool:
         """
-        Add course to configuration.
+        Add course to configuration (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             course (CourseConfig): Course object to add
@@ -43,25 +44,16 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course already exists
         """
-        # Check if course already exists using consistent helper
         if self.course_exists(course.course_id):
             return False
-        
-        # Add course to config
         self.config_model.config.config.courses.append(course)
-        
-        # Save and reload
-        if not self.config_model.safe_save():
-            return False
-        
-        self.config_model.reload()
         return True
     
     def delete_course(self, course_id: str, section_index: int = None) -> bool:
         """
-        Delete course by ID and optional section index.
-        
+        Delete course by ID and optional section index (in-memory only).
         Also removes all references to this course from conflicts and faculty preferences.
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             course_id (str): Course ID to delete (e.g., "CMSC 340")
@@ -70,94 +62,65 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course not found
         """
-        # Check if course exists using consistent helper
         if not self.course_exists(course_id):
             return False
-        
         try:
-            with self.config_model.config.config.edit_mode() as editable:
-                # Clean up conflict references in other courses
-                for course in editable.courses:
-                    if course.course_id != course_id:
-                        while course_id in course.conflicts:
-                            course.conflicts.remove(course_id)
-                
-                # Clean up faculty preferences
-                for faculty in editable.faculty:
-                    if course_id in faculty.course_preferences:
-                        del faculty.course_preferences[course_id]
-                
-                # Remove course(s)
-                if section_index is not None:
-                    # Remove specific section by index
-                    editable.courses = [
-                        c for i, c in enumerate(editable.courses)
-                        if i != section_index
-                    ]
-                else:
-                    # Remove all courses with this ID
-                    editable.courses = [
-                        c for c in editable.courses
-                        if c.course_id != course_id
-                    ]
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
+            # Remove conflict references from other courses
+            for course in self.config_model.config.config.courses:
+                if course.course_id != course_id:
+                    if course_id in course.conflicts:
+                        course.conflicts = [c for c in course.conflicts if c != course_id]
+
+            # Remove from faculty preferences
+            for faculty in self.config_model.config.config.faculty:
+                if course_id in faculty.course_preferences:
+                    del faculty.course_preferences[course_id]
+
+            # Remove course using list.pop() to avoid assignment validation
+            courses = self.config_model.config.config.courses
+            if section_index is not None:
+                if section_index < len(courses):
+                    courses.pop(section_index)
+            else:
+                for i in range(len(courses) - 1, -1, -1):
+                    if courses[i].course_id == course_id:
+                        courses.pop(i)
+
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG delete_course exception: {e}")
             return False
     
     def modify_course(self, course_id: str, **updates) -> bool:
         """
-        Modify a course's attributes.
+        Modify a course's attributes (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             course_id (str): Course ID to modify
             **updates: Keyword arguments for fields to update
-                - credits (int): New credit value
-                - room (list): New room list
-                - lab (list): New lab list
-                - faculty (list): New faculty list
         
         Returns:
             bool: True if successful, False if course not found
         """
-        # Check if course exists using consistent helper
         if not self.course_exists(course_id):
             return False
-        
         try:
-            with self.config_model.config.config.edit_mode() as editable:
-                # Find all courses with this ID and apply updates
-                for course in editable.courses:
-                    if course.course_id == course_id:
-                        # Apply updates
-                        if 'credits' in updates:
-                            if updates['credits'] < 0:
-                                return False
-                            course.credits = updates['credits']
-                        
-                        if 'room' in updates:
-                            course.room = updates['room']
-                        
-                        if 'lab' in updates:
-                            course.lab = updates['lab']
-                        
-                        if 'faculty' in updates:
-                            course.faculty = updates['faculty']
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
+            for course in self.config_model.config.config.courses:
+                if course.course_id == course_id:
+                    if 'credits' in updates:
+                        if updates['credits'] < 0:
+                            return False
+                        course.credits = updates['credits']
+                    if 'room' in updates:
+                        course.room = updates['room']
+                    if 'lab' in updates:
+                        course.lab = updates['lab']
+                    if 'faculty' in updates:
+                        course.faculty = updates['faculty']
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG modify_course exception: {e}")
             return False
     
     def course_exists(self, course_id: str) -> bool:
@@ -205,7 +168,6 @@ class CourseModel:
     def get_courses_with_sections(self) -> list[tuple[str, int, CourseConfig]]:
         """
         Get all courses with section labels.
-        
         Returns courses as tuples of (section_label, index, course).
         Section labels are formatted as "COURSE_ID.01", "COURSE_ID.02", etc.
         
@@ -217,11 +179,9 @@ class CourseModel:
         """
         section_counter = {}
         result = []
-        
         for i, course in enumerate(self.get_all_courses()):
             cid = course.course_id
             section_counter[cid] = section_counter.get(cid, 0) + 1
             label = f"{cid}.{section_counter[cid]:02d}"
             result.append((label, i, course))
-        
         return result

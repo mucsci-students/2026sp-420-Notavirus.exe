@@ -110,22 +110,23 @@ def test_add_course_success(course_model):
     assert course_model.course_exists("TEST 101") == True
 
 
-def test_add_course_duplicate(course_model):
+def test_add_course_duplicate_creates_second_section(course_model):
     """
-    Test that adding a duplicate course fails.
-    
+    Test that adding a course with an existing ID creates a second section.
+
     Parameters:
         course_model (CourseModel): Course model fixture
     """
-    # Add first course
-    course = build_test_course(course_id="DUP 101")
-    course_model.add_course(course)
-    
-    # Try to add duplicate
-    duplicate = build_test_course(course_id="DUP 101")
-    result = course_model.add_course(duplicate)
-    
-    assert result == False
+    course1 = build_test_course(course_id="DUP 101")
+    course2 = build_test_course(course_id="DUP 101")
+
+    course_model.add_course(course1)
+    result = course_model.add_course(course2)
+
+    assert result == True
+    sections = course_model.get_courses_with_sections()
+    dup_sections = [s for s in sections if s[2].course_id == "DUP 101"]
+    assert len(dup_sections) == 2
 
 
 def test_add_course_empty_rooms_labs(course_model):

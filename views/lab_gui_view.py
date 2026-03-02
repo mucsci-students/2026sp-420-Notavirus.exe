@@ -121,8 +121,8 @@ class LabGUIView:
         ui.query('body').style('background-color: var(--q-delete)')
         
         # Load labs from controller
-        if LabGUIView.controller:
-            initial_labs = LabGUIView.controller.get_all_labs()
+        if LabGUIView._lab_controller:
+            initial_labs = LabGUIView._lab_controller.get_all_labs()
         else:
             initial_labs = []
 
@@ -147,7 +147,7 @@ class LabGUIView:
                 ui.notify('No changes to save.', type='info')
                 return
                 
-            if LabGUIView.controller and LabGUIView.controller.delete_labs_gui(state['deleted_labs']):
+            if LabGUIView._lab_controller and LabGUIView._lab_controller.delete_labs_gui(state['deleted_labs']):
                 ui.notify('Changes saved successfully!', type='positive')
                 state['deleted_labs'] = []
                 ui.navigate.to('/lab')

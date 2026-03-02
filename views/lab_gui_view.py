@@ -221,8 +221,19 @@ class LabGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-        with ui.column().classes('gap-6 items-center w-full'):
+        with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
+            ui.label('View Labs').classes('text-4xl mb-6 text-black')
+
+            labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
+
+            if not labs:
+                ui.label('No labs in configuration.').classes('text-gray-600')
+            else:
+                with ui.column().classes('w-full max-w-2xl gap-3'):
+                    for lab in labs:
+                        with ui.card().classes('w-full px-5 py-4'):
+                            ui.label(lab).classes('text-base font-semibold')
+
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/lab'))

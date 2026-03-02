@@ -180,6 +180,7 @@ class ConflictGUIView:
     @ui.page('/conflict/delete')
     @staticmethod
     def conflict_delete():
+        from views.gui_view import GUIView
 
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')

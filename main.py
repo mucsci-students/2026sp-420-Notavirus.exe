@@ -69,11 +69,11 @@ def main():
     from controllers.room_controller     import RoomController
     from controllers.schedule_controller import ScheduleController
 
-    faculty_controller  = FacultyController(faculty_model,   None)
-    course_controller   = CourseController(course_model,     None, config_model)
+    faculty_controller  = FacultyController(faculty_model, None)
+    course_controller   = CourseController(course_model, config_model)
     conflict_controller = ConflictController(conflict_model, None)
-    lab_controller      = LabController(lab_model,           None)
-    room_controller     = RoomController(room_model,         None)
+    lab_controller      = LabController(lab_model, None)
+    room_controller     = RoomController(room_model, None)
     schedule_controller = ScheduleController(scheduler_model, None)
 
     # Inject into view classes BEFORE importing them
@@ -103,7 +103,24 @@ def main():
     ScheduleGUIView.schedule_controller = schedule_controller
 
     # Import GUIView last so all routes are already registered
-    from views.gui_view import GUIView  # noqa: F401
+    from views.gui_view import GUIView  
+
+    # GUIView top-level controller object
+    GUIView.controller = type('obj', (object,), {
+        'config_model':        config_model,
+        'course_model':        course_model,
+        'faculty_model':       faculty_model,
+        'conflict_model':      conflict_model,
+        'lab_model':           lab_model,
+        'room_model':          room_model,
+        'faculty_controller':  faculty_controller,
+        'course_controller':   course_controller,
+        'conflict_controller': conflict_controller,
+        'lab_controller':      lab_controller,
+        'room_controller':     room_controller,
+    })()
+
+    
 
     print(f"Loading configuration from: {config_path}")
     from nicegui import ui

@@ -32,7 +32,8 @@ class RoomModel:
     
     def add_room(self, room_name: str) -> bool:
         """
-        Add room to configuration.
+        Add room to configuration (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             room_name (str): Name of room to add (e.g., "Roddy 140")
@@ -40,30 +41,19 @@ class RoomModel:
         Returns:
             bool: True if successful, False if room already exists or name is invalid
         """
-        # Validate room name
         if not room_name or not room_name.strip():
             return False
-        
-        # Check if room already exists
         if self.room_exists(room_name):
             return False
-        
-        # Add room to config
         self.config_model.config.config.rooms.append(room_name)
-        
-        # Save and reload
-        if not self.config_model.safe_save():
-            return False
-        
-        self.config_model.reload()
         return True
     
     def delete_room(self, room_name: str) -> bool:
         """
-        Delete room from configuration.
-        
+        Delete room from configuration (in-memory only).
         Also removes all references to this room from courses and faculty.
-        IMPORTANT: Removes references BEFORE removing from rooms list to avoid validation errors.
+        Removes references BEFORE removing from rooms list to avoid validation errors.
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             room_name (str): Name of room to delete
@@ -73,40 +63,24 @@ class RoomModel:
         """
         if not self.room_exists(room_name):
             return False
-        
         try:
-            # Remove room references from courses
             for course in self.config_model.config.config.courses:
                 course.room = [r for r in course.room if r != room_name]
-            
-            # Remove room from faculty preferences
             for faculty in self.config_model.config.config.faculty:
                 if room_name in faculty.room_preferences:
                     del faculty.room_preferences[room_name]
-            
-            # NOW remove room from rooms list (do this LAST)
             self.config_model.config.config.rooms = [
                 r for r in self.config_model.config.config.rooms if r != room_name
             ]
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG delete_room exception: {e}")
             return False
     
     def modify_room(self, old_name: str, new_name: str) -> bool:
         """
-        Modify room name and update all references.
-        
-        Updates room name in:
-        - Rooms list
-        - Course room assignments
-        - Faculty room preferences
+        Modify room name and update all references (in-memory only).
+        Call config_model.safe_save() to persist changes to disk.
         
         Parameters:
             old_name (str): Current room name
@@ -115,37 +89,22 @@ class RoomModel:
         Returns:
             bool: True if successful, False if old room doesn't exist or new name already exists
         """
-        # Validate
         if not self.room_exists(old_name):
             return False
-        
         if self.room_exists(new_name):
             return False
-        
         try:
-            with self.config_model.config.config.edit_mode() as editable:
-                # Update room name in list
-                rooms = editable.rooms
-                index = rooms.index(old_name)
-                rooms[index] = new_name
-                
-                # Update course references
-                for course in editable.courses:
-                    course.room = [new_name if r == old_name else r for r in course.room]
-                
-                # Update faculty preferences
-                for faculty in editable.faculty:
-                    if old_name in faculty.room_preferences:
-                        faculty.room_preferences[new_name] = faculty.room_preferences.pop(old_name)
-            
-            # Save changes
-            if not self.config_model.safe_save():
-                return False
-            
-            self.config_model.reload()
+            rooms = self.config_model.config.config.rooms
+            index = rooms.index(old_name)
+            rooms[index] = new_name
+            for course in self.config_model.config.config.courses:
+                course.room = [new_name if r == old_name else r for r in course.room]
+            for faculty in self.config_model.config.config.faculty:
+                if old_name in faculty.room_preferences:
+                    faculty.room_preferences[new_name] = faculty.room_preferences.pop(old_name)
             return True
-            
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG modify_room exception: {e}")
             return False
     
     def room_exists(self, room_name: str) -> bool:

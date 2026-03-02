@@ -30,16 +30,17 @@ class FacultyGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            ui.label('Faculty').classes('text-4xl mb-10 text-black')
-            ui.button('Add Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/add'))
-            ui.button('Modify Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/modify'))
-            ui.button('Delete Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/delete'))
-            ui.button('View Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/view'))
+            # Title
+            ui.label('Faculty').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            ui.button('Add Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/add'))
+            ui.button('Modify Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/modify'))
+            ui.button('Delete Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/delete'))
+            ui.button('View Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/faculty/add')
     @staticmethod
@@ -53,7 +54,6 @@ class FacultyGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))

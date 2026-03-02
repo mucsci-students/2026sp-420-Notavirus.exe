@@ -30,16 +30,16 @@ class CourseGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            ui.label('Course').classes('text-4xl mb-10 text-black')
-            ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/add'))
-            ui.button('Modify Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/modify'))
-            ui.button('Delete Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/delete'))
-            ui.button('View Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course/view'))
+            # Title
+            ui.label('Course').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            ui.button('Add Course').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-courseBegin), var(--q-courseEnd)) !important;').on('click', lambda: ui.navigate.to('/course/add'))
+            ui.button('Modify Course').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-courseBegin), var(--q-courseEnd)) !important;').on('click', lambda: ui.navigate.to('/course/modify'))
+            ui.button('Delete Course').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-courseBegin), var(--q-courseEnd)) !important;').on('click', lambda: ui.navigate.to('/course/delete'))
+            ui.button('View Course').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-courseBegin), var(--q-courseEnd)) !important;').on('click', lambda: ui.navigate.to('/course/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/course/add')
     @staticmethod

@@ -31,21 +31,16 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
-
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            ui.label('Conflict').classes('text-4xl mb-10 text-black')
-            ui.button('Add Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/add'))
-            ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/modify'))
-            ui.button('Delete Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/delete'))
-            ui.button('View Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/view'))
+            # Title
+            ui.label('Conflict').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            ui.button('Add Conflict').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;').on('click', lambda: ui.navigate.to('/conflict/add'))
+            ui.button('Modify Conflict').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;').on('click', lambda: ui.navigate.to('/conflict/modify'))
+            ui.button('Delete Conflict').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;').on('click', lambda: ui.navigate.to('/conflict/delete'))
+            ui.button('View Conflict').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;').on('click', lambda: ui.navigate.to('/conflict/view'))
             ui.space()
-
-            ui.button('Back') \
-                .props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4') \
-                .on('click', lambda: ui.navigate.to('/'))
-
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/conflict/add')
     @staticmethod

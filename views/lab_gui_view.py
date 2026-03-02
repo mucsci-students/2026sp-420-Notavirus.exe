@@ -22,15 +22,16 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            ui.label('Lab').classes('text-4xl mb-10 text-black')
-            ui.button('Add Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/add'))
-            ui.button('Modify Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/modify'))
-            ui.button('Delete Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/delete'))
-            ui.button('View Lab').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab/view'))
+            # Title
+            ui.label('Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            ui.button('Add Lab').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;').on('click', lambda: ui.navigate.to('/lab/add'))
+            ui.button('Modify Lab').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;').on('click', lambda: ui.navigate.to('/lab/modify'))
+            ui.button('Delete Lab').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;').on('click', lambda: ui.navigate.to('/lab/delete'))
+            ui.button('View Lab').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;').on('click', lambda: ui.navigate.to('/lab/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/lab/add')
     @staticmethod
@@ -44,7 +45,6 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))

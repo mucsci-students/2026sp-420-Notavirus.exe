@@ -66,7 +66,6 @@ class GUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
-
         cm = GUIView.controller.config_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-6'):
@@ -81,13 +80,16 @@ class GUIView:
                     ui.label(lab)
 
             with ui.expansion('Courses', icon='book').classes('w-3/4'):
-                for course in cm.get_all_courses():
-                    with ui.card().classes('w-full'):
-                        ui.label(course.course_id).classes('font-bold')
-                        ui.label(f'Credits: {course.credits}')
-                        ui.label(f'Rooms: {", ".join(course.room)}')
-                        ui.label(f'Labs: {", ".join(course.lab) or "None"}')
-                        ui.label(f'Faculty: {", ".join(course.faculty) or "Any"}')
+                with ui.scroll_area().classes('w-full h-64'):
+                    for course in cm.get_all_courses():
+                        with ui.card().classes('w-full mb-2'):
+                            with ui.row().classes('w-full justify-between items-center'):
+                                ui.label(course.course_id).classes('font-bold text-lg')
+                                ui.label(f'{course.credits} credits').classes('text-gray-500')
+                            with ui.row().classes('gap-4'):
+                                ui.label(f'Rooms: {", ".join(course.room) or "Any"}').classes('text-sm')
+                                ui.label(f'Labs: {", ".join(course.lab) or "None"}').classes('text-sm')
+                                ui.label(f'Faculty: {", ".join(course.faculty) or "Any"}').classes('text-sm')
 
             with ui.expansion('Faculty', icon='person').classes('w-3/4'):
                 for f in cm.get_all_faculty():

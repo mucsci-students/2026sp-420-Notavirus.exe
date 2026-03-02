@@ -108,7 +108,7 @@ class CourseGUIView:
 
             ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_add)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
-
+        
 
     @ui.page('/course/modify')
     @staticmethod

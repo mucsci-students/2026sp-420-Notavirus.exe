@@ -119,7 +119,7 @@ class LabGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)')
-        
+         
         # Load labs from controller
         if LabGUIView._lab_controller:
             initial_labs = LabGUIView._lab_controller.get_all_labs()

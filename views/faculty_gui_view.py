@@ -129,13 +129,11 @@ class FacultyGUIView:
                     def refresh_faculty_list():
                         scroll_area.clear()
                         with scroll_area:
-                            from views.gui_view import GUIView
-                            if not GUIView._controller:
+                            if not FacultyGUIView.faculty_model:
                                 ui.label('System not initialized properly.').classes('text-xl text-red-500')
                                 return
-                                
                             try:
-                                faculty_list = GUIView._controller.config_model.get_all_faculty()
+                                faculty_list = FacultyGUIView.faculty_model.get_all_faculty()
                                 if faculty_list:
                                     for f in faculty_list:
                                         ui.label(f.name).classes('text-xl text-black mb-2 py-2 border-b border-gray-200 w-full')
@@ -178,11 +176,11 @@ class FacultyGUIView:
                 
                 try:
                     from views.gui_view import GUIView
-                    if not GUIView._controller:
+                    if not GUIView.controller:
                         ui.notify('System not initialized properly.', type='negative')
                         return
                     
-                    controller = GUIView._controller.faculty_controller
+                    controller = GUIView.controller.faculty_controller
                     
                     if controller.add_faculty(faculty_data):
                         ui.notify(f"Faculty '{name}' added successfully!", type='positive')

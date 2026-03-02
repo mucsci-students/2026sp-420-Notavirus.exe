@@ -55,6 +55,8 @@ class FacultyGUIView:
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
                 .classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
@@ -428,6 +430,8 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-delete)')
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Delete Faculty').classes('text-4xl mb-6 text-black')
 
             container = ui.column().classes('w-full max-w-lg gap-3 items-center')
@@ -516,6 +520,8 @@ class FacultyGUIView:
         model = FacultyGUIView.faculty_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('View Faculty').classes('text-4xl mb-6 text-black')
             with ui.column().classes('w-full max-w-lg gap-3'):
                 faculty_list = model.get_all_faculty() if model else []

@@ -61,9 +61,43 @@ class GUIView:
             None
         """
         GUITheme.applyTheming()
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
+        ui.query('body').style('background-color: var(--q-primary)')
+        cm = GUIView.controller.config_model
+
+        with ui.column().classes('w-full items-center pt-12 pb-12 gap-6'):
+            ui.label('Configuration').classes('text-4xl mb-10 text-black')
+
+            with ui.expansion('Rooms', icon='meeting_room').classes('w-3/4'):
+                for room in cm.get_all_rooms():
+                    ui.label(room)
+
+            with ui.expansion('Labs', icon='computer').classes('w-3/4'): 
+                for lab in cm.get_all_labs():
+                    ui.label(lab)
+
+            with ui.expansion('Courses', icon='book').classes('w-3/4'):
+                with ui.scroll_area().classes('w-full h-64'):
+                    for course in cm.get_all_courses():
+                        with ui.card().classes('w-full mb-2'):
+                            with ui.row().classes('w-full justify-between items-center'):
+                                ui.label(course.course_id).classes('font-bold text-lg')
+                                ui.label(f'{course.credits} credits').classes('text-gray-500')
+                            with ui.row().classes('gap-4'):
+                                ui.label(f'Rooms: {", ".join(course.room) or "Any"}').classes('text-sm')
+                                ui.label(f'Labs: {", ".join(course.lab) or "None"}').classes('text-sm')
+                                ui.label(f'Faculty: {", ".join(course.faculty) or "Any"}').classes('text-sm')
+
+            with ui.expansion('Faculty', icon='person').classes('w-3/4'):
+                for f in cm.get_all_faculty():
+                    with ui.expansion(f.name).classes('w-full'):
+                        ui.label(f'Max credits: {f.maximum_credits}')
+                        ui.label(f'Min credits: {f.minimum_credits}')
+
+                        for day, slots in f.times.items():
+                            ui.label(f'{day}: {", ".join(str(s) for s in slots) or "Unavailable"}')
+
+            ui.button('Back').props('rounded color=black text-color=white no-caps') \
+                .classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
     
     @staticmethod
     def runGUI():

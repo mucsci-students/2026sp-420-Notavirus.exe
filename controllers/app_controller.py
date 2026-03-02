@@ -82,6 +82,33 @@ class SchedulerController:
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
 
         LabGUIView._lab_controller = self.lab_controller
+
+        from views.faculty_gui_view  import FacultyGUIView
+        from views.course_gui_view   import CourseGUIView
+        from views.conflict_gui_view import ConflictGUIView
+        from views.room_gui_view     import RoomGUIView
+        from views.schedule_gui_view import ScheduleGUIView
+
+        FacultyGUIView.faculty_model        = self.faculty_model
+        FacultyGUIView.faculty_controller   = self.faculty_controller
+
+        CourseGUIView.course_model          = self.course_model
+        CourseGUIView.course_controller     = self.course_controller
+
+        ConflictGUIView.conflict_model      = self.conflict_model
+        ConflictGUIView.conflict_controller = self.conflict_controller
+
+        LabGUIView.lab_model                = self.lab_model
+        LabGUIView.lab_controller           = self.lab_controller
+        LabGUIView._lab_controller          = self.lab_controller
+
+        RoomGUIView.room_model              = self.room_model
+        RoomGUIView.room_controller         = self.room_controller
+
+        ScheduleGUIView.scheduler_model     = self.scheduler_model
+        ScheduleGUIView.schedule_controller = self.schedule_controller
+
+        GUIView.controller = self
     
     def run(self):
         """
@@ -99,6 +126,6 @@ class SchedulerController:
         print("  🚀 GUI SERVER STARTING")
         print("="*60)
         print("  🌐 Open your browser to: http://localhost:8080")
-        print("  🛑 Stop server: Press Ctrl+C in this terminal")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal (will receive asyncio errors)")
         print("="*60 + "\n")
         ui.run(title='Scheduler', reload=False, storage_secret='scheduler_secret_key')

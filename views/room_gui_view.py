@@ -77,12 +77,12 @@ class RoomGUIView:
 
             if success:
                 result_label.set_text("Room added successfully.")
-                ui.navigate.to('/room')
+                
             else:
                 result_label.set_text("Room already exists or invalid.")
 
-        ui.button("Add").on("click", handle_add)
-        
+        ui.button("Save to config").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
+        ui.button("save").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
         ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     
@@ -113,11 +113,14 @@ class RoomGUIView:
 
                 if success:
                     result_label.set_text("Room modified.")
-                    ui.navigate.to('/room')
+                    
                 else:
                     result_label.set_text("Modification failed.")
 
-            ui.button("Modify").on("click", handle_modify)
+            ui.button("Save to Config").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
+            ui.button("Save").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
+
     @ui.page('/room/delete')
     @staticmethod
     def room_delete():

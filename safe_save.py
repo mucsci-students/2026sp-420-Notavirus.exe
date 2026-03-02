@@ -1,36 +1,50 @@
 # Filename: safe_save.py
 # Description: Safe config saving with validation before writing to the original file
+
 import shutil
 import tempfile
 import os
+import json
 
 
 def safe_save(config, config_path: str) -> bool:
     """
-    Writes config to a temporary file and only overwrites the original if
-    the write succeeds.
-
-    Strips faculty course preferences that reference courses not present in
-    the configuration before writing, since hypothetical course preferences
-    are allowed in-memory but must be valid on disk.
+    Saves config by merging changes onto the original raw JSON dict.
+    This preserves the original file's formatting and field representations
+    (e.g. compact time strings) for any fields that weren't modified.
 
     Returns True if saved successfully, False otherwise.
     """
     try:
-        # Get valid course IDs
         valid_courses = {c.course_id for c in config.config.courses}
 
-        # Strip invalid course preferences before writing
-        for faculty in config.config.faculty:
-            faculty.course_preferences = {
-                k: v for k, v in faculty.course_preferences.items()
+        # Load the original file as a raw dict to preserve formatting
+        with open(config_path, 'r') as f:
+            original = json.load(f)
+
+        # Build the updated data from Pydantic but only for sections we manage
+        updated = json.loads(config.model_dump_json(exclude_unset=True))
+
+        # Selectively merge only the config section (rooms, labs, courses, faculty)
+        # Leave time_slot_config, limit, optimizer_flags untouched from original
+        original['config']['rooms'] = updated['config']['rooms']
+        original['config']['labs'] = updated['config']['labs']
+        original['config']['courses'] = updated['config']['courses']
+
+        # For faculty, strip invalid course preferences
+        updated_faculty = updated['config']['faculty']
+        for faculty in updated_faculty:
+            prefs = faculty.get('course_preferences', {})
+            faculty['course_preferences'] = {
+                k: v for k, v in prefs.items()
                 if k in valid_courses
             }
+        original['config']['faculty'] = updated_faculty
 
         dir_name = os.path.dirname(os.path.abspath(config_path))
         with tempfile.NamedTemporaryFile(mode='w', dir=dir_name, delete=False, suffix='.tmp') as tmp:
             tmp_path = tmp.name
-            tmp.write(config.model_dump_json(indent=2))
+            json.dump(original, tmp, indent=2)
 
         shutil.move(tmp_path, config_path)
         print("Changes saved successfully.")

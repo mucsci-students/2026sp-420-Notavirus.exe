@@ -23,9 +23,7 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-primary)')
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            # Title
             ui.label('Faculty').classes('text-4xl mb-10 text-black')
-
             ui.button('Add Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/add'))
             ui.button('Modify Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/modify'))
             ui.button('Delete Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/delete'))
@@ -58,7 +56,8 @@ class FacultyGUIView:
 
         User first selects a faculty member from a dropdown, then sees
         all of their current information with structured button-based
-        controls for making changes.
+        controls for making changes. Changes are in-memory until Save
+        Configuration is clicked.
 
         Parameters:
             None
@@ -71,14 +70,15 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-modify)')
 
         controller = GUIView.controller.faculty_controller
+        config_model = GUIView.controller.config_model
         all_faculty = controller.model.get_all_faculty()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
-            # Home button at top
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
 
             ui.label('Modify Faculty').classes('text-4xl mb-4 text-black')
+            ui.label('Select a Faculty member to modify their information. Press the "Save Configuration" button at the bottom of the editor page to permanently save your modifications to the original configuration file.').classes('text-lg text-black text-center max-w-xl')
 
             if not all_faculty:
                 ui.label('There are no faculty in the configuration.').classes('text-xl text-black')
@@ -89,6 +89,7 @@ class FacultyGUIView:
             selected_faculty = {'value': None}
             form_card = ui.card().classes('w-full max-w-2xl')
             form_card.set_visibility(False)
+            save_config_label = ui.label('').classes('text-lg text-black')
 
             def reload_form():
                 try:
@@ -104,11 +105,11 @@ class FacultyGUIView:
                 f = selected_faculty['value']
                 success = controller.model.modify_faculty(f.name, field, value)
                 if success:
-                    feedback_label.set_text(f"Updated successfully.")
+                    feedback_label.set_text('Updated successfully.')
                     feedback_label.classes(replace='text-md text-green-600')
                     reload_form()
                 else:
-                    feedback_label.set_text(f"Failed to update.")
+                    feedback_label.set_text('Failed to update.')
                     feedback_label.classes(replace='text-md text-red-600')
 
             def build_form(f):
@@ -122,28 +123,22 @@ class FacultyGUIView:
                             ui.label(f"Current: {'Full-time' if is_fulltime else 'Adjunct'} | Max Credits: {f.maximum_credits} | Course Limit: {f.unique_course_limit}").classes('text-black')
                             position_feedback = ui.label(' ').classes('text-md text-black')
                             with ui.row().classes('gap-4'):
-                                def set_fulltime():
-                                    name = selected_faculty['value'].name
-                                    controller.model.modify_faculty(name, 'unique_course_limit', 2)
-                                    if selected_faculty['value'].maximum_credits <= 4:
-                                        controller.model.modify_faculty(name, 'maximum_credits', 12)
-                                    position_feedback.set_text("Position set to Full-time.")
-                                    position_feedback.classes(replace='text-md text-green-600')
-                                    reload_form()
-
-                                def set_adjunct():
-                                    name = selected_faculty['value'].name
-                                    controller.model.modify_faculty(name, 'unique_course_limit', 1)
-                                    if selected_faculty['value'].maximum_credits > 4:
-                                        if selected_faculty['value'].minimum_credits > 4:
-                                            controller.model.modify_faculty(name, 'minimum_credits', 4)
-                                        controller.model.modify_faculty(name, 'maximum_credits', 4)
-                                    position_feedback.set_text("Position set to Adjunct.")
-                                    position_feedback.classes(replace='text-md text-green-600')
-                                    reload_form()
-
-                                ui.button('Set Full-time').props('rounded color=black text-color=white no-caps').on('click', set_fulltime)
-                                ui.button('Set Adjunct').props('rounded color=black text-color=white no-caps').on('click', set_adjunct)
+                                ui.button('Set Full-time').props('rounded color=black text-color=white no-caps').on(
+                                    'click', lambda: [
+                                        controller.gui_set_position(selected_faculty['value'].name, True),
+                                        position_feedback.set_text('Position set to Full-time.'),
+                                        position_feedback.classes(replace='text-md text-green-600'),
+                                        reload_form()
+                                    ]
+                                )
+                                ui.button('Set Adjunct').props('rounded color=black text-color=white no-caps').on(
+                                    'click', lambda: [
+                                        controller.gui_set_position(selected_faculty['value'].name, False),
+                                        position_feedback.set_text('Position set to Adjunct.'),
+                                        position_feedback.classes(replace='text-md text-green-600'),
+                                        reload_form()
+                                    ]
+                                )
 
                         ui.separator()
 
@@ -156,20 +151,13 @@ class FacultyGUIView:
                                 max_credits_input = ui.number(min=0, max=20, value=f.maximum_credits).classes('w-32')
 
                                 def save_max_credits():
-                                    name = selected_faculty['value'].name
-                                    new_max = int(max_credits_input.value)
-                                    if selected_faculty['value'].minimum_credits > new_max:
-                                        controller.model.modify_faculty(name, 'minimum_credits', new_max)
-                                    controller.model.modify_faculty(name, 'maximum_credits', new_max)
-                                    if new_max <= 4:
-                                        controller.model.modify_faculty(name, 'unique_course_limit', 1)
-                                    else:
-                                        if selected_faculty['value'].unique_course_limit < 2:
-                                            controller.model.modify_faculty(name, 'unique_course_limit', 2)
-                                    max_credits_feedback.set_text("Maximum credits updated.")
-                                    max_credits_feedback.classes(replace='text-md text-green-600')
+                                    success = controller.gui_set_maximum_credits(
+                                        selected_faculty['value'].name, int(max_credits_input.value)
+                                    )
+                                    if success:
+                                        max_credits_feedback.set_text('Maximum credits updated.')
+                                        max_credits_feedback.classes(replace='text-md text-green-600')
                                     reload_form()
-                                   
 
                                 ui.button('Save').props('rounded color=black text-color=white no-caps').on('click', save_max_credits)
 
@@ -311,6 +299,25 @@ class FacultyGUIView:
 
                                     ui.button('Save').props('rounded color=black text-color=white no-caps').on('click', save_room_pref)
 
+                                if f.room_preferences:
+                                    ui.label('Remove a room preference:').classes('text-black mt-2')
+                                    with ui.row().classes('gap-4 items-center'):
+                                        remove_room_select = ui.select(
+                                            options=list(f.room_preferences.keys()),
+                                            label='Room to Remove'
+                                        ).classes('w-48')
+
+                                        def remove_room_pref():
+                                            if not remove_room_select.value:
+                                                return
+                                            new_prefs = dict(selected_faculty['value'].room_preferences)
+                                            new_prefs.pop(remove_room_select.value, None)
+                                            apply('room_preferences', new_prefs, room_pref_feedback)
+
+                                        ui.button('Remove').props('rounded color=red text-color=white no-caps').on('click', remove_room_pref)
+                            else:
+                                ui.label('No rooms available in configuration.').classes('text-black text-sm')
+
                         ui.separator()
 
                         # --- Lab Preferences ---
@@ -341,6 +348,25 @@ class FacultyGUIView:
 
                                     ui.button('Save').props('rounded color=black text-color=white no-caps').on('click', save_lab_pref)
 
+                                if f.lab_preferences:
+                                    ui.label('Remove a lab preference:').classes('text-black mt-2')
+                                    with ui.row().classes('gap-4 items-center'):
+                                        remove_lab_select = ui.select(
+                                            options=list(f.lab_preferences.keys()),
+                                            label='Lab to Remove'
+                                        ).classes('w-48')
+
+                                        def remove_lab_pref():
+                                            if not remove_lab_select.value:
+                                                return
+                                            new_prefs = dict(selected_faculty['value'].lab_preferences)
+                                            new_prefs.pop(remove_lab_select.value, None)
+                                            apply('lab_preferences', new_prefs, lab_pref_feedback)
+
+                                        ui.button('Remove').props('rounded color=red text-color=white no-caps').on('click', remove_lab_pref)
+                            else:
+                                ui.label('No labs available in configuration.').classes('text-black text-sm')
+
             def on_select(e):
                 if not e.value or e.value not in faculty_options:
                     form_card.set_visibility(False)
@@ -351,6 +377,15 @@ class FacultyGUIView:
                 form_card.set_visibility(True)
                 build_form(f)
 
+            def handle_save():
+                success = config_model.safe_save()
+                if success:
+                    save_config_label.set_text('Configuration saved successfully.')
+                    save_config_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_config_label.set_text('Save failed. Check terminal for details.')
+                    save_config_label.classes(replace='text-lg text-red-600')
+
             ui.select(
                 options=list(faculty_options.keys()),
                 label='Select Faculty Member',
@@ -358,7 +393,10 @@ class FacultyGUIView:
             ).classes('w-full max-w-2xl text-xl')
 
             form_card
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/faculty'))
+            save_config_label
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4').on('click', handle_save)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty'))
+
     @ui.page('/faculty/delete')
     @staticmethod
     def faculty_delete():

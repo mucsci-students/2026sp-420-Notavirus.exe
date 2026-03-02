@@ -46,6 +46,8 @@ class LabGUIView:
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
 
@@ -71,6 +73,8 @@ class LabGUIView:
         config_model = GUIView.controller.config_model
 
         with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Modify Lab').classes('text-4xl mb-10 text-black')
 
             existing_lab = ui.select(labs, label='Select Lab to Modify').props('rounded outlined').classes('w-80')
@@ -166,6 +170,8 @@ class LabGUIView:
                 ui.navigate.to('/lab')
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Delete Lab').classes('text-4xl mb-10 text-black')
             
             # The list box (scrollable)
@@ -216,5 +222,7 @@ class LabGUIView:
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))

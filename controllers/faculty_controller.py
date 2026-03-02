@@ -357,3 +357,59 @@ class FacultyController:
             return self.model.modify_faculty(faculty_name, 'lab_preferences', lab_prefs)
         
         return False
+    
+    def gui_set_position(self, faculty_name: str, is_fulltime: bool) -> bool:
+        """
+        Set faculty position type and update credits and course limit accordingly.
+        Full-time: unique_course_limit=2, maximum_credits=12 if currently adjunct.
+        Adjunct: unique_course_limit=1, maximum_credits=4 if currently above adjunct,
+                minimum_credits lowered first if it would exceed new max.
+
+        Parameters:
+            faculty_name (str): Name of faculty to modify
+            is_fulltime (bool): True for full-time, False for adjunct
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        faculty = self.model.get_faculty_by_name(faculty_name)
+        if not faculty:
+            return False
+
+        if is_fulltime:
+            self.model.modify_faculty(faculty_name, 'unique_course_limit', 2)
+            if faculty.maximum_credits <= 4:
+                self.model.modify_faculty(faculty_name, 'maximum_credits', 12)
+        else:
+            self.model.modify_faculty(faculty_name, 'unique_course_limit', 1)
+            if faculty.maximum_credits > 4:
+                if faculty.minimum_credits > 4:
+                    self.model.modify_faculty(faculty_name, 'minimum_credits', 4)
+                self.model.modify_faculty(faculty_name, 'maximum_credits', 4)
+        return True
+
+    def gui_set_maximum_credits(self, faculty_name: str, new_max: int) -> bool:
+        """
+        Set faculty maximum credits and sync unique_course_limit and minimum_credits
+        to stay consistent with the new value.
+
+        Parameters:
+            faculty_name (str): Name of faculty to modify
+            new_max (int): New maximum credits value
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        faculty = self.model.get_faculty_by_name(faculty_name)
+        if not faculty:
+            return False
+
+        if faculty.minimum_credits > new_max:
+            self.model.modify_faculty(faculty_name, 'minimum_credits', new_max)
+        self.model.modify_faculty(faculty_name, 'maximum_credits', new_max)
+        if new_max <= 4:
+            self.model.modify_faculty(faculty_name, 'unique_course_limit', 1)
+        else:
+            if faculty.unique_course_limit < 2:
+                self.model.modify_faculty(faculty_name, 'unique_course_limit', 2)
+        return True

@@ -138,6 +138,8 @@ class CourseGUIView:
         controller = CourseGUIView.course_controller
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Modify Course').classes('text-4xl mb-6 text-black')
 
             sections = model.get_courses_with_sections() if model else []
@@ -197,7 +199,7 @@ class CourseGUIView:
                     """
                     entry = section_map.get(selected_label.value)
                     if not entry:
-                        status.set_text('⚠ Section not found.')
+                        status.set_text('Section not found!')
                         return
                     section_idx, course = entry
                     cid = course.course_id
@@ -259,12 +261,12 @@ class CourseGUIView:
                             updates['faculty'] = parsed['faculty']
 
                     if not updates:
-                        status.set_text('ℹ No changes entered.')
+                        status.set_text('No changes entered.')
                         return
 
                     ok = model.modify_course(cid, **updates)
                     if ok:
-                        status.set_text(f"✓ '{selected_label.value}' updated successfully.")
+                        status.set_text(f"'{selected_label.value}' updated successfully.")
                         credits_input.value = rooms_input.value = labs_input.value = faculty_input.value = ''
                         # Refresh section map with updated data
                         new_sections = model.get_courses_with_sections()
@@ -393,6 +395,8 @@ class CourseGUIView:
         model = CourseGUIView.course_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('View Courses').classes('text-4xl mb-6 text-black')
             with ui.column().classes('w-full max-w-lg gap-3'):
                 sections = model.get_courses_with_sections() if model else []

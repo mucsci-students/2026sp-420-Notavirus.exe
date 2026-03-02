@@ -8,6 +8,9 @@ from nicegui import ui
 from views.gui_theme import GUITheme
 
 class RoomGUIView:
+    room_model = None
+    room_controller = None
+
     @ui.page('/room')
     @staticmethod
     def room():
@@ -44,8 +47,10 @@ class RoomGUIView:
         """
         GUITheme.applyTheming()
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/room'))
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/modify')
     @staticmethod
@@ -60,8 +65,10 @@ class RoomGUIView:
         """
         GUITheme.applyTheming()
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/room'))
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/delete')
     @staticmethod
@@ -76,8 +83,10 @@ class RoomGUIView:
         """
         GUITheme.applyTheming()
         with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/room'))
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/view')
     @staticmethod
@@ -91,6 +100,20 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/room'))
+        ui.query('body').style('background-color: var(--q-primary)')
+        with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+            ui.label('View Rooms').classes('text-4xl mb-6 text-black')
+
+            rooms = RoomGUIView.room_model.get_all_rooms() if RoomGUIView.room_model else []
+
+            if not rooms:
+                ui.label('No rooms in configuration.').classes('text-gray-600')
+            else:
+                with ui.column().classes('w-full max-w-2xl gap-3'):
+                    for room in rooms:
+                        with ui.card().classes('w-full px-5 py-4'):
+                            ui.label(room).classes('text-base font-semibold')
+
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/room'))

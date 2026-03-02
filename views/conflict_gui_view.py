@@ -23,9 +23,7 @@ class ConflictGUIView:
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            # Title
             ui.label('Conflict').classes('text-4xl mb-10 text-black')
-
             ui.button('Add Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/add'))
             ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/modify'))
             ui.button('Delete Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict/delete'))
@@ -72,12 +70,13 @@ class ConflictGUIView:
     def conflict_delete():
         """
         Displays the GUI for deleting a conflict.
-        
+
         By default, displays conflicts as section pairs (e.g. CMSC 140.01 ↔ CMSC 161.01)
         and deletes only that specific section pair's conflict.
         When the 'Sort course conflicts without section preference' toggle is enabled,
         conflicts are collapsed to base course pairs (e.g. CMSC 140 ↔ CMSC 161)
         and deleting will remove that conflict across all sections.
+        Changes are in-memory until Save Configuration is clicked.
 
         Parameters:
             None        
@@ -91,6 +90,7 @@ class ConflictGUIView:
 
         controller = GUIView.controller.conflict_controller
         course_model = GUIView.controller.course_model
+        config_model = GUIView.controller.config_model
 
         courses_with_sections = course_model.get_courses_with_sections()
         section_label_map = {i: label for label, i, _ in courses_with_sections}
@@ -114,6 +114,9 @@ class ConflictGUIView:
         conflict_options = build_section_options()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+
             ui.label('Delete Conflict').classes('text-4xl mb-4 text-black')
             ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg text-black text-center max-w-xl')
 
@@ -123,7 +126,8 @@ class ConflictGUIView:
                 return
 
             feedback = ui.label('').classes('text-lg')
-            selected = {'value': None}
+            save_label = ui.label('').classes('text-lg text-black')
+            selected = {'value': None, 'dirty': False}
 
             select = ui.select(
                 options=list(conflict_options.keys()),
@@ -159,14 +163,16 @@ class ConflictGUIView:
                         if not selected['value']:
                             return
                         c1, c2, i1, i2 = selected['value']
-                        label = select.value
                         s1 = section_label_map.get(i1, c1) if i1 is not None else c1
                         s2 = section_label_map.get(i2, c2) if i2 is not None else c2
                         success, message = controller.gui_delete_conflict(s1, s2, i1, i2)
                         feedback.set_text(message)
-                        feedback.classes(replace=f'text-lg {"text-black-600" if success else "text-red-600"}')
+                        feedback.classes(replace=f'text-lg {"text-black" if success else "text-red-600"}')
                         confirm_card.set_visibility(False)
                         if success:
+                            selected['dirty'] = True
+                            save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
+                            save_label.classes(replace='text-lg text-orange-500')
                             existing_conflicts.clear()
                             existing_conflicts.extend(controller.gui_get_all_conflicts())
                             new_options = build_base_options() if i1 is None else build_section_options()
@@ -202,7 +208,18 @@ class ConflictGUIView:
                 feedback.set_text('')
                 confirm_card.set_visibility(True)
 
+            def handle_save():
+                success = config_model.safe_save()
+                if success:
+                    selected['dirty'] = False
+                    save_label.set_text('Configuration saved successfully.')
+                    save_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_label.set_text('Save failed. Check terminal for details.')
+                    save_label.classes(replace='text-lg text-red-600')
+
             ui.button('Check Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', on_validate)
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
 
     @ui.page('/conflict/view')

@@ -69,11 +69,11 @@ def main():
     from controllers.room_controller     import RoomController
     from controllers.schedule_controller import ScheduleController
 
-    faculty_controller  = FacultyController(faculty_model,   None)
-    course_controller   = CourseController(course_model,     None, config_model)
+    faculty_controller  = FacultyController(faculty_model, None)
+    course_controller   = CourseController(course_model, config_model)
     conflict_controller = ConflictController(conflict_model, None)
-    lab_controller      = LabController(lab_model,           None)
-    room_controller     = RoomController(room_model,         None)
+    lab_controller      = LabController(lab_model, None)
+    room_controller     = RoomController(room_model, None)
     schedule_controller = ScheduleController(scheduler_model, None)
 
     # Inject into view classes BEFORE importing them
@@ -95,6 +95,7 @@ def main():
 
     LabGUIView.lab_model                = lab_model
     LabGUIView.lab_controller           = lab_controller
+    LabGUIView._lab_controller          = lab_controller
 
     RoomGUIView.room_model              = room_model
     RoomGUIView.room_controller         = room_controller

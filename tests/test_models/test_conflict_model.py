@@ -156,10 +156,7 @@ def test_add_conflict_mutual(conflict_model, course_model):
     
     # Add conflict
     conflict_model.add_conflict("MUTUAL A", "MUTUAL B")
-    
-    # Reload course model to get updated data
-    course_model.config_model.reload()
-    
+        
     # Check both directions
     course_a_updated = course_model.get_course_by_id("MUTUAL A")
     course_b_updated = course_model.get_course_by_id("MUTUAL B")
@@ -265,8 +262,6 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD1 A", "MOD1 B")
     
-    # Reload to get updated course objects with conflicts
-    conflict_model.config_model.reload()
     
     # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD1 A")
@@ -283,9 +278,6 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     
     # Assert
     assert result == True
-    
-    # Reload again to verify changes
-    course_model.config_model.reload()
     
     # Verify: A no longer conflicts with B
     course_a_updated = course_model.get_course_by_id("MOD1 A")
@@ -363,8 +355,6 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD2 A", "MOD2 B")
     
-    # Reload to get updated course objects with conflicts
-    conflict_model.config_model.reload()
     
     # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD2 A")
@@ -381,9 +371,7 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
     
     # Assert
     assert result == True
-    
-    # Reload again to verify changes
-    course_model.config_model.reload()
+
     
     # Verify: A no longer conflicts with B, now conflicts with C
     course_a_updated = course_model.get_course_by_id("MOD2 A")
@@ -542,8 +530,7 @@ def test_get_all_conflicts(conflict_model, course_model):
     assert len(all_conflicts) >= 2  # At least our two conflicts
     
     # Check conflicts are unique pairs (sorted tuples)
-    assert ("ALL A", "ALL B") in all_conflicts or ("ALL B", "ALL A") in all_conflicts
-
+    assert any((c1 == "ALL A" and c2 == "ALL B") or (c1 == "ALL B" and c2 == "ALL A") for c1, c2, i1, i2 in all_conflicts)
 
 def test_conflict_exists_true(conflict_model, course_model):
     """

@@ -112,11 +112,12 @@ def test_add_course_success(course_model):
 
 def test_add_course_duplicate_creates_second_section(course_model):
     """
-    Test that adding a course with an existing ID creates a second section.
-
+    Test that adding a duplicate course creates a second section.
+    
     Parameters:
         course_model (CourseModel): Course model fixture
     """
+    # Add first course
     course1 = build_test_course(course_id="DUP 101")
     course2 = build_test_course(course_id="DUP 101")
 

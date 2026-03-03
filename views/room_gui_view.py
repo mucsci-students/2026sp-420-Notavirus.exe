@@ -56,6 +56,14 @@ class RoomGUIView:
         Returns:        
             None
         """
+        def handle_add():
+            success = self.controller.model.add_room(room_input.value)
+
+            if success:
+                result_label.set_text("Room added successfully.")
+                
+            else:
+                result_label.set_text("Room already exists or invalid.")
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
         with ui.column().classes('gap-6 items-center w-full'):
@@ -71,37 +79,17 @@ class RoomGUIView:
             room_input = ui.input("Room name and number")
 
             result_label = ui.label()
+            ui.button("Save to config").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
+            ui.button("Save").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
-        def handle_add():
-            success = self.controller.model.add_room(room_input.value)
 
-            if success:
-                result_label.set_text("Room added successfully.")
-                
-            else:
-                result_label.set_text("Room already exists or invalid.")
 
-        ui.button("Save to config").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-        ui.button("save").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-        ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     
     def room_modify(self):
 
-        GUITheme.applyTheming()
-
-        with ui.column().classes('gap-6 items-center w-full'):
-
-            ui.label('Modify Room').classes('text-3xl')
-
-            rooms = self.controller.model.get_all_rooms()
-
-            selected_room = ui.select(options=rooms, label="Select Room")
-            new_name = ui.input("New Room Name")
-
-            result_label = ui.label()
-
-            def handle_modify():
+        def handle_modify():
                 if not selected_room.value:
                     result_label.set_text("Select a room first.")
                     return
@@ -117,6 +105,20 @@ class RoomGUIView:
                 else:
                     result_label.set_text("Modification failed.")
 
+        GUITheme.applyTheming()
+
+        with ui.column().classes('gap-6 items-center w-full'):
+
+            ui.label('Modify Room').classes('text-3xl')
+
+            rooms = self.controller.model.get_all_rooms()
+
+            selected_room = ui.select(options=rooms, label="Select Room")
+            new_name = ui.input("New Room Name")
+
+            result_label = ui.label()
+
+            
             ui.button("Save to Config").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
             ui.button("Save").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))

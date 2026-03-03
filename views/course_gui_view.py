@@ -54,7 +54,7 @@ class CourseGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-add)')
+        ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
         from views.gui_view import GUIView
 
@@ -64,9 +64,9 @@ class CourseGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Add Course').classes('text-4xl mb-4 text-black')
-            ui.label('To add a course enter at least a course ID and credits. When adding duplicate courses, multiple sections will be created.').classes('text-base text-black text-center max-w-xl mb-2')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Add Course').classes('text-4xl mb-4 !text-black dark:!text-white')
+            ui.label('To add a course enter at least a course ID and credits. When adding duplicate courses, multiple sections will be created.').classes('text-base !text-black dark:!text-white text-center max-w-xl mb-2')
 
             selected = {'dirty': False}
 
@@ -148,12 +148,12 @@ class CourseGUIView:
                     faculty_select = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined').classes('w-80')
                     result_label = ui.label('').classes('text-base')
                     save_label = ui.label('').classes('text-lg')
-                    ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_add)
-                    ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-                    ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+                    ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_add)
+                    ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+                    ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
                 with ui.column().classes('items-center gap-2'):
-                    ui.label('Current Courses').classes('text-2xl text-black text-center')
+                    ui.label('Current Courses').classes('text-2xl !text-black dark:!text-white text-center')
                     course_table()
         
 
@@ -180,20 +180,20 @@ class CourseGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-modify)')
+        ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
         model      = CourseGUIView.course_model
         controller = CourseGUIView.course_controller
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Modify Course').classes('text-4xl mb-6 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Modify Course').classes('text-4xl mb-6 !text-black dark:!text-white')
 
             sections = model.get_courses_with_sections() if model else []
             if not sections:
                 ui.label('No courses on file.').classes('text-gray-600')
                 ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                    .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/course'))
+                    .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
                 return
 
             # Build label -> (index, course) mapping so we can look up by section label
@@ -324,10 +324,10 @@ class CourseGUIView:
                         status.set_text(f"⚠ Failed to update '{selected_label.value}'.")
 
                 ui.button('Apply Changes', on_click=do_modify) \
-                    .props('rounded color=black text-color=white no-caps').classes('w-full h-12 mt-2')
+                    .props('rounded color=black text-color=white no-caps').classes('w-full h-12 mt-2 dark:!bg-white dark:!text-black')
 
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/course'))
+                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
     @ui.page('/course/delete')
     @staticmethod
@@ -349,7 +349,7 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-delete)')
+        ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
         controller = GUIView.controller.course_controller
         config_model = GUIView.controller.config_model
@@ -357,18 +357,18 @@ class CourseGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
-            ui.label('Delete Course').classes('text-4xl mb-4 text-black')
-            ui.label('Select a course to delete from the drop down below, but remember all references to the course will be permanently gone!').classes('text-lg text-black text-center max-w-xl')
+            ui.label('Delete Course').classes('text-4xl mb-4 !text-black dark:!text-white')
+            ui.label('Select a course to delete from the drop down below, but remember all references to the course will be permanently gone!').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             if not existing_courses:
-                ui.label('There are no courses currently in the configuration.').classes('text-xl text-black')
-                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+                ui.label('There are no courses currently in the configuration.').classes('text-xl !text-black dark:!text-white')
+                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
                 return
 
-            status_label = ui.label('').classes('text-lg text-black')
-            save_label = ui.label('').classes('text-lg text-black')
+            status_label = ui.label('').classes('text-lg !text-black dark:!text-white')
+            save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
 
             section_options = {label: (course.course_id, index) for label, index, course in existing_courses}
             selected = {'value': None, 'dirty': False}
@@ -420,8 +420,8 @@ class CourseGUIView:
                     save_label.classes(replace='text-lg text-red-600')
 
             ui.button('Delete Course').props('rounded color=red text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_delete)
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/course'))
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
     @ui.page('/course/view')
     @staticmethod
@@ -438,13 +438,13 @@ class CourseGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = CourseGUIView.course_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('View Courses').classes('text-4xl mb-6 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('View Courses').classes('text-4xl mb-6 !text-black dark:!text-white')
             with ui.column().classes('w-full max-w-lg gap-3'):
                 sections = model.get_courses_with_sections() if model else []
                 if not sections:
@@ -463,4 +463,4 @@ class CourseGUIView:
                                     ui.label(lbl).classes('text-gray-500 font-medium')
                                     ui.label(val)
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/course'))
+                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))

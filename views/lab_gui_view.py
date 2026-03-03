@@ -47,9 +47,9 @@ class LabGUIView:
         GUITheme.applyTheming()
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/modify')
     @staticmethod
@@ -67,15 +67,15 @@ class LabGUIView:
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-modify)')
+        ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
 
         labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
         config_model = GUIView.controller.config_model
 
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Modify Lab').classes('text-4xl mb-10 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Modify Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
 
             existing_lab = ui.select(labs, label='Select Lab to Modify').props('rounded outlined').classes('w-80')
             modified_lab = ui.input(label='Modified Lab').props('rounded outlined').classes('w-80')
@@ -106,9 +106,9 @@ class LabGUIView:
                     save_label.set_text('Save failed. Check terminal for details.')
                     save_label.classes(replace='text-base text-red-600')
 
-            ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', save)
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
+            ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save)
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/delete')
     @staticmethod
@@ -122,7 +122,7 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-delete)')
+        ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
          
         # Load labs from controller
         if LabGUIView._lab_controller:
@@ -171,8 +171,8 @@ class LabGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Delete Lab').classes('text-4xl mb-10 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Delete Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
             
             # The list box (scrollable)
             with ui.card().classes('w-96 h-80 border-2 border-black shadow-none p-0'):
@@ -194,7 +194,7 @@ class LabGUIView:
                                 else:
                                     if l in state['selected_labs']:
                                         state['selected_labs'].remove(l)
-                            ui.checkbox(lab, value=checked, on_change=toggle).classes('w-full text-lg')
+                            ui.checkbox(lab, value=checked, on_change=toggle).classes('w-full text-lg').props('color=blue')
             
             update_lab_list()
             
@@ -205,8 +205,8 @@ class LabGUIView:
             
             # Cancel and Save Buttons
             with ui.row().classes('gap-12 mt-4'):
-                ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', on_cancel)
-                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl').on('click', on_save)
+                ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_cancel)
+                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_save)
 
     @ui.page('/lab/view')
     @staticmethod
@@ -220,11 +220,11 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('View Labs').classes('text-4xl mb-6 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('View Labs').classes('text-4xl mb-6 !text-black dark:!text-white')
 
             labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
 
@@ -236,4 +236,4 @@ class LabGUIView:
                         with ui.card().classes('w-full px-5 py-4'):
                             ui.label(lab).classes('text-base font-semibold')
 
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/lab'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))

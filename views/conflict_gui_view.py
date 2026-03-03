@@ -218,17 +218,168 @@ class ConflictGUIView:
         Returns:
             None
         """
-        GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-modify)')
+        from views.gui_view import GUIView
 
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+        GUITheme.applyTheming()
+
+        controller = GUIView.controller.conflict_controller
+        course_model = GUIView.controller.course_model
+        config_model = GUIView.controller.config_model
+
+        courses_with_sections = course_model.get_courses_with_sections()
+        section_label_map = {i: label for label, i, _ in courses_with_sections}
+
+        existing_conflicts = controller.gui_get_all_conflicts()
+
+        def build_section_options():
+            """Builds conflict options keyed by section label pairs."""
+            return controller.gui_get_conflict_labels(existing_conflicts, section_label_map)
+
+        def build_base_options():
+            """Builds conflict options keyed by base course ID pairs."""
+            seen = set()
+            result = {}
+            for c1, c2, i1, i2 in existing_conflicts:
+                key = tuple(sorted([c1, c2]))
+                if key not in seen:
+                    seen.add(key)
+                    label = f"{key[0]}  ↔  {key[1]}"
+                    result[label] = (key[0], key[1], None, None)
+            return result
+
+        conflict_options = build_section_options()
+
+        with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.button('Back') \
-                .props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl') \
-                .on('click', lambda: ui.navigate.to('/conflict'))
+
+            ui.label('Modify Conflict').classes('text-4xl mb-4 !text-black dark:!text-white')
+            ui.label('Select an existing conflict and choose the new classes you want to conflict.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+
+            if not existing_conflicts:
+                ui.label('There are no conflicts currently in the configuration.').classes('text-xl !text-black dark:!text-white')
+                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
+                return
+
+            feedback = ui.label('').classes('text-lg')
+            save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
+            selected = {'value': None, 'dirty': False, 'is_base': False}
+
+            all_courses = config_model.get_all_courses()
+            course_map = {}
+            course_counts = {}
+            for c in all_courses:
+                cid = c.course_id
+                course_counts[cid] = course_counts.get(cid, 0) + 1
+                label = f"{cid}.{course_counts[cid]:02d}"
+                course_map[label] = c
+            
+            all_labels = list(course_map.keys())
+
+            def update_selection(e):
+                val = conflict_options.get(e.value)
+                if val:
+                    selected['value'] = val
+                    c1, c2, i1, i2 = val
+                    s1 = section_label_map.get(i1, c1) if i1 is not None else c1
+                    s2 = section_label_map.get(i2, c2) if i2 is not None else c2
+                    
+                    if s1 in all_labels:
+                        new_course_a.value = s1
+                    else:
+                        for l in all_labels:
+                            if l.startswith(s1):
+                                new_course_a.value = l
+                                break
+                    if s2 in all_labels:
+                        new_course_b.value = s2
+                    else:
+                        for l in all_labels:
+                            if l.startswith(s2):
+                                new_course_b.value = l
+                                break
+
+            select_existing = ui.select(
+                options=list(conflict_options.keys()),
+                label='Select Conflict to Modify',
+                on_change=update_selection
+            ).classes('w-full max-w-xl text-xl')
+
+            with ui.row().classes('gap-4 w-full max-w-xl justify-center items-center mt-2'):
+                new_course_a = ui.select(all_labels, label='New Course A').classes('w-64 max-w-xs')
+                ui.label('↔').classes('text-2xl !text-black dark:!text-white font-bold mx-2')
+                new_course_b = ui.select(all_labels, label='New Course B').classes('w-64 max-w-xs')
+
+            def on_toggle(e):
+                selected['value'] = None
+                selected['is_base'] = e.value
+                select_existing.value = None
+                conflict_options.clear()
+                if e.value:
+                    conflict_options.update(build_base_options())
+                else:
+                    conflict_options.update(build_section_options())
+                select_existing.options = list(conflict_options.keys())
+                select_existing.update()
+                feedback.set_text('')
+
+            ui.switch(
+                'Sort course conflicts without section preference',
+                on_change=on_toggle
+            ).classes('!text-black dark:!text-white')
+
+            def on_modify():
+                if not selected['value']:
+                    feedback.set_text('Please select a conflict to modify.')
+                    feedback.classes(replace='text-lg text-red-600')
+                    return
+                
+                c1, c2, i1, i2 = selected['value']
+                old_c1 = section_label_map.get(i1, c1) if i1 is not None else c1
+                old_c2 = section_label_map.get(i2, c2) if i2 is not None else c2
+                
+                new_c1 = new_course_a.value
+                new_c2 = new_course_b.value
+                
+                if not new_c1 or not new_c2:
+                    feedback.set_text('Please select both new courses.')
+                    feedback.classes(replace='text-lg text-red-600')
+                    return
+                
+                success, message = controller.gui_modify_conflict(old_c1, old_c2, new_c1, new_c2)
+                feedback.set_text(message)
+                feedback.classes(replace=f'text-lg {"!text-black dark:!text-white" if success else "text-red-600"}')
+                
+                if success:
+                    selected['dirty'] = True
+                    save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
+                    save_label.classes(replace='text-lg text-orange-500')
+                    existing_conflicts.clear()
+                    existing_conflicts.extend(controller.gui_get_all_conflicts())
+                    
+                    new_options = build_base_options() if selected['is_base'] else build_section_options()
+                    conflict_options.clear()
+                    conflict_options.update(new_options)
+                    select_existing.options = list(new_options.keys())
+                    select_existing.value = None
+                    select_existing.update()
+                    selected['value'] = None
+                    new_course_a.value = None
+                    new_course_b.value = None
+
+            def handle_save():
+                success = config_model.safe_save()
+                if success:
+                    selected['dirty'] = False
+                    save_label.set_text('Configuration saved successfully.')
+                    save_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_label.set_text('Save failed. Check terminal for details.')
+                    save_label.classes(replace='text-lg text-red-600')
+
+            ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', on_modify)
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
 
 
     @ui.page('/conflict/delete')

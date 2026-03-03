@@ -222,6 +222,36 @@ class FacultyController:
         
         except Exception as e:
             self.view.display_error(f"Failed to validate references: {e}")
+            
+    def get_available_courses(self) -> list[str]:
+        """
+        Get a list of all available course IDs.
+        
+        Returns:
+            list[str]: Sorted list of unique course IDs
+        """
+        courses = self.model.config_model.get_all_courses()
+        return sorted(list(set([c.course_id for c in courses])))
+        
+    def get_available_labs(self) -> list[str]:
+        """
+        Get a list of all available lab names.
+        
+        Returns:
+            list[str]: Sorted list of unique lab names
+        """
+        labs = self.model.config_model.get_all_labs()
+        return sorted(list(set(labs)))
+        
+    def get_existing_faculty_names(self) -> list[str]:
+        """
+        Get a list of all existing faculty names.
+        
+        Returns:
+            list[str]: List of faculty names
+        """
+        faculty_list = self.model.get_all_faculty()
+        return [f.name for f in faculty_list]
     
     def _build_faculty_config(self, data: dict) -> FacultyConfig:
         """
@@ -268,7 +298,7 @@ class FacultyController:
             maximum_days=MAX_DAYS,
             times=times,
             room_preferences={},
-            lab_preferences={}
+            lab_preferences=data.get('lab_preferences', {})
         )
     
     def _handle_modification(self, faculty_name: str, choice: str, faculty) -> bool:

@@ -92,10 +92,15 @@ class FacultyGUIView:
                         course_container = ui.column().classes('w-full gap-2')
                         course_rows = []
                         def add_course_row():
+                            from views.gui_view import GUIView
+                            options = []
+                            if GUIView._controller and hasattr(GUIView._controller, 'faculty_controller'):
+                                options = GUIView._controller.faculty_controller.get_available_courses()
+
                             with course_container:
                                 row_container = ui.row().classes('items-center gap-4 w-full wrap')
                                 with row_container:
-                                    course_input = ui.input('Course Code').props('outlined dense square borderless').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
+                                    course_input = ui.select(options, label='Course Code', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
                                     weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
                                     
                                     row_data = {'course': course_input, 'weight': weight_input}
@@ -113,6 +118,39 @@ class FacultyGUIView:
                         
                         ui.button('+ Add Course', on_click=add_course_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
+                    # Labs and Preferences
+                    with ui.column().classes('w-full mt-6 gap-2'):
+                        ui.label('Lab Preferences:').classes('text-2xl text-black')
+                        
+                        lab_container = ui.column().classes('w-full gap-2')
+                        lab_rows = []
+                        def add_lab_row():
+                            from views.gui_view import GUIView
+                            options = []
+                            if GUIView._controller and hasattr(GUIView._controller, 'faculty_controller'):
+                                options = GUIView._controller.faculty_controller.get_available_labs()
+
+                            with lab_container:
+                                row_container = ui.row().classes('items-center gap-4 w-full wrap')
+                                with row_container:
+                                    lab_input = ui.select(options, label='Lab Name', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
+                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
+                                    
+                                    row_data = {'lab': lab_input, 'weight': weight_input}
+                                    lab_rows.append(row_data)
+                                    
+                                    def delete_row(e, rc=row_container, rd=row_data):
+                                        rc.delete()
+                                        if rd in lab_rows:
+                                            lab_rows.remove(rd)
+                                            
+                                    ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
+                        
+                        # Add initial row
+                        add_lab_row()
+                        
+                        ui.button('+ Add Lab', on_click=add_lab_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
+
                 # Right Column
                 with ui.column().classes('w-[45%] h-[500px] border-4 border-black bg-white p-6 items-start justify-start overflow-hidden'):
                     ui.label('Existing Faculty').classes('text-3xl text-black text-center w-full mb-4 font-bold border-b-2 border-black pb-2')
@@ -127,10 +165,10 @@ class FacultyGUIView:
                                 return
                                 
                             try:
-                                faculty_list = GUIView._controller.config_model.get_all_faculty()
-                                if faculty_list:
-                                    for f in faculty_list:
-                                        ui.label(f.name).classes('text-xl text-black mb-2 py-2 border-b border-gray-200 w-full')
+                                faculty_names = GUIView._controller.faculty_controller.get_existing_faculty_names()
+                                if faculty_names:
+                                    for name in faculty_names:
+                                        ui.label(name).classes('text-xl text-black mb-2 py-2 border-b border-gray-200 w-full')
                                 else:
                                     ui.label('No existing faculty found.').classes('text-xl text-gray-500 italic')
                             except Exception as e:
@@ -160,12 +198,19 @@ class FacultyGUIView:
                     if course:
                         course_prefs[course] = int(row['weight'].value or 5)
                         
+                lab_prefs = {}
+                for row in lab_rows:
+                    lab = row['lab'].value
+                    if lab:
+                        lab_prefs[lab] = int(row['weight'].value or 5)
+                        
                 faculty_data = {
                     'name': name,
                     'is_full_time': is_full_time,
                     'times': times_data,
                     'days': list(times_data.keys()),  # for compatibility
                     'course_preferences': course_prefs,
+                    'lab_preferences': lab_prefs,
                 }
                 
                 try:

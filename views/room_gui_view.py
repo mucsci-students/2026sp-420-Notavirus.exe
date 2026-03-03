@@ -82,11 +82,34 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+
+        rooms = RoomGUIView.room_controller.model.get_all_rooms() if RoomGUIView.room_controller else []
+
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Delete Room').classes('text-4xl mb-10 text-black')
+
+            selected_room = ui.select(rooms, label='Select Room to Delete').props('rounded outlined').classes('w-80')
+
+            result_label = ui.label('').classes('text-base')
+
+            def delete():
+                try:
+                    success, message = RoomGUIView.room_controller.gui_delete_room(
+                        selected_room.value
+                    )
+                    result_label.set_text(message)
+                    if success:
+                        updated_rooms = RoomGUIView.room_controller.model.get_all_rooms()
+                        selected_room.set_options(updated_rooms)
+                        selected_room.set_value(None)
+
+                except Exception as e:
+                    result_label.set_text(f'Error: {e}')
+
+            ui.button('Delete').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', delete)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/view')
     @staticmethod

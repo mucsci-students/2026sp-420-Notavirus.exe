@@ -251,7 +251,7 @@ class ConflictGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+                ui.button('Home').props('rounded no-caps').classes('h-10 !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: check_discard_and_navigate('/'))
 
             ui.label('Modify Conflict').classes('text-4xl mb-4 !text-black dark:!text-white')
             ui.label('Select an existing conflict and choose the new classes you want to conflict.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
@@ -264,6 +264,19 @@ class ConflictGUIView:
             feedback = ui.label('').classes('text-lg')
             save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
             selected = {'value': None, 'dirty': False, 'is_base': False}
+
+            def check_discard_and_navigate(target_url):
+                if selected.get('dirty'):
+                    confirm_dialog.target_url = target_url
+                    confirm_dialog.open()
+                else:
+                    ui.navigate.to(target_url)
+
+            with ui.dialog() as confirm_dialog, ui.card().classes('items-center !bg-white dark:!bg-gray-800'):
+                ui.label('You have unsaved changes. Are you sure you want to leave?').classes('text-lg !text-black dark:!text-white')
+                with ui.row().classes('mt-4 gap-4'):
+                    ui.button('Yes', on_click=lambda: (confirm_dialog.close(), ui.navigate.to(getattr(confirm_dialog, 'target_url', '/')))).props('color=red text-color=white')
+                    ui.button('No', on_click=confirm_dialog.close).props('color=black text-color=white')
 
             all_courses = config_model.get_all_courses()
             course_map = {}
@@ -377,9 +390,9 @@ class ConflictGUIView:
                     save_label.set_text('Save failed. Check terminal for details.')
                     save_label.classes(replace='text-lg text-red-600')
 
-            ui.button('Modify Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', on_modify)
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
+            ui.button('Modify Conflict').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', on_modify)
+            ui.button('Save Configuration').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', handle_save)
+            ui.button('Back').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: check_discard_and_navigate('/conflict'))
 
 
     @ui.page('/conflict/delete')
@@ -447,7 +460,7 @@ class ConflictGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: check_discard_and_navigate_del('/'))
 
             ui.label('Delete Conflict').classes('text-4xl mb-4 text-black')
             ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg text-black text-center max-w-xl')
@@ -460,6 +473,19 @@ class ConflictGUIView:
             feedback = ui.label('').classes('text-lg')
             save_label = ui.label('').classes('text-lg text-black')
             selected = {'value': None, 'dirty': False}
+
+            def check_discard_and_navigate_del(target_url):
+                if selected.get('dirty'):
+                    confirm_dialog_del.target_url = target_url
+                    confirm_dialog_del.open()
+                else:
+                    ui.navigate.to(target_url)
+
+            with ui.dialog() as confirm_dialog_del, ui.card().classes('items-center !bg-white dark:!bg-gray-800'):
+                ui.label('You have unsaved changes. Are you sure you want to leave?').classes('text-lg !text-black dark:!text-white')
+                with ui.row().classes('mt-4 gap-4'):
+                    ui.button('Yes', on_click=lambda: (confirm_dialog_del.close(), ui.navigate.to(getattr(confirm_dialog_del, 'target_url', '/')))).props('color=red text-color=white')
+                    ui.button('No', on_click=confirm_dialog_del.close).props('color=black text-color=white')
 
             select = ui.select(
                 options=list(conflict_options.keys()),
@@ -595,7 +621,7 @@ class ConflictGUIView:
 
             ui.button('Check Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', on_validate)
             ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: check_discard_and_navigate_del('/conflict'))
 
     @ui.page('/conflict/view')
     @staticmethod

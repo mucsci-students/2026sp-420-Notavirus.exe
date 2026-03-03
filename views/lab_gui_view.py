@@ -48,7 +48,47 @@ class LabGUIView:
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Under Construction!').classes('text-4xl mb-10 text-black')
+            ui.label('Add Lab').classes('text-4xl mb-10 text-black')
+
+            new_lab = ui.input(label='Lab Name').props('rounded outlined').classes('w-80')
+
+            result_label = ui.label('').classes('text-base')
+
+            # Current labs list
+            ui.label('Current Labs:').classes('text-lg font-semibold mt-4')
+            labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
+            lab_list_container = ui.column().classes('w-80')
+            with lab_list_container:
+                if not labs:
+                    ui.label('No labs yet.').classes('text-gray-500')
+                else:
+                    for lab in labs:
+                        with ui.card().classes('w-full px-4 py-2'):
+                            ui.label(lab).classes('text-base')
+
+            def add():
+                try:
+                    success, message = LabGUIView._lab_controller.gui_add_lab(
+                        new_lab.value
+                    )
+                    result_label.set_text(message)
+                    if success:
+                        new_lab.set_value('')
+                        # Refresh the labs list
+                        lab_list_container.clear()
+                        updated_labs = LabGUIView._lab_controller.model.get_all_labs()
+                        with lab_list_container:
+                            if not updated_labs:
+                                ui.label('No labs yet.').classes('text-gray-500')
+                            else:
+                                for lab in updated_labs:
+                                    with ui.card().classes('w-full px-4 py-2'):
+                                        ui.label(lab).classes('text-base')
+
+                except Exception as e:
+                    result_label.set_text(f'Error: {e}')
+
+            ui.button('Add').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', add)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/modify')

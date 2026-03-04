@@ -250,7 +250,9 @@ class ScheduleGUIView:
                     OptimizerFlags.FACULTY_ROOM:   'Room Preference',
                     OptimizerFlags.FACULTY_LAB:    'Lab Preference',
                     OptimizerFlags.SAME_ROOM:      'Same Room per Faculty',
-                    OptimizerFlags.SAME_LAB:       'Same Lab per Faculty'
+                    OptimizerFlags.SAME_LAB:       'Same Lab per Faculty',
+                    OptimizerFlags.PACK_ROOMS:     'Pack Rooms',
+                    OptimizerFlags.PACK_LABS:      'Pack Labs',
                 }
 
                 optimizer_select = ui.select(

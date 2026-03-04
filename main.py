@@ -13,11 +13,6 @@ from pathlib import Path
 from controllers.app_controller import SchedulerController
 from views.gui_view import GUIView
 
-controller = SchedulerController(config_path)
-
-GUIView.controller = controller
-
-
 def main():
     """
     Main entry point for the scheduler application.

@@ -38,6 +38,34 @@ class ScheduleController:
         self.model = scheduler_model
         self.view = view
     
+    def import_schedule_file(self, fileName, fileData):
+        """
+        Handles file import request from the view.
+        Determines file type and delegates parsing to model.
+        """
+
+        if fileName.endswith('.json'):
+            return self.model.import_from_json(fileData)
+
+        elif fileName.endswith('.csv'):
+            return self.model.import_from_csv(fileData)
+
+        else:
+            raise ValueError("Unsupported file type")
+        
+    def export_schedules(self, format_type, schedules):
+        """
+        Handles file export request from view
+        Determines file type and delegates to model
+        """
+        if format_type == "json":
+            return self.model.export_to_json(schedules)
+
+        if format_type == "csv":
+            return self.model.export_to_csv(schedules)
+
+        raise ValueError("Unsupported export format")
+        
     def run_scheduler(self):
         """
         Complete workflow for running the scheduler.

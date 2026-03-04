@@ -153,6 +153,23 @@ def _faculty_options(schedule: list) -> list[str]:
     """Sorted list of all unique faculty names in the schedule."""
     return sorted({ci.faculty for ci in schedule})
 
+def download_csv():
+    data = ScheduleGUIView.schedule_controller.export_schedules(
+        "csv",
+        _state.schedules
+    )
+
+    ui.download(data, filename="schedules.csv")
+
+
+def download_json():
+    data = ScheduleGUIView.schedule_controller.export_schedules(
+        "json",
+        _state.schedules
+    )
+
+    ui.download(data, filename="schedules.json")
+
 
 # ---------------------------------------------------------------------------
 # Table column definitions
@@ -298,7 +315,116 @@ class ScheduleGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
+        #creates hidden upload window for importing
 
+        
+        async def handle_upload(e):
+            
+            if ScheduleGUIView.schedule_controller is None:
+                ui.notify('Controller not initialized', type='negative')
+                return
+
+            try:
+                content = await e.file.read()
+
+                # Let controller handle parsing
+                schedules = ScheduleGUIView.schedule_controller.import_schedule_file(
+                    e.file.name,
+                    content
+                )
+                
+
+                if schedules:
+                    _state.schedules = schedules
+                    _state.current_index = 0
+                    ui.notify(f'Imported {e.file.name}')
+                    
+                    ui.navigate.to('/display_schedules')
+                else:
+                    ui.notify(f'No schedules found in {e.file.name}', type='warning')
+
+            except Exception as ex:
+                ui.notify(f'Import failed: {ex}', type='negative')
+                print({ex})
+
+            
+        upload = ui.upload(
+            multiple=True,
+            auto_upload=True
+        ).props('hidden')
+
+        upload.on_upload(handle_upload)
+        #pop up window for information when export button is pressed
+        export_dialog = ui.dialog()
+
+        with export_dialog:
+
+            with ui.card().classes(
+                "w-[400px] rounded-2xl shadow-xl p-6 flex flex-col gap-4"
+            ):
+
+                ui.label("Export Schedules").classes(
+                    "text-2xl font-bold text-center w-full"
+                )
+
+                # Schedule selection
+                schedule_select = ui.select(
+                    options=[f"Schedule {i+1}" for i in range(len(_state.schedules))],
+                    multiple=True,
+                    label="Select schedules"
+                ).classes("w-full")
+
+                # Filename input
+                filename_input = ui.input(
+                    label="File name",
+                    value="schedules"
+                ).classes("w-full")
+
+                # Format selector
+                format_select = ui.select(
+                    options=["csv", "json"],
+                    value="csv",
+                    label="Export format"
+                ).classes("w-full")
+
+                result_label = ui.label("").classes(
+                    "text-sm text-gray-500 italic text-center w-full"
+                )
+
+                def do_export():
+                    if not schedule_select.value:
+                        ui.notify("Please select at least one schedule", type="warning")
+                        return
+
+                    indices = [
+                        int(x.replace("Schedule ", "")) - 1
+                        for x in schedule_select.value
+                    ]
+
+                    schedules_to_export = [
+                        _state.schedules[i] for i in indices
+                    ]
+
+                    filename = filename_input.value.strip() or "schedules"
+
+                    data = ScheduleGUIView.schedule_controller.export_schedules(
+                        format_select.value,
+                        schedules_to_export
+                    )
+
+                    ui.download(data, filename=f"{filename}.{format_select.value}")
+
+                    export_dialog.close()
+
+                with ui.row().classes("w-full justify-end gap-3 pt-2"):
+
+                    ui.button("Cancel").props(
+                        "outline rounded no-caps"
+                    ).on("click", export_dialog.close)
+
+                    ui.button("Export").props(
+                        "color=black text-color=white rounded no-caps"
+                    ).on("click", do_export)
         # Guard: nothing generated yet
         if not _state.schedules:
             with ui.column().classes('gap-4 items-center w-full pt-20'):
@@ -308,6 +434,11 @@ class ScheduleGUIView:
                     'rounded color=black text-color=white no-caps'
                 ).classes('w-48 h-12 text-base').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
+                )
+                ui.button('Import Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-48 h-12 text-base').on(
+                    'click', lambda: upload.run_method('pickFiles')
                 )
             return
 
@@ -396,6 +527,16 @@ class ScheduleGUIView:
                     'rounded color=black text-color=white no-caps'
                 ).classes('w-44 h-12 text-base').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
+                )
+                ui.button('Export Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-44 h-12 text-base').on(
+                    'click', export_dialog.open
+                )
+                ui.button('Import Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-48 h-12 text-base').on(
+                    'click', lambda: upload.run_method('pickFiles')
                 )
 
         # ── Filter callbacks ─────────────────────────────────────────────

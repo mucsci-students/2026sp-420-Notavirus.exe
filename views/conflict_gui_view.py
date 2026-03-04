@@ -320,7 +320,6 @@ class ConflictGUIView:
 
             with ui.row().classes('gap-4 w-full max-w-xl justify-center items-center mt-2'):
                 new_course_a = ui.select(all_labels, label='New Course A').classes('w-64 max-w-xs')
-                ui.label('↔').classes('text-2xl !text-black dark:!text-white font-bold mx-2')
                 new_course_b = ui.select(all_labels, label='New Course B').classes('w-64 max-w-xs')
 
             def on_toggle(e):

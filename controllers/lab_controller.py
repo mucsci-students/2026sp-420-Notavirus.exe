@@ -222,7 +222,7 @@ class LabController:
     def delete_labs_gui(self, labs_to_delete: list[str]) -> bool:
         """
         Deletes a list of labs from the model for the GUI.
-                
+                    
         Parameters:
             labs_to_delete (list[str]): List of lab names to delete.
         Returns:
@@ -234,7 +234,49 @@ class LabController:
                 success = False
         return success
 
-    def gui_modify_lab(self, old_name: str, new_name: str,) -> tuple[bool, str]:
+    def gui_add_lab(self, lab_name: str) -> tuple[bool, str]:
+        """
+        GUI workflow for adding a new lab.
+
+        Parameters:
+            lab_name (str): Name of the lab to add
+
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        if not lab_name or not lab_name.strip():
+            return False, "Lab name cannot be empty."
+
+        lab_name = lab_name.strip()
+
+        success = self.model.add_lab(lab_name)
+
+        if success:
+            return True, f"Lab '{lab_name}' added successfully."
+
+        return False, f"Failed: lab '{lab_name}' already exists."
+
+    def gui_delete_lab(self, lab_name: str) -> tuple[bool, str]:
+        """
+        GUI workflow for deleting a lab.
+
+        Parameters:
+            lab_name (str): Name of the lab to delete
+
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        if not lab_name:
+            return False, "Please select a lab to delete."
+
+        success = self.model.delete_lab(lab_name)
+
+        if success:
+            return True, f"Lab '{lab_name}' deleted successfully."
+
+        return False, f"Failed: lab '{lab_name}' could not be deleted."
+
+    def gui_modify_lab(self, old_name: str, new_name: str) -> tuple[bool, str]:
         """
         GUI workflow for modifying a lab
 
@@ -246,11 +288,11 @@ class LabController:
             tuple[bool, str]: (success, message)
         """
         if not new_name:
-            return False, f'All labs must have a name.'
+            return False, 'All labs must have a name.'
         if not old_name:
-            return False, f'Please select a lab to modify.'
+            return False, 'Please select a lab to modify.'
 
-        #Check if name already exists(case-insensitive)
+        # Check if name already exists (case-insensitive)
         all_labs = self.model.get_all_labs()
         for lab in all_labs:
             if lab.lower() == new_name.lower() and lab.lower() != old_name.lower():

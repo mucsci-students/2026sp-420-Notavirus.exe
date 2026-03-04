@@ -30,16 +30,17 @@ class FacultyGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            ui.label('Faculty').classes('text-4xl mb-10 text-black')
-            ui.button('Add Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/add'))
-            ui.button('Modify Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/modify'))
-            ui.button('Delete Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/delete'))
-            ui.button('View Faculty').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/faculty/view'))
+            # Title
+            ui.label('Faculty').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            ui.button('Add Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/add'))
+            ui.button('Modify Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/modify'))
+            ui.button('Delete Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/delete'))
+            ui.button('View Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/view'))
             ui.space()
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4').on('click', lambda: ui.navigate.to('/'))
+            ui.button('Back').props('rounded color=backbtn text-color=white no-caps').classes('w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]').on('click', lambda: ui.navigate.to('/'))
 
     @ui.page('/faculty/add')
     @staticmethod
@@ -100,10 +101,15 @@ class FacultyGUIView:
                         course_container = ui.column().classes('w-full gap-2')
                         course_rows = []
                         def add_course_row():
+                            from views.gui_view import GUIView
+                            options = []
+                            if GUIView.controller and hasattr(GUIView.controller, 'faculty_controller'):
+                                options = GUIView.controller.faculty_controller.get_available_courses()
+
                             with course_container:
                                 row_container = ui.row().classes('items-center gap-4 w-full wrap')
                                 with row_container:
-                                    course_input = ui.input('Course Code').props('outlined dense square borderless').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
+                                    course_input = ui.select(options, label='Course Code', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
                                     weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
                                     
                                     row_data = {'course': course_input, 'weight': weight_input}
@@ -120,6 +126,39 @@ class FacultyGUIView:
                         add_course_row()
                         
                         ui.button('+ Add Course', on_click=add_course_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
+
+                    # Labs and Preferences
+                    with ui.column().classes('w-full mt-6 gap-2'):
+                        ui.label('Lab Preferences:').classes('text-2xl text-black')
+                        
+                        lab_container = ui.column().classes('w-full gap-2')
+                        lab_rows = []
+                        def add_lab_row():
+                            from views.gui_view import GUIView
+                            options = []
+                            if GUIView.controller and hasattr(GUIView.controller, 'faculty_controller'):
+                                options = GUIView.controller.faculty_controller.get_available_labs()
+
+                            with lab_container:
+                                row_container = ui.row().classes('items-center gap-4 w-full wrap')
+                                with row_container:
+                                    lab_input = ui.select(options, label='Lab Name', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
+                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
+                                    
+                                    row_data = {'lab': lab_input, 'weight': weight_input}
+                                    lab_rows.append(row_data)
+                                    
+                                    def delete_row(e, rc=row_container, rd=row_data):
+                                        rc.delete()
+                                        if rd in lab_rows:
+                                            lab_rows.remove(rd)
+                                            
+                                    ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
+                        
+                        # Add initial row
+                        add_lab_row()
+                        
+                        ui.button('+ Add Lab', on_click=add_lab_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
                 # Right Column
                 with ui.column().classes('w-[45%] h-[500px] border-4 border-black bg-white p-6 items-start justify-start overflow-hidden'):
@@ -166,12 +205,19 @@ class FacultyGUIView:
                     if course:
                         course_prefs[course] = int(row['weight'].value or 5)
                         
+                lab_prefs = {}
+                for row in lab_rows:
+                    lab = row['lab'].value
+                    if lab:
+                        lab_prefs[lab] = int(row['weight'].value or 5)
+                        
                 faculty_data = {
                     'name': name,
                     'is_full_time': is_full_time,
                     'times': times_data,
                     'days': list(times_data.keys()),  # for compatibility
                     'course_preferences': course_prefs,
+                    'lab_preferences': lab_prefs,
                 }
                 
                 try:
@@ -565,6 +611,8 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-delete)')
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('Delete Faculty').classes('text-4xl mb-6 text-black')
 
             container = ui.column().classes('w-full max-w-lg gap-3 items-center')
@@ -653,6 +701,8 @@ class FacultyGUIView:
         model = FacultyGUIView.faculty_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
             ui.label('View Faculty').classes('text-4xl mb-6 text-black')
             with ui.column().classes('w-full max-w-lg gap-3'):
                 faculty_list = model.get_all_faculty() if model else []

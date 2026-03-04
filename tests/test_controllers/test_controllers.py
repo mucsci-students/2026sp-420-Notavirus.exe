@@ -49,6 +49,11 @@ def config_model(test_config):
     """Create ConfigModel with test configuration."""
     return ConfigModel(test_config)
 
+@pytest.fixture
+def course_controller(config_model):
+    """Create CourseController with test configuration."""
+    course_model = CourseModel(config_model)
+    return CourseController(course_model, config_model)
 
 @pytest.fixture
 def course_controller(config_model):
@@ -260,3 +265,4 @@ def test_course_controller_get_available_resources(course_controller):
     assert isinstance(resources['rooms'], list)
     assert isinstance(resources['labs'], list)
     assert isinstance(resources['faculty'], list)
+    

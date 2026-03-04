@@ -8,6 +8,9 @@ This view class handles all GUI pages related to schedules, including:
 - Tabular views by Room/Lab and by Faculty, with filter dropdowns
 """
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from nicegui import ui
 from views.gui_theme import GUITheme
 
@@ -247,13 +250,15 @@ class ScheduleGUIView:
                     'rounded color=black text-color=white no-caps'
                 ).classes('w-36 h-12 text-base')
 
-        def on_generate():
+        async def on_generate():
             model = _state._scheduler_model
-            if model is None:
-                status_label.set_text(
-                    'Error: scheduler model is not initialized. '
-                    'Ensure main.py sets ScheduleGUIView.scheduler_model before ui.run().'
-                )
+            if model is None or getattr(model, "config_model", None) is None:
+                status_label.set_text('Error: No configuration loaded.')
+                return
+
+            errors = getattr(model, "validate_config", lambda: "")()
+            if errors:
+                status_label.set_text(f'Configuration invalid:\n{errors}')
                 return
 
             limit = int(limit_input.value or 5)
@@ -261,13 +266,15 @@ class ScheduleGUIView:
             generate_btn.props('loading disabled')
 
             try:
-                schedules = list(model.generate_schedules(limit=limit))
+                def _run():
+                    return list(model.generate_schedules(limit=limit))
+
+                loop = asyncio.get_event_loop()
+                with ThreadPoolExecutor() as pool:
+                    schedules = await loop.run_in_executor(pool, _run)
 
                 if not schedules:
-                    status_label.set_text(
-                        'No schedules could be generated with the current configuration.'
-                    )
-                    generate_btn.props(remove='loading disabled')
+                    status_label.set_text('No valid schedules could be generated.')
                     return
 
                 _state.schedules = schedules
@@ -276,6 +283,7 @@ class ScheduleGUIView:
 
             except Exception as e:
                 status_label.set_text(f'Error: {e}')
+            finally:
                 generate_btn.props(remove='loading disabled')
 
         generate_btn.on('click', on_generate)
@@ -313,17 +321,13 @@ class ScheduleGUIView:
 
         total = len(_state.schedules)
 
-        # ── Mutable filter state (plain list so closures can mutate index 0) ──
-        # Using a list instead of a plain variable lets the nested closures
-        # below mutate the value without needing `nonlocal` on every function.
-        room_filter    = [None]   # None = show all locations
-        faculty_filter = [None]   # None = show all faculty
+        room_filter    = [None]
+        faculty_filter = [None]
 
         with ui.column().classes('gap-4 items-center w-full px-4 pt-6 pb-10'):
 
             ui.label('Schedule Viewer').classes('text-4xl font-bold text-black')
 
-            # ── Prev / Next navigation ───────────────────────────────────
             with ui.row().classes('items-center gap-4 justify-center'):
                 prev_btn = ui.button(icon='chevron_left').props('round flat color=black')
                 index_label = ui.label(
@@ -331,7 +335,6 @@ class ScheduleGUIView:
                 ).classes('text-lg font-semibold text-black min-w-[160px] text-center')
                 next_btn = ui.button(icon='chevron_right').props('round flat color=black')
 
-            # ── Tabbed tables ────────────────────────────────────────────
             with ui.card().classes('w-full max-w-7xl rounded-2xl shadow-md'):
                 with ui.tabs().classes('text-black') as tabs:
                     room_tab    = ui.tab('By Room / Lab')
@@ -339,7 +342,6 @@ class ScheduleGUIView:
 
                 with ui.tab_panels(tabs, value=room_tab).classes('w-full'):
 
-                    # ── By Room / Lab panel ──────────────────────────────
                     with ui.tab_panel(room_tab):
                         with ui.row().classes('items-center gap-3 px-2 pt-2 pb-1'):
                             ui.label('Filter:').classes('text-sm text-gray-500')
@@ -362,7 +364,6 @@ class ScheduleGUIView:
                         ).classes('w-full')
                         room_table.props('flat dense')
 
-                    # ── By Faculty panel ─────────────────────────────────
                     with ui.tab_panel(faculty_tab):
                         with ui.row().classes('items-center gap-3 px-2 pt-2 pb-1'):
                             ui.label('Filter:').classes('text-sm text-gray-500')
@@ -385,7 +386,6 @@ class ScheduleGUIView:
                         ).classes('w-full')
                         faculty_table.props('flat dense')
 
-            # ── Footer ───────────────────────────────────────────────────
             with ui.row().classes('gap-4 justify-center'):
                 ui.button('Back to Home').props(
                     'rounded outline color=black no-caps'
@@ -397,8 +397,6 @@ class ScheduleGUIView:
                 ).classes('w-44 h-12 text-base').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
                 )
-
-        # ── Filter callbacks ─────────────────────────────────────────────
 
         def on_room_filter(e):
             val = e.value if e.value != 'All' else None
@@ -419,8 +417,6 @@ class ScheduleGUIView:
         room_select.on_value_change(on_room_filter)
         faculty_select.on_value_change(on_faculty_filter)
 
-        # ── Navigation callbacks ─────────────────────────────────────────
-
         def _sync_btn_states():
             if _state.current_index == 0:
                 prev_btn.props('disabled')
@@ -432,25 +428,16 @@ class ScheduleGUIView:
                 next_btn.props(remove='disabled')
 
         def _reload_schedule():
-            """
-            Rebuild both tables and reset both filter dropdowns to 'All'
-            whenever the user navigates to a different schedule.
-            Resetting filters avoids the situation where a location or faculty
-            name from schedule N doesn't exist in schedule N+1.
-            """
             schedule = _state.schedules[_state.current_index]
 
-            # Reset filters
             room_filter[0]    = None
             faculty_filter[0] = None
             room_select.set_value('All')
             faculty_select.set_value('All')
 
-            # Rebuild option lists (different schedules may have different rooms/faculty)
             room_select.options    = ['All'] + _location_options(schedule)
             faculty_select.options = ['All'] + _faculty_options(schedule)
 
-            # Rebuild tables
             room_table.rows    = _build_room_rows(schedule, location_filter=None)
             faculty_table.rows = _build_faculty_rows(schedule, faculty_filter=None)
             room_table.update()
@@ -460,22 +447,14 @@ class ScheduleGUIView:
             _sync_btn_states()
 
         def go_prev():
-            print(f"[NAV] go_prev called, current_index={_state.current_index}, total={total}")
             if _state.current_index > 0:
                 _state.current_index -= 1
-                print(f"[NAV] moved to {_state.current_index}")
                 _reload_schedule()
-            else:
-                print(f"[NAV] go_prev blocked: already at 0")
 
         def go_next():
-            print(f"[NAV] go_next called, current_index={_state.current_index}, total={total}")
             if _state.current_index < total - 1:
                 _state.current_index += 1
-                print(f"[NAV] moved to {_state.current_index}")
                 _reload_schedule()
-            else:
-                print(f"[NAV] go_next blocked: already at end")
 
         prev_btn.on('click', go_prev)
         next_btn.on('click', go_next)
@@ -492,8 +471,6 @@ class ScheduleGUIView:
     @staticmethod
     def test_schedules():
         import os, sys
-        import asyncio
-        from concurrent.futures import ThreadPoolExecutor
 
         status = ui.label('Generating test schedules…').classes('text-gray-600 italic p-4')
 
@@ -510,7 +487,6 @@ class ScheduleGUIView:
                     model = SchedulerModel(ConfigModel(sys.argv[1]))
                     return list(model.generate_schedules(limit=2))
 
-                # Run blocking Z3 work in a thread so the event loop stays alive
                 loop = asyncio.get_event_loop()
                 with ThreadPoolExecutor() as pool:
                     schedules = await loop.run_in_executor(pool, _generate)

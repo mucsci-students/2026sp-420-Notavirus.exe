@@ -12,6 +12,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from nicegui import ui
+from scheduler import OptimizerFlags
 from views.gui_theme import GUITheme
 
 
@@ -238,6 +239,27 @@ class ScheduleGUIView:
                     format='%d',
                 ).classes('w-full')
 
+            with ui.card().classes('w-full rounded-2xl shadow-md p-6'):
+                ui.label('Optimization Options').classes('text-lg font-semibold text-gray-700 mb-1')
+                ui.label(
+                    'Select which preferences to optimize for. Leave empty for no optimization.'
+                ).classes('text-sm text-gray-500 mb-4')
+
+                _flag_labels = {
+                    OptimizerFlags.FACULTY_COURSE: 'Course Preference',
+                    OptimizerFlags.FACULTY_ROOM:   'Room Preference',
+                    OptimizerFlags.FACULTY_LAB:    'Lab Preference',
+                    OptimizerFlags.SAME_ROOM:      'Same Room per Faculty',
+                    OptimizerFlags.SAME_LAB:       'Same Lab per Faculty'
+                }
+
+                optimizer_select = ui.select(
+                    options={flag: label for flag, label in _flag_labels.items()},
+                    multiple=True,
+                    value=[],
+                    label='Optimization',
+                ).classes('w-full').props('use-chips')
+
             status_label = ui.label('').classes('text-sm text-gray-600 italic')
 
             with ui.row().classes('gap-4 justify-center w-full'):
@@ -262,6 +284,7 @@ class ScheduleGUIView:
                 return
 
             limit = int(limit_input.value or 5)
+            model.config_model.config.optimizer_flags = list(optimizer_select.value or [])
             status_label.set_text('Generating schedules… this may take a moment.')
             generate_btn.props('loading disabled')
 

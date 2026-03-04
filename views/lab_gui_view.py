@@ -90,15 +90,20 @@ class LabGUIView:
                     )
                     result_label.set_text(message)
                     if success:
-                        existing_lab.set_options(LabGUIView._lab_controller.model.get_all_labs())
-                        modified_lab.set_value('')
-                        save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
-                        save_label.classes(replace='text-base text-orange-500')
+                        # Perform temporary save
+                        save_success = config_model.save_feature('temp', 'labs')
+                        if save_success:
+                            existing_lab.set_options(LabGUIView._lab_controller.model.get_all_labs())
+                            modified_lab.set_value('')
+                            save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
+                            save_label.classes(replace='text-base text-orange-500')
+                        else:
+                            result_label.set_text('Error: Failed to save temporary changes.')
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
             def handle_save():
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'labs')
                 if success:
                     save_label.set_text('Configuration saved successfully.')
                     save_label.classes(replace='text-base text-green-600')

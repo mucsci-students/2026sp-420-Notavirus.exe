@@ -118,6 +118,9 @@ class FacultyGUIView:
                 f = selected_faculty['value']
                 success = controller.model.modify_faculty(f.name, field, value)
                 if success:
+                    # Save temporary changes to the accumulator
+                    config_model.save_feature('temp', 'faculty')
+                    
                     feedback_label.set_text('Updated successfully.')
                     feedback_label.classes(replace='text-md text-green-600')
                     reload_form()
@@ -139,6 +142,7 @@ class FacultyGUIView:
                                 ui.button('Set Full-time').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, True),
+                                        config_model.save_feature('temp', 'faculty'),
                                         position_feedback.set_text('Position set to Full-time.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -147,6 +151,7 @@ class FacultyGUIView:
                                 ui.button('Set Adjunct').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, False),
+                                        config_model.save_feature('temp', 'faculty'),
                                         position_feedback.set_text('Position set to Adjunct.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -168,6 +173,7 @@ class FacultyGUIView:
                                         selected_faculty['value'].name, int(max_credits_input.value)
                                     )
                                     if success:
+                                        config_model.save_feature('temp', 'faculty')
                                         max_credits_feedback.set_text('Maximum credits updated.')
                                         max_credits_feedback.classes(replace='text-md text-green-600')
                                     reload_form()
@@ -391,7 +397,7 @@ class FacultyGUIView:
                 build_form(f)
 
             def handle_save():
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'faculty')
                 if success:
                     save_config_label.set_text('Configuration saved successfully.')
                     save_config_label.classes(replace='text-lg text-green-600')

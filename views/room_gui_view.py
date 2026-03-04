@@ -63,11 +63,30 @@ class RoomGUIView:
         Returns:        
             None
         """
+        from views.gui_view import GUIView
+
         GUITheme.applyTheming()
+        ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
+        
+        config_model = GUIView.controller.config_model
+
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            save_label = ui.label('').classes('text-base')
+
+            def handle_save():
+                success = config_model.save_feature('config', 'rooms')
+                if success:
+                    save_label.set_text('Configuration saved successfully.')
+                    save_label.classes(replace='text-base text-green-600')
+                else:
+                    save_label.set_text('Save failed. Check terminal for details.')
+                    save_label.classes(replace='text-base text-red-600')
+
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/delete')

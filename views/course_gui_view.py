@@ -119,6 +119,7 @@ class CourseGUIView:
                         selected['dirty'] = True
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
+                        config_model.save_feature('temp', 'courses')
                         course_id_input.set_value('')
                         credits_input.set_value(4)
                         room_select.set_value([])
@@ -130,7 +131,7 @@ class CourseGUIView:
                     result_label.set_text(f'Error: {e}')
 
             def handle_save():
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved successfully.')
@@ -313,6 +314,7 @@ class CourseGUIView:
 
                     ok = model.modify_course(cid, **updates)
                     if ok:
+                        GUIView.controller.config_model.save_feature('temp', 'courses')
                         status.set_text(f"'{selected_label.value}' updated successfully.")
                         credits_input.value = rooms_input.value = labs_input.value = faculty_input.value = ''
                         # Refresh section map with updated data
@@ -398,6 +400,7 @@ class CourseGUIView:
                                 selected['dirty'] = True
                                 save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
                                 save_label.classes(replace='text-lg text-orange-500')
+                                config_model.save_feature('temp', 'courses')
                                 updated = controller.get_courses_with_sections()
                                 new_options = {label: (course.course_id, index) for label, index, course in updated}
                                 section_options.clear()
@@ -410,7 +413,7 @@ class CourseGUIView:
                 dialog.open()
 
             def handle_save():
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved successfully.')

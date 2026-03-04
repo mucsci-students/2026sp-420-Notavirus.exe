@@ -180,6 +180,7 @@ class ConflictGUIView:
                         # Rebuild course_map from the freshly reloaded config so
                         # section_conflict_exists sees the updated conflicts lists
                         # without requiring a page reload.
+                        model.config_model.save_feature('temp', 'courses')
                         fresh_courses = model.config_model.get_all_courses()
                         fresh_counts: dict[str, int] = {}
                         for c in fresh_courses:
@@ -370,6 +371,9 @@ class ConflictGUIView:
                         feedback.classes(replace=f'text-lg {"!text-black dark:!text-white" if success else "text-red-600"}')
                         confirm_card.set_visibility(False)
                         if success:
+                            model = ConflictGUIView.conflict_model
+                            if model:
+                                model.config_model.save_feature('temp', 'courses')
                             selected['dirty'] = True
                             save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
                             save_label.classes(replace='text-lg text-orange-500')
@@ -433,7 +437,7 @@ class ConflictGUIView:
                 Returns:
                     None
                 """
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved successfully.')

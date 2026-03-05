@@ -127,11 +127,17 @@ class SchedulerModel:
         text = file_bytes.decode("utf-8")
         reader = csv.reader(io.StringIO(text))
 
+        schedules = []
         schedule = []
 
         for row in reader:
-            if not row:
-                continue  # skip empty lines
+
+        # ---- Empty line means new schedule ----
+            if not row or all(cell.strip() == "" for cell in row):
+                if schedule:
+                    schedules.append(schedule)
+                    schedule = []
+                continue
 
             course_str = row[0]
             faculty = row[1]
@@ -200,8 +206,11 @@ class SchedulerModel:
 
             schedule.append(ci)
 
-        # Wrap in outer list to match JSON import format
-        return [schedule]
+        # ---- Add final schedule if file doesn't end with empty line ----
+        if schedule:
+            schedules.append(schedule)
+
+        return schedules
 
     
     def export_to_csv(self, schedules: list[list]):

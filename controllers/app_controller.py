@@ -83,7 +83,7 @@ class SchedulerController:
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
 
         LabGUIView._lab_controller = self.lab_controller
-        self.room_view = RoomGUIView(self.room_controller)
+        RoomGUIView.room_controller=self.room_controller
     
     def run(self):
         """

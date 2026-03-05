@@ -10,21 +10,16 @@ from controllers.room_controller import RoomController
 
 
 class RoomGUIView:
-    """
-    initiate the view with the controller
-    and the pages with access to the controller
     
-    """
 
-    def __init__(self, controller):
-        self.controller = controller
-        ui.page('/room')(self.room)
-        ui.page('/room/add')(self.room_add)
-        ui.page('/room/modify')(self.room_modify)
+    room_controller = None
+        
 
 
-    
-    def room(self):
+
+    @ui.page('/room')
+    @staticmethod
+    def room():
         """
         Displays the GUI for room.
                 
@@ -46,8 +41,9 @@ class RoomGUIView:
             ui.space()
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/'))
 
-    
-    def room_add(self):
+    @ui.page('/room/add')
+    @staticmethod
+    def room_add():
         """
         Displays the GUI for adding a room.
                 
@@ -57,7 +53,7 @@ class RoomGUIView:
             None
         """
         def handle_add():
-            success = self.controller.model.add_room(room_input.value)
+            success = RoomGUIView.room_controller.model.add_room(room_input.value)
 
             if success:
                 result_label.set_text("Room added successfully.")
@@ -70,7 +66,7 @@ class RoomGUIView:
             ui.label('Add Room').classes('text-3xl')
 
             # Display existing rooms
-            rooms = self.controller.model.get_all_rooms()
+            rooms = RoomGUIView.room_controller.model.get_all_rooms()
             ui.label("Existing Rooms:")
             with ui.list():
                 for r in rooms:
@@ -86,15 +82,16 @@ class RoomGUIView:
 
 
 
-    
-    def room_modify(self):
+    @ui.page('/room/modify')
+    @staticmethod
+    def room_modify():
 
         def handle_modify():
                 if not selected_room.value:
                     result_label.set_text("Select a room first.")
                     return
 
-                success = self.controller.model.modify_room(
+                success = RoomGUIView.room_controller.model.modify_room(
                     selected_room.value,
                     new_name.value
                 )
@@ -111,7 +108,7 @@ class RoomGUIView:
 
             ui.label('Modify Room').classes('text-3xl')
 
-            rooms = self.controller.model.get_all_rooms()
+            rooms = RoomGUIView.room_controller.model.get_all_rooms()
 
             selected_room = ui.select(options=rooms, label="Select Room")
             new_name = ui.input("New Room Name")

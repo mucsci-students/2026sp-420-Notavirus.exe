@@ -112,6 +112,15 @@ class SchedulerController:
 
         GUIView.controller = self
     
+    def save_configuration(self) -> bool:
+        """
+        Saves the current configuration via the model.
+        
+        Returns:
+            bool: True if save successful, False otherwise
+        """
+        return self.config_model.safe_save()
+
     def run(self):
         """
         Main application loop.

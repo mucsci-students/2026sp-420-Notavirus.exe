@@ -428,26 +428,19 @@ class ScheduleGUIView:
                     if not schedule_select.value:
                         ui.notify("Please select at least one schedule", type="warning")
                         return
-
                     indices = [
                         int(x.replace("Schedule ", "")) - 1
                         for x in schedule_select.value
                     ]
-
                     schedules_to_export = [
                         _state.schedules[i] for i in indices
                     ]
-        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
-
                     filename = filename_input.value.strip() or "schedules"
-
                     data = ScheduleGUIView.schedule_controller.export_schedules(
                         format_select.value,
                         schedules_to_export
                     )
-
                     ui.download(data, filename=f"{filename}.{format_select.value}")
-
                     export_dialog.close()
 
                 with ui.row().classes("w-full justify-end gap-3 pt-2"):

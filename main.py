@@ -38,6 +38,9 @@ def main():
         # Create and run main controller
         print(f"Loading configuration from: {config_path}")
         controller = SchedulerController(config_path)
+
+        GUIView.controller = controller
+
         controller.run()
 
     except KeyboardInterrupt:

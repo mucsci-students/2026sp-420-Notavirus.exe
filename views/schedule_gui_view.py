@@ -238,20 +238,25 @@ class ScheduleGUIView:
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
+        # Read the config file's current limit so we can display it
+        config_limit = 100
+        model = _state._scheduler_model
+        if model is not None and getattr(model, "config_model", None) is not None:
+            config_limit = model.config_model.config.limit
+
         with ui.column().classes('gap-6 items-center w-full max-w-lg mx-auto pt-10'):
             ui.label('Generate Schedules').classes('text-4xl font-bold !text-black dark:!text-white')
 
             with ui.card().classes('w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-white'):
                 ui.label('Schedule Limit').classes('text-lg font-semibold text-gray-700 mb-1')
                 ui.label(
-                    'Maximum number of schedules to generate. Higher limits take longer.'
+                    f'Config file limit: {config_limit}.'
                 ).classes('text-sm text-gray-500 mb-4')
 
                 limit_input = ui.number(
-                    label='Limit',
-                    value=5,
+                    label='Limit (overrides config)',
+                    value=config_limit,
                     min=1,
-                    max=500,
                     step=1,
                     format='%d',
                 ).classes('w-full').props('color=black label-color=black input-class="!text-black" :dark="false"')
@@ -302,8 +307,7 @@ class ScheduleGUIView:
                 status_label.set_text(f'Configuration invalid:\n{errors}')
                 return
 
-            limit = int(limit_input.value or 5)
-            model.config_model.config.optimizer_flags = list(optimizer_select.value or [])
+            limit = int(limit_input.value or config_limit)
             status_label.set_text('Generating schedules… this may take a moment.')
             generate_btn.props('loading disabled')
 

@@ -23,6 +23,7 @@ from controllers.schedule_controller import ScheduleController
 
 from views.gui_view import GUIView
 from views.lab_gui_view import LabGUIView   
+from views.room_gui_view import RoomGUIView
 from nicegui import ui
 
 

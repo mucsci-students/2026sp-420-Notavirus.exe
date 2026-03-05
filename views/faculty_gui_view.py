@@ -57,7 +57,11 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-add)')
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
-            # Title
+            # Home button row
+            with ui.row().classes('w-full max-w-6xl justify-start mb-4'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+
+            # Title                
             ui.label('Add Faculty').classes('text-5xl mb-12 mt-4 !text-black dark:!text-white')
             
             with ui.row().classes('w-full max-w-6xl justify-between items-start'):

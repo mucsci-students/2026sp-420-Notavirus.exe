@@ -59,14 +59,14 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-add)')
+        ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
         model = ConflictGUIView.conflict_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Add Conflict').classes('text-4xl mb-6 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Add Conflict').classes('text-4xl mb-6 !text-black dark:!text-white')
 
             all_courses = model.config_model.get_all_courses() if model else []
 
@@ -89,9 +89,9 @@ class ConflictGUIView:
             labels = list(course_map.keys())
 
             course_a = ui.select(labels, label='Course A',
-                                 value=labels[0]).classes('w-full max-w-md')
+                                 value=labels[0]).props('label-color=grey-7').classes('w-full max-w-md')
             course_b = ui.select(labels, label='Course B',
-                                 value=labels[1] if len(labels) > 1 else labels[0]) \
+                                 value=labels[1] if len(labels) > 1 else labels[0]).props('label-color=grey-7') \
                          .classes('w-full max-w-md')
 
             status = ui.label('').classes('text-sm')
@@ -180,6 +180,7 @@ class ConflictGUIView:
                         # Rebuild course_map from the freshly reloaded config so
                         # section_conflict_exists sees the updated conflicts lists
                         # without requiring a page reload.
+                        model.config_model.save_feature('temp', 'courses')
                         fresh_courses = model.config_model.get_all_courses()
                         fresh_counts: dict[str, int] = {}
                         for c in fresh_courses:
@@ -198,12 +199,12 @@ class ConflictGUIView:
 
             ui.button('Add Conflict') \
                 .props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-12') \
+                .classes('w-80 h-12 dark:!bg-white dark:!text-black') \
                 .on('click', do_add)
 
             ui.button('Back') \
                 .props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4') \
+                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black') \
                 .on('click', lambda: ui.navigate.to('/conflict'))
 
 
@@ -316,11 +317,11 @@ class ConflictGUIView:
                 options=list(conflict_options.keys()),
                 label='Select Conflict to Modify',
                 on_change=update_selection
-            ).classes('w-full max-w-xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             with ui.row().classes('gap-4 w-full max-w-xl justify-center items-center mt-2'):
-                new_course_a = ui.select(all_labels, label='New Course A').classes('w-64 max-w-xs')
-                new_course_b = ui.select(all_labels, label='New Course B').classes('w-64 max-w-xs')
+                new_course_a = ui.select(all_labels, label='New Course A').props('label-color=grey-7').classes('w-64 max-w-xs')
+                new_course_b = ui.select(all_labels, label='New Course B').props('label-color=grey-7').classes('w-64 max-w-xs')
 
             def on_toggle(e):
                 selected['value'] = None
@@ -413,7 +414,7 @@ class ConflictGUIView:
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-delete)')
+        ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
         controller = GUIView.controller.conflict_controller
         course_model = GUIView.controller.course_model
@@ -459,18 +460,18 @@ class ConflictGUIView:
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: check_discard_and_navigate_del('/'))
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
-            ui.label('Delete Conflict').classes('text-4xl mb-4 text-black')
-            ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg text-black text-center max-w-xl')
+            ui.label('Delete Conflict').classes('text-4xl mb-4 !text-black dark:!text-white')
+            ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             if not existing_conflicts:
-                ui.label('There are no conflicts currently in the configuration.').classes('text-xl text-black')
-                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/conflict'))
+                ui.label('There are no conflicts currently in the configuration.').classes('text-xl !text-black dark:!text-white')
+                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/conflict'))
                 return
 
             feedback = ui.label('').classes('text-lg')
-            save_label = ui.label('').classes('text-lg text-black')
+            save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
             selected = {'value': None, 'dirty': False}
 
             def check_discard_and_navigate_del(target_url):
@@ -490,7 +491,7 @@ class ConflictGUIView:
                 options=list(conflict_options.keys()),
                 label='Select Conflict to Delete',
                 on_change=lambda e: selected.update({'value': conflict_options.get(e.value)})
-            ).classes('w-full max-w-xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             def on_toggle(e):
                 """
@@ -515,13 +516,13 @@ class ConflictGUIView:
             ui.switch(
                 'Sort course conflicts without section preference',
                 on_change=on_toggle
-            ).classes('text-black')
+            ).classes('!text-black dark:!text-white')
 
             confirm_card = ui.card().classes('w-full max-w-xl items-center bg-transparent shadow-none')
             confirm_card.set_visibility(False)
 
             with confirm_card:
-                confirm_label = ui.label('').classes('text-xl text-black text-center')
+                confirm_label = ui.label('').classes('text-xl !text-black dark:!text-white text-center')
                 with ui.row().classes('gap-4 justify-center mt-2'):
 
                     def on_confirm():
@@ -543,9 +544,12 @@ class ConflictGUIView:
                         s2 = section_label_map.get(i2, c2) if i2 is not None else c2
                         success, message = controller.gui_delete_conflict(s1, s2, i1, i2)
                         feedback.set_text(message)
-                        feedback.classes(replace=f'text-lg {"text-black" if success else "text-red-600"}')
+                        feedback.classes(replace=f'text-lg {"!text-black dark:!text-white" if success else "text-red-600"}')
                         confirm_card.set_visibility(False)
                         if success:
+                            model = ConflictGUIView.conflict_model
+                            if model:
+                                model.config_model.save_feature('temp', 'courses')
                             selected['dirty'] = True
                             save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
                             save_label.classes(replace='text-lg text-orange-500')
@@ -569,11 +573,11 @@ class ConflictGUIView:
                             None
                         """
                         feedback.set_text('Conflict deletion cancelled.')
-                        feedback.classes(replace='text-lg text-black')
+                        feedback.classes(replace='text-lg !text-black dark:!text-white')
                         confirm_card.set_visibility(False)
 
                     ui.button('Confirm Delete').props('rounded color=red text-color=white no-caps').classes('w-48 h-12 text-lg').on('click', on_confirm)
-                    ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-12 text-lg').on('click', on_cancel)
+                    ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-12 text-lg dark:!bg-white dark:!text-black').on('click', on_cancel)
 
             def on_validate():
                 """
@@ -609,7 +613,7 @@ class ConflictGUIView:
                 Returns:
                     None
                 """
-                success = config_model.safe_save()
+                success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved successfully.')
@@ -618,9 +622,9 @@ class ConflictGUIView:
                     save_label.set_text('Save failed. Check terminal for details.')
                     save_label.classes(replace='text-lg text-red-600')
 
-            ui.button('Check Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', on_validate)
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_save)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: check_discard_and_navigate_del('/conflict'))
+            ui.button('Check Conflict').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_validate)
+            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/conflict'))
 
     @ui.page('/conflict/view')
     @staticmethod
@@ -637,14 +641,14 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
         model = ConflictGUIView.conflict_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('View Conflicts').classes('text-4xl mb-6 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('View Conflicts').classes('text-4xl mb-6 !text-black dark:!text-white')
 
             all_courses = model.config_model.get_all_courses() if model else []
 
@@ -694,16 +698,16 @@ class ConflictGUIView:
             else:
                 with ui.column().classes('w-full max-w-2xl gap-3'):
                     for key, group in groups.items():
-                        with ui.card().classes('w-full px-5 py-4'):
+                        with ui.card().classes('w-full px-5 py-4 !bg-white dark:!bg-white'):
                             ui.label(', '.join(group['labels'])) \
-                                .classes('font-semibold text-base')
-                            ui.label('conflicts with:').classes('text-xs text-gray-400')
+                                .classes('font-semibold text-base !text-black')
+                            ui.label('conflicts with:').classes('text-xs text-gray-500')
                             for conflict_display in group['conflicts']:
                                 with ui.row().classes('items-center gap-2 ml-2'):
-                                    ui.label('↔').classes('text-gray-400 text-xs')
-                                    ui.label(conflict_display).classes('text-sm')
+                                    ui.label('↔').classes('text-gray-500 text-xs')
+                                    ui.label(conflict_display).classes('text-sm !text-black')
 
             ui.button('Back') \
                 .props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4') \
+                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black') \
                 .on('click', lambda: ui.navigate.to('/conflict'))

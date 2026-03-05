@@ -219,12 +219,12 @@ class ScheduleGUIView:
         On success, stores results in _state and navigates to /display_schedules.
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
         with ui.column().classes('gap-6 items-center w-full max-w-lg mx-auto pt-10'):
-            ui.label('Generate Schedules').classes('text-4xl font-bold text-black')
+            ui.label('Generate Schedules').classes('text-4xl font-bold !text-black dark:!text-white')
 
-            with ui.card().classes('w-full rounded-2xl shadow-md p-6'):
+            with ui.card().classes('w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-white'):
                 ui.label('Schedule Limit').classes('text-lg font-semibold text-gray-700 mb-1')
                 ui.label(
                     'Maximum number of schedules to generate. Higher limits take longer.'
@@ -237,7 +237,7 @@ class ScheduleGUIView:
                     max=500,
                     step=1,
                     format='%d',
-                ).classes('w-full')
+                ).classes('w-full').props('color=black label-color=black input-class="!text-black" :dark="false"')
 
             with ui.card().classes('w-full rounded-2xl shadow-md p-6'):
                 ui.label('Optimization Options').classes('text-lg font-semibold text-gray-700 mb-1')
@@ -266,8 +266,8 @@ class ScheduleGUIView:
 
             with ui.row().classes('gap-4 justify-center w-full'):
                 ui.button('Back').props(
-                    'rounded outline color=black no-caps'
-                ).classes('w-36 h-12 text-base').on(
+                    'rounded outline color=black no-caps text-color=black'
+                ).classes('w-36 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/')
                 )
                 generate_btn = ui.button('Generate').props(
@@ -330,16 +330,16 @@ class ScheduleGUIView:
         - Unique _key field prevents Quasar from misidentifying rows on update.
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
         # Guard: nothing generated yet
         if not _state.schedules:
             with ui.column().classes('gap-4 items-center w-full pt-20'):
-                ui.label('No schedules available.').classes('text-2xl text-black')
+                ui.label('No schedules available.').classes('text-2xl !text-black dark:!text-white')
                 ui.label('Please generate schedules first.').classes('text-gray-600')
                 ui.button('Go to Generator').props(
                     'rounded color=black text-color=white no-caps'
-                ).classes('w-48 h-12 text-base').on(
+                ).classes('w-48 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
                 )
             return
@@ -351,17 +351,17 @@ class ScheduleGUIView:
 
         with ui.column().classes('gap-4 items-center w-full px-4 pt-6 pb-10'):
 
-            ui.label('Schedule Viewer').classes('text-4xl font-bold text-black')
+            ui.label('Schedule Viewer').classes('text-4xl font-bold !text-black dark:!text-white')
 
             with ui.row().classes('items-center gap-4 justify-center'):
-                prev_btn = ui.button(icon='chevron_left').props('round flat color=black')
+                prev_btn = ui.button(icon='chevron_left').props('round flat color=black').classes('dark:!text-white')
                 index_label = ui.label(
                     f'Schedule {_state.current_index + 1} of {total}'
-                ).classes('text-lg font-semibold text-black min-w-[160px] text-center')
-                next_btn = ui.button(icon='chevron_right').props('round flat color=black')
+                ).classes('text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center')
+                next_btn = ui.button(icon='chevron_right').props('round flat color=black').classes('dark:!text-white')
 
             with ui.card().classes('w-full max-w-7xl rounded-2xl shadow-md'):
-                with ui.tabs().classes('text-black') as tabs:
+                with ui.tabs().classes('!text-black dark:!text-white') as tabs:
                     room_tab    = ui.tab('By Room / Lab')
                     faculty_tab = ui.tab('By Faculty')
 
@@ -376,7 +376,7 @@ class ScheduleGUIView:
                                 ),
                                 value='All',
                                 label='Location',
-                            ).classes('min-w-[180px]')
+                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
 
                         room_table = ui.table(
                             columns=ROOM_COLUMNS,
@@ -398,7 +398,7 @@ class ScheduleGUIView:
                                 ),
                                 value='All',
                                 label='Faculty',
-                            ).classes('min-w-[180px]')
+                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
 
                         faculty_table = ui.table(
                             columns=FACULTY_COLUMNS,
@@ -413,8 +413,8 @@ class ScheduleGUIView:
 
             with ui.row().classes('gap-4 justify-center'):
                 ui.button('Back to Home').props(
-                    'rounded outline color=black no-caps'
-                ).classes('w-44 h-12 text-base').on(
+                    'rounded outline color=black no-caps text-color=black'
+                ).classes('w-44 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/')
                 )
                 ui.button('Generate New').props(

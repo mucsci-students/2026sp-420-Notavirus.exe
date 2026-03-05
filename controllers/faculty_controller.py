@@ -79,16 +79,16 @@ class FacultyController:
             
             # Step 4: Show result
             if success:
-                if hasattr(self, 'view') and self.view is not None:
+                if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_message'):
                     self.view.display_message(f"Faculty '{faculty_data['name']}' added successfully!")
                 return True
             else:
-                if hasattr(self, 'view') and self.view is not None:
+                if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_error'):
                     self.view.display_error(f"Faculty '{faculty_data['name']}' already exists.")
                 return False
-        
+
         except Exception as e:
-            if hasattr(self, 'view') and self.view is not None:
+            if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_error'):
                 self.view.display_error(f"Failed to add faculty: {e}")
             else:
                 print(f"Failed to add faculty: {e}")

@@ -1,4 +1,3 @@
-
 # views/course_gui_view.py
 """
 CourseGUIView - Graphical-user interface for course interactions
@@ -143,11 +142,11 @@ class CourseGUIView:
 
             with ui.row().classes('justify-center items-start w-full gap-[150px]'):
                 with ui.column().classes('items-center gap-4 pt-10'):
-                    course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined').classes('w-80')
-                    credits_input = ui.number(label='Credits ', min=0, value=4).props('rounded outlined').classes('w-80')
-                    room_select = ui.select(resources['rooms'], label='Rooms', multiple=True).props('rounded outlined').classes('w-80')
-                    lab_select = ui.select(resources['labs'], label='Labs', multiple=True).props('rounded outlined').classes('w-80')
-                    faculty_select = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined').classes('w-80')
+                    course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined label-color=grey-7').classes('w-80')
+                    credits_input = ui.number(label='Credits ', min=0, value=4).props('rounded outlined label-color=grey-7').classes('w-80')
+                    room_select = ui.select(resources['rooms'], label='Rooms', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
+                    lab_select = ui.select(resources['labs'], label='Labs', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
+                    faculty_select = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
                     result_label = ui.label('').classes('text-base')
                     save_label = ui.label('').classes('text-lg')
                     ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_add)
@@ -164,17 +163,6 @@ class CourseGUIView:
     def course_modify():
         """
         Displays the GUI for modifying an existing course.
-
-        Loads all course sections from CourseModel and displays a dropdown
-        showing section labels (e.g. CMSC 161.01, CMSC 161.02) so individual
-        sections can be targeted. Shows current values for the selected section.
-
-        Credits: enter a number to change, blank to keep.
-        Rooms/Labs: enter comma-separated values to replace, blank to keep,
-                    prefix with - to remove a specific entry (e.g. -Roddy 136).
-        Faculty: add by name, remove with -Name prefix.
-
-        Calls controller._parse_modifications() then model.modify_course().
 
         Parameters:
             None
@@ -198,20 +186,17 @@ class CourseGUIView:
                     .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
                 return
 
-            # Build label -> (index, course) mapping so we can look up by section label
             section_map = {label: (idx, course) for label, idx, course in sections}
             section_labels = [label for label, _, _ in sections]
             status = ui.label('').classes('text-sm')
 
             with ui.card().classes('w-full max-w-lg p-6 gap-4'):
                 selected_label = ui.select(section_labels, label='Section to Modify',
-                                           value=section_labels[0]).classes('w-full')
+                                           value=section_labels[0]).props('label-color=grey-7').classes('w-full')
 
-                # Shows current values for the selected section
                 info = ui.label('').classes('text-xs text-gray-500')
 
                 def refresh_info():
-                    """Updates the info label with current values of the selected section."""
                     entry = section_map.get(selected_label.value)
                     if entry:
                         _, course = entry
@@ -231,21 +216,12 @@ class CourseGUIView:
                     'Faculty: Name to add, -Name to remove.'
                 ).classes('text-xs text-gray-400')
 
-                credits_input = ui.input('New Credits').classes('w-full')
-                rooms_input   = ui.input('Rooms (e.g. Roddy 136, Roddy 140  or  -Roddy 136)').classes('w-full')
-                labs_input    = ui.input('Labs (e.g. Linux  or  -Mac)').classes('w-full')
-                faculty_input = ui.input('Faculty (add: Name, remove: -Name)').classes('w-full')
+                credits_input = ui.input('New Credits').props('label-color=grey-7').classes('w-full')
+                rooms_input   = ui.input('Rooms (e.g. Roddy 136, Roddy 140  or  -Roddy 136)').props('label-color=grey-7').classes('w-full')
+                labs_input    = ui.input('Labs (e.g. Linux  or  -Mac)').props('label-color=grey-7').classes('w-full')
+                faculty_input = ui.input('Faculty (add: Name, remove: -Name)').props('label-color=grey-7').classes('w-full')
 
                 def do_modify():
-                    """
-                    Reads inputs, parses modifications, and applies them to the
-                    selected section via the model.
-
-                    Parameters:
-                        None
-                    Returns:
-                        None
-                    """
                     entry = section_map.get(selected_label.value)
                     if not entry:
                         status.set_text('Section not found!')
@@ -255,7 +231,6 @@ class CourseGUIView:
 
                     updates = {}
 
-                    # Credits: only update if field is non-empty
                     raw_credits = credits_input.value.strip()
                     if raw_credits:
                         try:
@@ -268,7 +243,6 @@ class CourseGUIView:
                             status.set_text(f"⚠ '{raw_credits}' is not a valid number.")
                             return
 
-                    # Rooms: blank = keep, otherwise parse add/remove
                     raw_rooms = rooms_input.value.strip()
                     if raw_rooms:
                         changes = [r.strip() for r in raw_rooms.split(',') if r.strip()]
@@ -283,7 +257,6 @@ class CourseGUIView:
                                     current.append(change)
                         updates['room'] = current
 
-                    # Labs: blank = keep, otherwise parse add/remove
                     raw_labs = labs_input.value.strip()
                     if raw_labs:
                         changes = [l.strip() for l in raw_labs.split(',') if l.strip()]
@@ -298,7 +271,6 @@ class CourseGUIView:
                                     current.append(change)
                         updates['lab'] = current
 
-                    # Faculty: reuse controller's existing parse logic
                     raw_faculty = faculty_input.value.strip()
                     if raw_faculty:
                         modifications = {'credits': '', 'room': '', 'lab': '', 'faculty': raw_faculty}
@@ -315,10 +287,10 @@ class CourseGUIView:
 
                     ok = model.modify_course(cid, **updates)
                     if ok:
+                        from views.gui_view import GUIView
                         GUIView.controller.config_model.save_feature('temp', 'courses')
                         status.set_text(f"'{selected_label.value}' updated successfully.")
                         credits_input.value = rooms_input.value = labs_input.value = faculty_input.value = ''
-                        # Refresh section map with updated data
                         new_sections = model.get_courses_with_sections()
                         section_map.clear()
                         section_map.update({lbl: (i, c) for lbl, i, c in new_sections})
@@ -337,12 +309,6 @@ class CourseGUIView:
     def course_delete():
         """
         Displays the GUI for deleting a course.
-
-        Presents a dropdown of all course sections (e.g. CMSC 140.01, CMSC 140.02)
-        derived from the current configuration. Deleting a specific section removes
-        only that section from the JSON, and remaining sections are renumbered
-        automatically on reload. Changes are in-memory until Save Configuration
-        is clicked.
 
         Parameters:
             None
@@ -380,7 +346,7 @@ class CourseGUIView:
                 options=list(section_options.keys()),
                 label='Select Course Section',
                 on_change=lambda e: selected.update({'value': section_options[e.value]}) if e.value in section_options else selected.update({'value': None})
-            ).classes('w-full max-w-xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             def handle_delete():
                 if not selected['value']:
@@ -432,9 +398,6 @@ class CourseGUIView:
     def course_view():
         """
         Displays the GUI for viewing all courses.
-
-        Loads all course sections from CourseModel and displays each as an
-        expandable card showing credits, rooms, labs, faculty, and conflicts.
 
         Parameters:
             None

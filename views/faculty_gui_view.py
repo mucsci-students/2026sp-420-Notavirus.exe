@@ -58,36 +58,39 @@ class FacultyGUIView:
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
             # Title
-            ui.label('Add Faculty').classes('text-5xl mb-12 mt-4 text-black')
+            ui.label('Add Faculty').classes('text-5xl mb-12 mt-4 !text-black dark:!text-white')
             
             with ui.row().classes('w-full max-w-6xl justify-between items-start'):
                 # Left Column
                 with ui.column().classes('w-[50%] gap-6'):
                     with ui.row().classes('items-center gap-4 w-full'):
-                        ui.label('Enter Faculty Name:').classes('text-2xl text-black')
-                        name_input = ui.input().props('outlined dense square borderless').classes('w-64 text-xl bg-white').style('border: 2px solid black;')
+                        ui.label('Enter Faculty Name:').classes('text-2xl !text-black dark:!text-white')
+                        name_input = ui.input().props('outlined dense square color=dark input-style="color: black !important"').classes('w-64 text-xl').style('background-color: white;')
                         
                     with ui.row().classes('items-center gap-6 w-full'):
-                        ui.label('Faculty Position:').classes('text-2xl text-black')
-                        position_radio = ui.radio(['Full Time', 'Adjunct'], value='Full Time').props('inline color=black').classes('text-xl text-black gap-4')
+                        ui.label('Faculty Position:').classes('text-2xl !text-black dark:!text-white')
+                        position_radio = ui.radio(['Full Time', 'Adjunct'], value='Full Time').props('inline').classes('text-xl !text-black dark:!text-white gap-4 faculty-radio')
+                        ui.add_css('''
+                            .faculty-radio .q-radio__inner { color: inherit !important; }
+                        ''')
 
-                    ui.label('Faculty Availability:').classes('text-2xl text-black')
+                    ui.label('Faculty Availability:').classes('text-2xl !text-black dark:!text-white')
                     
                     # Separate availability for each day
                     day_inputs = {}
                     with ui.column().classes('w-full pl-4 gap-2'):
                         for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
-                            with ui.row().classes('items-center w-full justify-between pr-4'):
-                                cb = ui.checkbox(day).props('color=black keep-color').classes('text-xl text-black w-32')
+                            with ui.row().classes('items-center w-full pr-4 gap-4'):
+                                cb = ui.checkbox(day).props('color=dark').classes('text-xl !text-black dark:!text-white')
                                 
                                 def handle_time_change(e, is_start, related_input):
                                     if e.value and not related_input.value:
                                         related_input.value = '17:00' if is_start else '09:00'
                                 
                                 with ui.row().classes('items-center gap-2').bind_visibility_from(cb, 'value'):
-                                    start_input = ui.input('Start (e.g. 09:00)').props('outlined dense square borderless').classes('w-28 bg-white').style('border: 2px solid black;')
-                                    ui.label('to').classes('text-lg text-black')
-                                    end_input = ui.input('End (e.g. 17:00)').props('outlined dense square borderless').classes('w-28 bg-white').style('border: 2px solid black;')
+                                    start_input = ui.input('Start (e.g. 09:00)').props('outlined dense square color=dark label-color=grey-7 input-style="color: black !important"').classes('w-28').style('background-color: white;')
+                                    ui.label('to').classes('text-lg !text-black dark:!text-white')
+                                    end_input = ui.input('End (e.g. 17:00)').props('outlined dense square color=dark label-color=grey-7 input-style="color: black !important"').classes('w-28').style('background-color: white;')
                                     
                                     start_input.on_value_change(lambda e, si=start_input, ei=end_input: handle_time_change(e, True, ei))
                                     end_input.on_value_change(lambda e, si=start_input, ei=end_input: handle_time_change(e, False, si))
@@ -96,7 +99,7 @@ class FacultyGUIView:
 
                     # Courses and Preferences
                     with ui.column().classes('w-full mt-6 gap-2'):
-                        ui.label('Courses and Preferences:').classes('text-2xl text-black')
+                        ui.label('Courses and Preferences:').classes('text-2xl !text-black dark:!text-white')
                         
                         course_container = ui.column().classes('w-full gap-2')
                         course_rows = []
@@ -109,8 +112,8 @@ class FacultyGUIView:
                             with course_container:
                                 row_container = ui.row().classes('items-center gap-4 w-full wrap')
                                 with row_container:
-                                    course_input = ui.select(options, label='Course Code', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
-                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
+                                    course_input = ui.select(options, label='Course Code', with_input=True).props('outlined dense square options-dense behavior="menu" label-color=grey-7 input-style="color: black !important"').classes('flex-grow').style('background-color: white; color: black; min-width: 150px;')
+                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square label-color=grey-7 input-style="color: black !important"').classes('w-40').style('background-color: white; color: black;')
                                     
                                     row_data = {'course': course_input, 'weight': weight_input}
                                     course_rows.append(row_data)
@@ -129,7 +132,7 @@ class FacultyGUIView:
 
                     # Labs and Preferences
                     with ui.column().classes('w-full mt-6 gap-2'):
-                        ui.label('Lab Preferences:').classes('text-2xl text-black')
+                        ui.label('Lab Preferences:').classes('text-2xl !text-black dark:!text-white')
                         
                         lab_container = ui.column().classes('w-full gap-2')
                         lab_rows = []
@@ -142,8 +145,8 @@ class FacultyGUIView:
                             with lab_container:
                                 row_container = ui.row().classes('items-center gap-4 w-full wrap')
                                 with row_container:
-                                    lab_input = ui.select(options, label='Lab Name', with_input=True).props('outlined dense square borderless options-dense behavior="menu"').classes('flex-grow bg-white').style('border: 2px solid black; min-width: 150px;')
-                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square borderless').classes('w-40 bg-white').style('border: 2px solid black;')
+                                    lab_input = ui.select(options, label='Lab Name', with_input=True).props('outlined dense square options-dense behavior="menu" label-color=grey-7 input-style="color: black !important"').classes('flex-grow').style('background-color: white; color: black; min-width: 150px;')
+                                    weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square label-color=grey-7 input-style="color: black !important"').classes('w-40').style('background-color: white; color: black;')
                                     
                                     row_data = {'lab': lab_input, 'weight': weight_input}
                                     lab_rows.append(row_data)
@@ -161,8 +164,8 @@ class FacultyGUIView:
                         ui.button('+ Add Lab', on_click=add_lab_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
                 # Right Column
-                with ui.column().classes('w-[45%] h-[500px] border-4 border-black bg-white p-6 items-start justify-start overflow-hidden'):
-                    ui.label('Existing Faculty').classes('text-3xl text-black text-center w-full mb-4 font-bold border-b-2 border-black pb-2')
+                with ui.column().classes('w-[45%] h-[500px] border-4 p-6 items-start justify-start overflow-hidden').style('border-color: black; background-color: white;') as right_panel:
+                    ui.label('Existing Faculty').classes('text-3xl !text-black text-center w-full mb-4 font-bold pb-2').style('border-bottom: 2px solid black;')
                     scroll_area = ui.scroll_area().classes('w-full h-full pr-4')
                     
                     def refresh_faculty_list():
@@ -175,9 +178,9 @@ class FacultyGUIView:
                                 faculty_list = FacultyGUIView.faculty_model.get_all_faculty()
                                 if faculty_list:
                                     for f in faculty_list:
-                                        ui.label(f.name).classes('text-xl text-black mb-2 py-2 border-b border-gray-200 w-full')
+                                        ui.label(f.name).classes('text-xl !text-black mb-2 py-2 w-full').style('border-bottom: 1px solid #e5e7eb;')
                                 else:
-                                    ui.label('No existing faculty found.').classes('text-xl text-gray-500 italic')
+                                    ui.label('No existing faculty found.').classes('text-xl text-gray-500 dark:text-gray-400 italic')
                             except Exception as e:
                                 ui.label('Could not load faculty data.').classes('text-xl text-red-500')
                     
@@ -239,8 +242,8 @@ class FacultyGUIView:
 
             # Bottom row for buttons
             with ui.row().classes('w-full max-w-6xl justify-between items-end mt-16'):
-                ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold').on('click', lambda: ui.navigate.to('/faculty'))
-                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold').on('click', save_faculty)
+                ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
+                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', save_faculty)
 
     @ui.page('/faculty/modify')
     @staticmethod
@@ -590,7 +593,7 @@ class FacultyGUIView:
                 options=list(faculty_options.keys()),
                 label='Select Faculty Member',
                 on_change=on_select
-            ).classes('w-full max-w-2xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-2xl text-xl')
 
             form_card
             save_config_label

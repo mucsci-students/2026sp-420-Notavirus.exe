@@ -89,9 +89,9 @@ class ConflictGUIView:
             labels = list(course_map.keys())
 
             course_a = ui.select(labels, label='Course A',
-                                 value=labels[0]).classes('w-full max-w-md')
+                                 value=labels[0]).props('label-color=grey-7').classes('w-full max-w-md')
             course_b = ui.select(labels, label='Course B',
-                                 value=labels[1] if len(labels) > 1 else labels[0]) \
+                                 value=labels[1] if len(labels) > 1 else labels[0]).props('label-color=grey-7') \
                          .classes('w-full max-w-md')
 
             status = ui.label('').classes('text-sm')
@@ -317,11 +317,11 @@ class ConflictGUIView:
                 options=list(conflict_options.keys()),
                 label='Select Conflict to Modify',
                 on_change=update_selection
-            ).classes('w-full max-w-xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             with ui.row().classes('gap-4 w-full max-w-xl justify-center items-center mt-2'):
-                new_course_a = ui.select(all_labels, label='New Course A').classes('w-64 max-w-xs')
-                new_course_b = ui.select(all_labels, label='New Course B').classes('w-64 max-w-xs')
+                new_course_a = ui.select(all_labels, label='New Course A').props('label-color=grey-7').classes('w-64 max-w-xs')
+                new_course_b = ui.select(all_labels, label='New Course B').props('label-color=grey-7').classes('w-64 max-w-xs')
 
             def on_toggle(e):
                 selected['value'] = None
@@ -491,7 +491,7 @@ class ConflictGUIView:
                 options=list(conflict_options.keys()),
                 label='Select Conflict to Delete',
                 on_change=lambda e: selected.update({'value': conflict_options.get(e.value)})
-            ).classes('w-full max-w-xl text-xl')
+            ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             def on_toggle(e):
                 """

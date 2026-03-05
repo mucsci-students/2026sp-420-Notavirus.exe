@@ -45,17 +45,28 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
+        ui.query('body').style('background-color: var(--q-add)')
+        ui.add_css('''
+            .body--dark .q-field__control {
+                background-color: #383838 !important;
+                border-color: white !important;
+            }
+            .body--dark .q-field__native,
+            .body--dark .q-field__label,
+            .body--dark .q-field__input {
+                color: white !important;
+            }
+        ''')
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Add Lab').classes('text-4xl mb-10 text-black')
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Add Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
 
-            new_lab = ui.input(label='Lab Name').props('rounded outlined').classes('w-80')
+            new_lab = ui.input(label='Lab Name').props('rounded outlined color=black').classes('w-80')
 
-            result_label = ui.label('').classes('text-base')
+            result_label = ui.label('').classes('text-base !text-black dark:!text-white')
 
-            # Current labs list
-            ui.label('Current Labs:').classes('text-lg font-semibold mt-4')
+            ui.label('Current Labs:').classes('text-lg font-semibold mt-4 !text-black dark:!text-white')
             labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
             lab_list_container = ui.column().classes('w-80')
             with lab_list_container:
@@ -74,7 +85,6 @@ class LabGUIView:
                     result_label.set_text(message)
                     if success:
                         new_lab.set_value('')
-                        # Refresh the labs list
                         lab_list_container.clear()
                         updated_labs = LabGUIView._lab_controller.model.get_all_labs()
                         with lab_list_container:
@@ -84,13 +94,12 @@ class LabGUIView:
                                 for lab in updated_labs:
                                     with ui.card().classes('w-full px-4 py-2'):
                                         ui.label(lab).classes('text-base')
-
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
-            ui.button('Add').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', add)
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/lab'))
-
+            ui.button('Add').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', add)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
+            
     @ui.page('/lab/modify')
     @staticmethod
     def lab_modify():

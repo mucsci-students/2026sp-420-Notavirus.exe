@@ -11,7 +11,7 @@ This application uses MVC architecture:
 import sys
 from pathlib import Path
 from controllers.app_controller import SchedulerController
-
+from views.gui_view import GUIView
 
 def main():
     """
@@ -39,7 +39,6 @@ def main():
         print(f"Loading configuration from: {config_path}")
         controller = SchedulerController(config_path)
 
-        from views.gui_view import GUIView
         GUIView.controller = controller
 
         controller.run()

@@ -8,7 +8,11 @@ This view class handles all GUI pages related to schedules, including:
 - Tabular views by Room/Lab and by Faculty, with filter dropdowns
 """
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from nicegui import ui
+from scheduler import OptimizerFlags
 from views.gui_theme import GUITheme
 
 
@@ -153,6 +157,23 @@ def _faculty_options(schedule: list) -> list[str]:
     """Sorted list of all unique faculty names in the schedule."""
     return sorted({ci.faculty for ci in schedule})
 
+def download_csv():
+    data = ScheduleGUIView.schedule_controller.export_schedules(
+        "csv",
+        _state.schedules
+    )
+
+    ui.download(data, filename="schedules.csv")
+
+
+def download_json():
+    data = ScheduleGUIView.schedule_controller.export_schedules(
+        "json",
+        _state.schedules
+    )
+
+    ui.download(data, filename="schedules.json")
+
 
 # ---------------------------------------------------------------------------
 # Table column definitions
@@ -215,12 +236,12 @@ class ScheduleGUIView:
         On success, stores results in _state and navigates to /display_schedules.
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
         with ui.column().classes('gap-6 items-center w-full max-w-lg mx-auto pt-10'):
-            ui.label('Generate Schedules').classes('text-4xl font-bold text-black')
+            ui.label('Generate Schedules').classes('text-4xl font-bold !text-black dark:!text-white')
 
-            with ui.card().classes('w-full rounded-2xl shadow-md p-6'):
+            with ui.card().classes('w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-white'):
                 ui.label('Schedule Limit').classes('text-lg font-semibold text-gray-700 mb-1')
                 ui.label(
                     'Maximum number of schedules to generate. Higher limits take longer.'
@@ -233,41 +254,69 @@ class ScheduleGUIView:
                     max=500,
                     step=1,
                     format='%d',
-                ).classes('w-full')
+                ).classes('w-full').props('color=black label-color=black input-class="!text-black" :dark="false"')
+
+            with ui.card().classes('w-full rounded-2xl shadow-md p-6'):
+                ui.label('Optimization Options').classes('text-lg font-semibold text-gray-700 mb-1')
+                ui.label(
+                    'Select which preferences to optimize for. Leave empty for no optimization.'
+                ).classes('text-sm text-gray-500 mb-4')
+
+                _flag_labels = {
+                    OptimizerFlags.FACULTY_COURSE: 'Course Preference',
+                    OptimizerFlags.FACULTY_ROOM:   'Room Preference',
+                    OptimizerFlags.FACULTY_LAB:    'Lab Preference',
+                    OptimizerFlags.SAME_ROOM:      'Same Room per Faculty',
+                    OptimizerFlags.SAME_LAB:       'Same Lab per Faculty',
+                    OptimizerFlags.PACK_ROOMS:     'Pack Rooms',
+                    OptimizerFlags.PACK_LABS:      'Pack Labs',
+                }
+
+                optimizer_select = ui.select(
+                    options={flag: label for flag, label in _flag_labels.items()},
+                    multiple=True,
+                    value=[],
+                    label='Optimization',
+                ).classes('w-full').props('use-chips')
 
             status_label = ui.label('').classes('text-sm text-gray-600 italic')
 
             with ui.row().classes('gap-4 justify-center w-full'):
                 ui.button('Back').props(
-                    'rounded outline color=black no-caps'
-                ).classes('w-36 h-12 text-base').on(
+                    'rounded outline color=black no-caps text-color=black'
+                ).classes('w-36 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/')
                 )
                 generate_btn = ui.button('Generate').props(
                     'rounded color=black text-color=white no-caps'
                 ).classes('w-36 h-12 text-base')
 
-        def on_generate():
+        async def on_generate():
             model = _state._scheduler_model
-            if model is None:
-                status_label.set_text(
-                    'Error: scheduler model is not initialized. '
-                    'Ensure main.py sets ScheduleGUIView.scheduler_model before ui.run().'
-                )
+            if model is None or getattr(model, "config_model", None) is None:
+                status_label.set_text('Error: No configuration loaded.')
+                return
+
+            errors = getattr(model, "validate_config", lambda: "")()
+            if errors:
+                status_label.set_text(f'Configuration invalid:\n{errors}')
                 return
 
             limit = int(limit_input.value or 5)
+            model.config_model.config.optimizer_flags = list(optimizer_select.value or [])
             status_label.set_text('Generating schedules… this may take a moment.')
             generate_btn.props('loading disabled')
 
             try:
-                schedules = list(model.generate_schedules(limit=limit))
+                def _run():
+                    return list(model.generate_schedules(limit=limit))
+
+                loop = asyncio.get_event_loop()
+                with ThreadPoolExecutor() as pool:
+                    schedules = await loop.run_in_executor(pool, _run)
 
                 if not schedules:
-                    status_label.set_text(
-                        'No schedules could be generated with the current configuration.'
-                    )
-                    generate_btn.props(remove='loading disabled')
+                    status_label.set_text('No valid schedules could be generated.')
                     return
 
                 _state.schedules = schedules
@@ -276,6 +325,7 @@ class ScheduleGUIView:
 
             except Exception as e:
                 status_label.set_text(f'Error: {e}')
+            finally:
                 generate_btn.props(remove='loading disabled')
 
         generate_btn.on('click', on_generate)
@@ -298,48 +348,157 @@ class ScheduleGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
+        #creates hidden upload window for importing
 
+        
+        async def handle_upload(e):
+            
+            if ScheduleGUIView.schedule_controller is None:
+                ui.notify('Controller not initialized', type='negative')
+                return
+
+            try:
+                content = await e.file.read()
+
+                # Let controller handle parsing
+                schedules = ScheduleGUIView.schedule_controller.import_schedule_file(
+                    e.file.name,
+                    content
+                )
+                
+
+                if schedules:
+                    _state.schedules = schedules
+                    _state.current_index = 0
+                    ui.notify(f'Imported {e.file.name}')
+                    
+                    ui.navigate.to('/display_schedules')
+                else:
+                    ui.notify(f'No schedules found in {e.file.name}', type='warning')
+
+            except Exception as ex:
+                ui.notify(f'Import failed: {ex}', type='negative')
+                print({ex})
+
+            
+        upload = ui.upload(
+            multiple=True,
+            auto_upload=True
+        ).props('hidden')
+
+        upload.on_upload(handle_upload)
+        #pop up window for information when export button is pressed
+        export_dialog = ui.dialog()
+
+        with export_dialog:
+
+            with ui.card().classes(
+                "w-[400px] rounded-2xl shadow-xl p-6 flex flex-col gap-4"
+            ):
+
+                ui.label("Export Schedules").classes(
+                    "text-2xl font-bold text-center w-full"
+                )
+
+                # Schedule selection
+                schedule_select = ui.select(
+                    options=[f"Schedule {i+1}" for i in range(len(_state.schedules))],
+                    multiple=True,
+                    label="Select schedules"
+                ).classes("w-full")
+
+                # Filename input
+                filename_input = ui.input(
+                    label="File name",
+                    value="schedules"
+                ).classes("w-full")
+
+                # Format selector
+                format_select = ui.select(
+                    options=["csv", "json"],
+                    value="csv",
+                    label="Export format"
+                ).classes("w-full")
+
+                result_label = ui.label("").classes(
+                    "text-sm text-gray-500 italic text-center w-full"
+                )
+
+                def do_export():
+                    if not schedule_select.value:
+                        ui.notify("Please select at least one schedule", type="warning")
+                        return
+
+                    indices = [
+                        int(x.replace("Schedule ", "")) - 1
+                        for x in schedule_select.value
+                    ]
+
+                    schedules_to_export = [
+                        _state.schedules[i] for i in indices
+                    ]
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
+
+                    filename = filename_input.value.strip() or "schedules"
+
+                    data = ScheduleGUIView.schedule_controller.export_schedules(
+                        format_select.value,
+                        schedules_to_export
+                    )
+
+                    ui.download(data, filename=f"{filename}.{format_select.value}")
+
+                    export_dialog.close()
+
+                with ui.row().classes("w-full justify-end gap-3 pt-2"):
+
+                    ui.button("Cancel").props(
+                        "outline rounded no-caps"
+                    ).on("click", export_dialog.close)
+
+                    ui.button("Export").props(
+                        "color=black text-color=white rounded no-caps"
+                    ).on("click", do_export)
         # Guard: nothing generated yet
         if not _state.schedules:
             with ui.column().classes('gap-4 items-center w-full pt-20'):
-                ui.label('No schedules available.').classes('text-2xl text-black')
+                ui.label('No schedules available.').classes('text-2xl !text-black dark:!text-white')
                 ui.label('Please generate schedules first.').classes('text-gray-600')
                 ui.button('Go to Generator').props(
                     'rounded color=black text-color=white no-caps'
-                ).classes('w-48 h-12 text-base').on(
+                ).classes('w-48 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
+                )
+                ui.button('Import Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-48 h-12 text-base').on(
+                    'click', lambda: upload.run_method('pickFiles')
                 )
             return
 
         total = len(_state.schedules)
 
-        # ── Mutable filter state (plain list so closures can mutate index 0) ──
-        # Using a list instead of a plain variable lets the nested closures
-        # below mutate the value without needing `nonlocal` on every function.
-        room_filter    = [None]   # None = show all locations
-        faculty_filter = [None]   # None = show all faculty
+        room_filter    = [None]
+        faculty_filter = [None]
 
         with ui.column().classes('gap-4 items-center w-full px-4 pt-6 pb-10'):
 
-            ui.label('Schedule Viewer').classes('text-4xl font-bold text-black')
+            ui.label('Schedule Viewer').classes('text-4xl font-bold !text-black dark:!text-white')
 
-            # ── Prev / Next navigation ───────────────────────────────────
             with ui.row().classes('items-center gap-4 justify-center'):
-                prev_btn = ui.button(icon='chevron_left').props('round flat color=black')
+                prev_btn = ui.button(icon='chevron_left').props('round flat color=black').classes('dark:!text-white')
                 index_label = ui.label(
                     f'Schedule {_state.current_index + 1} of {total}'
-                ).classes('text-lg font-semibold text-black min-w-[160px] text-center')
-                next_btn = ui.button(icon='chevron_right').props('round flat color=black')
+                ).classes('text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center')
+                next_btn = ui.button(icon='chevron_right').props('round flat color=black').classes('dark:!text-white')
 
-            # ── Tabbed tables ────────────────────────────────────────────
             with ui.card().classes('w-full max-w-7xl rounded-2xl shadow-md'):
-                with ui.tabs().classes('text-black') as tabs:
+                with ui.tabs().classes('!text-black dark:!text-white') as tabs:
                     room_tab    = ui.tab('By Room / Lab')
                     faculty_tab = ui.tab('By Faculty')
 
                 with ui.tab_panels(tabs, value=room_tab).classes('w-full'):
 
-                    # ── By Room / Lab panel ──────────────────────────────
                     with ui.tab_panel(room_tab):
                         with ui.row().classes('items-center gap-3 px-2 pt-2 pb-1'):
                             ui.label('Filter:').classes('text-sm text-gray-500')
@@ -349,7 +508,7 @@ class ScheduleGUIView:
                                 ),
                                 value='All',
                                 label='Location',
-                            ).classes('min-w-[180px]')
+                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
 
                         room_table = ui.table(
                             columns=ROOM_COLUMNS,
@@ -362,7 +521,6 @@ class ScheduleGUIView:
                         ).classes('w-full')
                         room_table.props('flat dense')
 
-                    # ── By Faculty panel ─────────────────────────────────
                     with ui.tab_panel(faculty_tab):
                         with ui.row().classes('items-center gap-3 px-2 pt-2 pb-1'):
                             ui.label('Filter:').classes('text-sm text-gray-500')
@@ -372,7 +530,7 @@ class ScheduleGUIView:
                                 ),
                                 value='All',
                                 label='Faculty',
-                            ).classes('min-w-[180px]')
+                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
 
                         faculty_table = ui.table(
                             columns=FACULTY_COLUMNS,
@@ -385,11 +543,10 @@ class ScheduleGUIView:
                         ).classes('w-full')
                         faculty_table.props('flat dense')
 
-            # ── Footer ───────────────────────────────────────────────────
             with ui.row().classes('gap-4 justify-center'):
                 ui.button('Back to Home').props(
-                    'rounded outline color=black no-caps'
-                ).classes('w-44 h-12 text-base').on(
+                    'rounded outline color=black no-caps text-color=black'
+                ).classes('w-44 h-12 text-base dark:!bg-white dark:!text-black').on(
                     'click', lambda: ui.navigate.to('/')
                 )
                 ui.button('Generate New').props(
@@ -397,8 +554,16 @@ class ScheduleGUIView:
                 ).classes('w-44 h-12 text-base').on(
                     'click', lambda: ui.navigate.to('/run_scheduler')
                 )
-
-        # ── Filter callbacks ─────────────────────────────────────────────
+                ui.button('Export Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-44 h-12 text-base').on(
+                    'click', export_dialog.open
+                )
+                ui.button('Import Schedules').props(
+                    'rounded color=black text-color=white no-caps'
+                ).classes('w-48 h-12 text-base').on(
+                    'click', lambda: upload.run_method('pickFiles')
+                )
 
         def on_room_filter(e):
             val = e.value if e.value != 'All' else None
@@ -419,8 +584,6 @@ class ScheduleGUIView:
         room_select.on_value_change(on_room_filter)
         faculty_select.on_value_change(on_faculty_filter)
 
-        # ── Navigation callbacks ─────────────────────────────────────────
-
         def _sync_btn_states():
             if _state.current_index == 0:
                 prev_btn.props('disabled')
@@ -432,25 +595,16 @@ class ScheduleGUIView:
                 next_btn.props(remove='disabled')
 
         def _reload_schedule():
-            """
-            Rebuild both tables and reset both filter dropdowns to 'All'
-            whenever the user navigates to a different schedule.
-            Resetting filters avoids the situation where a location or faculty
-            name from schedule N doesn't exist in schedule N+1.
-            """
             schedule = _state.schedules[_state.current_index]
 
-            # Reset filters
             room_filter[0]    = None
             faculty_filter[0] = None
             room_select.set_value('All')
             faculty_select.set_value('All')
 
-            # Rebuild option lists (different schedules may have different rooms/faculty)
             room_select.options    = ['All'] + _location_options(schedule)
             faculty_select.options = ['All'] + _faculty_options(schedule)
 
-            # Rebuild tables
             room_table.rows    = _build_room_rows(schedule, location_filter=None)
             faculty_table.rows = _build_faculty_rows(schedule, faculty_filter=None)
             room_table.update()
@@ -460,22 +614,14 @@ class ScheduleGUIView:
             _sync_btn_states()
 
         def go_prev():
-            print(f"[NAV] go_prev called, current_index={_state.current_index}, total={total}")
             if _state.current_index > 0:
                 _state.current_index -= 1
-                print(f"[NAV] moved to {_state.current_index}")
                 _reload_schedule()
-            else:
-                print(f"[NAV] go_prev blocked: already at 0")
 
         def go_next():
-            print(f"[NAV] go_next called, current_index={_state.current_index}, total={total}")
             if _state.current_index < total - 1:
                 _state.current_index += 1
-                print(f"[NAV] moved to {_state.current_index}")
                 _reload_schedule()
-            else:
-                print(f"[NAV] go_next blocked: already at end")
 
         prev_btn.on('click', go_prev)
         next_btn.on('click', go_next)
@@ -492,8 +638,6 @@ class ScheduleGUIView:
     @staticmethod
     def test_schedules():
         import os, sys
-        import asyncio
-        from concurrent.futures import ThreadPoolExecutor
 
         status = ui.label('Generating test schedules…').classes('text-gray-600 italic p-4')
 
@@ -510,7 +654,6 @@ class ScheduleGUIView:
                     model = SchedulerModel(ConfigModel(sys.argv[1]))
                     return list(model.generate_schedules(limit=2))
 
-                # Run blocking Z3 work in a thread so the event loop stays alive
                 loop = asyncio.get_event_loop()
                 with ThreadPoolExecutor() as pool:
                     schedules = await loop.run_in_executor(pool, _generate)

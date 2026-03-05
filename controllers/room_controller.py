@@ -200,7 +200,27 @@ class RoomController:
             except Exception as e:
                 self.view.display_error(f"Failed to modify room: {e}")
                 break
-    
+
+    def gui_delete_room(self, room_name: str) -> tuple[bool, str]:
+        """
+        GUI workflow for deleting a room.
+
+        Parameters:
+            room_name (str): Name of the room to delete
+
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        if not room_name:
+            return False, "Please select a room to delete."
+
+        success = self.model.delete_room(room_name)
+
+        if success:
+            return True, f"Room '{room_name}' deleted successfully."
+
+        return False, f"Failed: room '{room_name}' could not be deleted."
+
     def _split_room_name(self, room_name: str) -> tuple[str, str]:
         """
         Split room name into building and number.

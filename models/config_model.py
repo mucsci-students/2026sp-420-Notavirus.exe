@@ -7,7 +7,7 @@ All other models use ConfigModel to interact with the configuration file.
 """
 
 from scheduler import load_config_from_file, CombinedConfig
-from safe_save import safe_save
+from safe_save import safe_save, save_configuration
 
 
 class ConfigModel:
@@ -46,6 +46,19 @@ class ConfigModel:
             bool: True if save successful, False otherwise
         """
         return safe_save(self.config, self.config_path)
+
+    def save_feature(self, save_type: str, feature: str) -> bool:
+        """
+        Saves a specific feature configuration either temporarily or permanently.
+
+        Parameters:
+            save_type (str): 'temp' to save to a temporary file, 'config' to commit to the main file.
+            feature (str): The feature key to save (e.g., 'faculty', 'courses', 'rooms', 'labs', 'all').
+
+        Returns:
+            bool: True if save successful, False otherwise
+        """
+        return save_configuration(self.config, self.config_path, save_type, feature)
     
     def reload(self):
         """
@@ -59,8 +72,11 @@ class ConfigModel:
         Returns:
             None
         """
-        self.config = load_config_from_file(CombinedConfig, self.config_path)
-    
+        try:
+            self.config = load_config_from_file(CombinedConfig, self.config_path)
+        except Exception as e:
+            print(f"WARNING: reload skipped due to validation error: {e}")
+        
     def get_all_courses(self):
         """
         Get all courses from configuration.

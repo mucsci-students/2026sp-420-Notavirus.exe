@@ -192,13 +192,14 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 ## Features
 
 ### Sprint 1
-- **Faculty Management** — Add, modify, and delete faculty members including their name, position type, credit limits, course preferences (weighted 0–10), and availability by day and time.
+- **Faculty Management** — Add, modify, and delete faculty members including their name, position type, credit limits, course preferences (weighted 0–10), and availability by day and time. Course preferences can reference courses that do not yet exist in the configuration (hypothetical courses). These preferences are stored in-memory and will only persist to disk when Save Configuration is used, provided the referenced courses exist at save time.
 - **Course Management** — Add, modify, and delete courses from the configuration.
 - **Conflict Management** — Define course pairs that must not overlap. The scheduler automatically avoids room, faculty, and time conflicts; the conflicts list is specifically for student co-enrollment constraints.
 - **Lab Management** — Add, modify, and delete lab sections tied to courses.
 - **Room Management** — Add, modify, and delete rooms available for scheduling.
 - **Run Scheduler** — Generate an optimized schedule based on the current configuration using a constraint solver.
 - **Export to CSV** — Display or export generated schedules in CSV format.
+- **In-Memory Editing** - All add, modify, and delete operations update the in-memory configuration only. Changes are not written to disk until Save Configuration is explicitly triggered from the relevant page.
 
 ### Sprint 2
 #### Scheduler Config Editor
@@ -332,6 +333,9 @@ Pydantic Warnings
 
 Browser Doesn't Open
   Manually navigate to: http://localhost:8080
+
+Hypothetical Course Preferences
+Faculty course preferences can reference courses that don't exist yet. However, the configuration file on disk must always be valid. If the app fails to start with a validation error referencing a course preference, manually remove the invalid entry from the JSON file before restarting.
 
 ---
 

@@ -131,7 +131,7 @@ python main.py example.json
 
 Output:
 - Loading configuration from: example.json
-- 🚀 Starting Scheduler GUI...
+- 🚀 GUI SERVER STARTING
 - 🌐 Browser will open at: http://localhost:8080
 - 🛑 To stop: Press Ctrl+C in this terminal
 

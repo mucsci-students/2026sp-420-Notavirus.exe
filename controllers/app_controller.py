@@ -88,6 +88,7 @@ class SchedulerController:
         from views.conflict_gui_view import ConflictGUIView
         from views.room_gui_view     import RoomGUIView
         from views.schedule_gui_view import ScheduleGUIView
+        from views.schedule_gui_view import _state as _schedule_state
 
         FacultyGUIView.faculty_model        = self.faculty_model
         FacultyGUIView.faculty_controller   = self.faculty_controller
@@ -105,6 +106,7 @@ class SchedulerController:
         RoomGUIView.room_model              = self.room_model
         RoomGUIView.room_controller         = self.room_controller
 
+        _schedule_state._scheduler_model    = self.scheduler_model
         ScheduleGUIView.schedule_controller = self.schedule_controller
 
         GUIView.controller = self

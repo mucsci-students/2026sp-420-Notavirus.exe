@@ -10,6 +10,7 @@ This view class handles all GUI pages related to course management:
 - /course/delete : Delete a course (Under Construction)
 - /course/view   : View all courses
 """
+
 from nicegui import ui
 from views.gui_theme import GUITheme
 

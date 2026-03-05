@@ -22,17 +22,8 @@ class CourseGUIView:
     @ui.page('/course')
     @staticmethod
     def course():
-        """
-        Displays the Course hub page with navigation buttons.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            # Title
             ui.label('Course').classes('text-4xl mb-10 !text-black dark:!text-white')
 
             ui.button('Add Course').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-courseBegin), var(--q-courseEnd)) !important;').on('click', lambda: ui.navigate.to('/course/add'))
@@ -45,14 +36,6 @@ class CourseGUIView:
     @ui.page('/course/add')
     @staticmethod
     def course_add():
-        """
-        Displays the GUI for adding a course.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
@@ -156,19 +139,10 @@ class CourseGUIView:
                 with ui.column().classes('items-center gap-2'):
                     ui.label('Current Courses').classes('text-2xl !text-black dark:!text-white text-center')
                     course_table()
-        
 
     @ui.page('/course/modify')
     @staticmethod
     def course_modify():
-        """
-        Displays the GUI for modifying an existing course.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
         model      = CourseGUIView.course_model
@@ -188,7 +162,8 @@ class CourseGUIView:
 
             section_map = {label: (idx, course) for label, idx, course in sections}
             section_labels = [label for label, _, _ in sections]
-            status = ui.label('').classes('text-sm')
+            status = ui.label('').classes('text-sm !text-black dark:!text-white')
+            save_label = ui.label('').classes('text-lg')
 
             with ui.card().classes('w-full max-w-lg p-6 gap-4'):
                 selected_label = ui.select(section_labels, label='Section to Modify',
@@ -289,7 +264,9 @@ class CourseGUIView:
                     if ok:
                         from views.gui_view import GUIView
                         GUIView.controller.config_model.save_feature('temp', 'courses')
-                        status.set_text(f"'{selected_label.value}' updated successfully.")
+                        status.set_text(f"'{selected_label.value}' updated in memory.")
+                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
+                        save_label.classes(replace='text-lg text-orange-500')
                         credits_input.value = rooms_input.value = labs_input.value = faculty_input.value = ''
                         new_sections = model.get_courses_with_sections()
                         section_map.clear()
@@ -298,23 +275,27 @@ class CourseGUIView:
                     else:
                         status.set_text(f"⚠ Failed to update '{selected_label.value}'.")
 
-                ui.button('Apply Changes', on_click=do_modify) \
-                    .props('rounded color=black text-color=white no-caps').classes('w-full h-12 mt-2 dark:!bg-white dark:!text-black')
+                def do_save_to_config():
+                    from views.gui_view import GUIView
+                    success = GUIView.controller.config_model.save_feature('config', 'courses')
+                    if success:
+                        save_label.set_text('Configuration saved to file.')
+                        save_label.classes(replace='text-lg text-green-600')
+                    else:
+                        save_label.set_text('Save failed. Check terminal for details.')
+                        save_label.classes(replace='text-lg text-red-600')
 
+                ui.button('Apply Changes').props('rounded color=black text-color=white no-caps').classes('w-full h-12 mt-2 dark:!bg-white dark:!text-black').on('click', do_modify)
+                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-full h-12 dark:!bg-white dark:!text-black').on('click', do_save_to_config)
+
+            status
+            save_label
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
                 .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
     @ui.page('/course/delete')
     @staticmethod
     def course_delete():
-        """
-        Displays the GUI for deleting a course.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -365,7 +346,7 @@ class CourseGUIView:
                             status_label.set_text(message)
                             if success:
                                 selected['dirty'] = True
-                                save_label.set_text('You have unsaved changes. Click Save Configuration to persist.')
+                                save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                                 save_label.classes(replace='text-lg text-orange-500')
                                 config_model.save_feature('temp', 'courses')
                                 updated = controller.get_courses_with_sections()
@@ -383,27 +364,19 @@ class CourseGUIView:
                 success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
-                    save_label.set_text('Configuration saved successfully.')
+                    save_label.set_text('Configuration saved to file.')
                     save_label.classes(replace='text-lg text-green-600')
                 else:
                     save_label.set_text('Save failed. Check terminal for details.')
                     save_label.classes(replace='text-lg text-red-600')
 
             ui.button('Delete Course').props('rounded color=red text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_delete)
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+            ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
     @ui.page('/course/view')
     @staticmethod
     def course_view():
-        """
-        Displays the GUI for viewing all courses.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = CourseGUIView.course_model

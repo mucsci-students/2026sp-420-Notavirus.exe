@@ -21,18 +21,9 @@ class FacultyGUIView:
     @ui.page('/faculty')
     @staticmethod
     def faculty():
-        """
-        Displays the Faculty hub page with navigation buttons.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            # Title
             ui.label('Faculty').classes('text-4xl mb-10 !text-black dark:!text-white')
 
             ui.button('Add Faculty').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;').on('click', lambda: ui.navigate.to('/faculty/add'))
@@ -45,23 +36,13 @@ class FacultyGUIView:
     @ui.page('/faculty/add')
     @staticmethod
     def faculty_add():
-        """
-        Displays the GUI for adding a faculty member.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
-            # Home button row
             with ui.row().classes('w-full max-w-6xl justify-start mb-4'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
-            # Title                
             ui.label('Add Faculty').classes('text-5xl mb-12 mt-4 !text-black dark:!text-white')
             
             with ui.row().classes('w-full max-w-6xl justify-between items-start'):
@@ -80,7 +61,6 @@ class FacultyGUIView:
 
                     ui.label('Faculty Availability:').classes('text-2xl !text-black dark:!text-white')
                     
-                    # Separate availability for each day
                     day_inputs = {}
                     with ui.column().classes('w-full pl-4 gap-2'):
                         for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
@@ -101,7 +81,6 @@ class FacultyGUIView:
                                     
                                 day_inputs[day] = {'cb': cb, 'start': start_input, 'end': end_input}
 
-                    # Courses and Preferences
                     with ui.column().classes('w-full mt-6 gap-2'):
                         ui.label('Courses and Preferences:').classes('text-2xl !text-black dark:!text-white')
                         
@@ -129,12 +108,9 @@ class FacultyGUIView:
                                             
                                     ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
                         
-                        # Add initial row
                         add_course_row()
-                        
                         ui.button('+ Add Course', on_click=add_course_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
-                    # Labs and Preferences
                     with ui.column().classes('w-full mt-6 gap-2'):
                         ui.label('Lab Preferences:').classes('text-2xl !text-black dark:!text-white')
                         
@@ -162,9 +138,7 @@ class FacultyGUIView:
                                             
                                     ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
                         
-                        # Add initial row
                         add_lab_row()
-                        
                         ui.button('+ Add Lab', on_click=add_lab_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
                 # Right Column
@@ -190,12 +164,12 @@ class FacultyGUIView:
                     
                     refresh_faculty_list()
 
-            # Save action function
-            def save_faculty():
+            def _collect_faculty_data():
+                """Collect form data into a dict. Returns None and notifies if invalid."""
                 name = name_input.value
                 if not name:
                     ui.notify('Faculty name is required!', type='negative')
-                    return
+                    return None
                 
                 is_full_time = position_radio.value == 'Full Time'
                 
@@ -218,53 +192,67 @@ class FacultyGUIView:
                     if lab:
                         lab_prefs[lab] = int(row['weight'].value or 5)
                         
-                faculty_data = {
+                return {
                     'name': name,
                     'is_full_time': is_full_time,
                     'times': times_data,
-                    'days': list(times_data.keys()),  # for compatibility
+                    'days': list(times_data.keys()),
                     'course_preferences': course_prefs,
                     'lab_preferences': lab_prefs,
                 }
-                
+
+            def save_faculty():
+                """Save to in-memory model only."""
+                faculty_data = _collect_faculty_data()
+                if faculty_data is None:
+                    return
                 try:
                     from views.gui_view import GUIView
                     if not GUIView.controller:
                         ui.notify('System not initialized properly.', type='negative')
                         return
-                    
                     controller = GUIView.controller.faculty_controller
-                    
                     if controller.add_faculty(faculty_data):
-                        ui.notify(f"Faculty '{name}' added successfully!", type='positive')
+                        ui.notify(f"Faculty '{faculty_data['name']}' saved to memory.", type='positive')
                         name_input.value = ''
                         refresh_faculty_list()
                     else:
-                        ui.notify(f"Failed to add faculty '{name}'. Maybe they already exist?", type='negative')
+                        ui.notify(f"Failed to add faculty. Maybe they already exist?", type='negative')
                 except Exception as e:
                     ui.notify(f"Error saving: {e}", type='negative')
 
-            # Bottom row for buttons
+            def save_faculty_to_config():
+                """Save to in-memory model AND write to config file."""
+                faculty_data = _collect_faculty_data()
+                if faculty_data is None:
+                    return
+                try:
+                    from views.gui_view import GUIView
+                    if not GUIView.controller:
+                        ui.notify('System not initialized properly.', type='negative')
+                        return
+                    controller = GUIView.controller.faculty_controller
+                    config_model = GUIView.controller.config_model
+                    if controller.add_faculty(faculty_data):
+                        if config_model.save_feature('config', 'faculty'):
+                            ui.notify(f"Faculty '{faculty_data['name']}' saved to config file.", type='positive')
+                        else:
+                            ui.notify(f"Added to memory but config save failed.", type='warning')
+                        name_input.value = ''
+                        refresh_faculty_list()
+                    else:
+                        ui.notify(f"Failed to add faculty. Maybe they already exist?", type='negative')
+                except Exception as e:
+                    ui.notify(f"Error saving: {e}", type='negative')
+
             with ui.row().classes('w-full max-w-6xl justify-between items-end mt-16'):
                 ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
                 ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', save_faculty)
+                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', save_faculty_to_config)
 
     @ui.page('/faculty/modify')
     @staticmethod
     def faculty_modify():
-        """
-        Displays the GUI for modifying faculty.
-
-        User first selects a faculty member from a dropdown, then sees
-        all of their current information with structured button-based
-        controls for making changes. Changes are in-memory until Save
-        Configuration is clicked.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -279,7 +267,7 @@ class FacultyGUIView:
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
             ui.label('Modify Faculty').classes('text-4xl mb-4 !text-black dark:!text-white')
-            ui.label('Select a Faculty member to modify their information. Press the "Save Configuration" button at the bottom of the editor page to permanently save your modifications to the original configuration file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+            ui.label('Select a Faculty member to modify their information. Press "Save" to keep changes in memory, or "Save to Config" to permanently write to the config file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             if not all_faculty:
                 ui.label('There are no faculty in the configuration.').classes('text-xl !text-black dark:!text-white')
@@ -306,10 +294,8 @@ class FacultyGUIView:
                 f = selected_faculty['value']
                 success = controller.model.modify_faculty(f.name, field, value)
                 if success:
-                    # Save temporary changes to the accumulator
                     config_model.save_feature('temp', 'faculty')
-                    
-                    feedback_label.set_text('Updated successfully.')
+                    feedback_label.set_text('Updated in memory.')
                     feedback_label.classes(replace='text-md text-green-600')
                     reload_form()
                 else:
@@ -362,7 +348,7 @@ class FacultyGUIView:
                                     )
                                     if success:
                                         config_model.save_feature('temp', 'faculty')
-                                        max_credits_feedback.set_text('Maximum credits updated.')
+                                        max_credits_feedback.set_text('Updated in memory.')
                                         max_credits_feedback.classes(replace='text-md text-green-600')
                                     reload_form()
 
@@ -585,9 +571,20 @@ class FacultyGUIView:
                 build_form(f)
 
             def handle_save():
+                """Save changes to in-memory model only."""
+                success = config_model.save_feature('temp', 'faculty')
+                if success:
+                    save_config_label.set_text('Changes saved to memory.')
+                    save_config_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_config_label.set_text('Save failed. Check terminal for details.')
+                    save_config_label.classes(replace='text-lg text-red-600')
+
+            def handle_save_to_config():
+                """Write changes permanently to config file."""
                 success = config_model.save_feature('config', 'faculty')
                 if success:
-                    save_config_label.set_text('Configuration saved successfully.')
+                    save_config_label.set_text('Configuration saved to file.')
                     save_config_label.classes(replace='text-lg text-green-600')
                 else:
                     save_config_label.set_text('Save failed. Check terminal for details.')
@@ -601,25 +598,14 @@ class FacultyGUIView:
 
             form_card
             save_config_label
-            ui.button('Save Configuration').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', handle_save)
+            with ui.row().classes('gap-4 mt-4'):
+                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
+                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/delete')
     @staticmethod
     def faculty_delete():
-        """
-        Displays the GUI for deleting a faculty member.
-
-        Loads all faculty from FacultyModel and displays them as cards.
-        Each card has a Delete button that opens a confirmation dialog
-        before calling model.delete_faculty(). The list refreshes after
-        each deletion.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
@@ -629,10 +615,10 @@ class FacultyGUIView:
             ui.label('Delete Faculty').classes('text-4xl mb-6 !text-black dark:!text-white')
 
             container = ui.column().classes('w-full max-w-lg gap-3 items-center')
-            status    = ui.label('').classes('text-sm')
+            status    = ui.label('').classes('text-sm !text-black dark:!text-white')
+            save_label = ui.label('').classes('text-sm !text-black dark:!text-white')
 
             def build(c):
-                """Clears and rebuilds the faculty card list."""
                 c.clear()
                 model        = FacultyGUIView.faculty_model
                 faculty_list = model.get_all_faculty() if model else []
@@ -655,60 +641,47 @@ class FacultyGUIView:
                                         f'Limit {faculty.unique_course_limit} courses'
                                     ).classes('text-xs text-gray-500')
 
-                                def make_handler(name, m, sl):
-                                    """
-                                    Returns a delete handler for the given faculty name.
-
-                                    Parameters:
-                                        name (str): Faculty name to delete
-                                        m: FacultyModel instance
-                                        sl: Status label to update after deletion
-                                    Returns:
-                                        function: Click handler that opens confirmation dialog
-                                    """
+                                def make_delete_handler(name, m, sl):
                                     def _delete():
                                         with ui.dialog() as dlg, ui.card().classes('p-8 gap-4 items-center text-center'):
                                             ui.label(f"Delete '{name}'?").classes('text-xl font-bold')
-                                            ui.label('This will also remove them from any course assignments.') \
-                                                .classes('text-sm text-gray-500')
+                                            ui.label('This will remove them from memory. Use "Save to Config" to persist.').classes('text-sm text-gray-500')
                                             with ui.row().classes('gap-4 mt-4'):
-                                                ui.button('Cancel', on_click=dlg.close) \
-                                                    .props('rounded color=black text-color=white no-caps')
+                                                ui.button('Cancel', on_click=dlg.close).props('rounded color=black text-color=white no-caps')
 
                                                 def confirm(d=dlg, n=name, mod=m, s=sl):
-                                                    """Confirms deletion and refreshes the list."""
                                                     ok = mod.delete_faculty(n)
                                                     d.close()
-                                                    s.set_text(f"✓ '{n}' deleted." if ok
-                                                               else f"⚠ Could not delete '{n}'.")
+                                                    s.set_text(f"✓ '{n}' deleted from memory." if ok else f"⚠ Could not delete '{n}'.")
                                                     build(container)
 
-                                                ui.button('Delete', on_click=confirm) \
-                                                    .props('rounded color=red text-color=white no-caps')
+                                                ui.button('Delete', on_click=confirm).props('rounded color=red text-color=white no-caps')
                                         dlg.open()
                                     return _delete
 
-                                ui.button('Delete', on_click=make_handler(faculty.name, model, status)) \
-                                    .props('flat color=red no-caps')
+                                ui.button('Delete', on_click=make_delete_handler(faculty.name, model, status)).props('flat color=red no-caps')
 
             build(container)
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
+
+            def save_to_config():
+                from views.gui_view import GUIView
+                config_model = GUIView.controller.config_model
+                success = config_model.save_feature('config', 'faculty')
+                if success:
+                    save_label.set_text('Deletions saved to config file.')
+                    save_label.classes(replace='text-sm text-green-600')
+                else:
+                    save_label.set_text('Config save failed.')
+                    save_label.classes(replace='text-sm text-red-600')
+
+            save_label
+            with ui.row().classes('gap-4 mt-4'):
+                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save_to_config)
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/view')
     @staticmethod
     def faculty_view():
-        """
-        Displays the GUI for viewing all faculty members.
-
-        Loads all faculty from FacultyModel and displays each as an
-        expandable card showing position, credits, course limit, and preferences.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = FacultyGUIView.faculty_model
@@ -738,5 +711,4 @@ class FacultyGUIView:
                                 if faculty.course_preferences:
                                     ui.label('Course Prefs').classes('text-gray-500 font-medium')
                                     ui.label(', '.join(faculty.course_preferences.keys()))
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))

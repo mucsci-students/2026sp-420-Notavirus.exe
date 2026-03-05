@@ -124,6 +124,50 @@ class ConflictController:
             parts[-1] = parts[-1].rsplit('.', 1)[0]
         return ' '.join(parts)
 
+    def gui_modify_conflict(self, old_c1: str, old_c2: str, new_c1: str, new_c2: str) -> tuple[bool, str]:
+        """
+        Modify an existing conflict.
+
+        Parameters:
+            old_c1 (str): Original first class
+            old_c2 (str): Original second class
+            new_c1 (str): New first class
+            new_c2 (str): New second class
+
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        old_base1 = self._strip_section(old_c1)
+        old_base2 = self._strip_section(old_c2)
+        new_base1 = self._strip_section(new_c1)
+        new_base2 = self._strip_section(new_c2)
+
+        if old_base1 == new_base1 and old_base2 == new_base2:
+            return True, "No changes made."
+            
+        if new_base1 == new_base2:
+            return False, "Cannot conflict a course with itself."
+
+        courses_old1 = self.model.get_course_by_id(old_base1)
+        courses_old2 = self.model.get_course_by_id(old_base2)
+        courses_new1 = self.model.get_course_by_id(new_base1)
+        courses_new2 = self.model.get_course_by_id(new_base2)
+
+        if not courses_old1 or not courses_old2 or not courses_new1 or not courses_new2:
+            return False, "One or more courses not found."
+
+        if old_base1 != new_base1 and old_base2 == new_base2:
+            success = self.model.modify_conflict(courses_old1[0], courses_old2[0], courses_new1[0], 1)
+        elif old_base2 != new_base2 and old_base1 == new_base1:
+            success = self.model.modify_conflict(courses_old1[0], courses_old2[0], courses_new2[0], 2)
+        else:
+            self.model.delete_conflict(old_base1, old_base2)
+            success = self.model.add_conflict(new_base1, new_base2)
+
+        if success:
+            return True, "Conflict modified successfully."
+        return False, "Failed to modify conflict."
+
     def gui_get_conflict_labels(self, existing_conflicts: list, section_label_map: dict) -> dict[str, tuple[str, str, int, int]]:
         """
         Build a label -> (c1, c2, i1, i2) map for GUI dropdowns.

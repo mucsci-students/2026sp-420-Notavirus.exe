@@ -17,18 +17,16 @@ class RoomGUIView:
     @staticmethod
     def room():
         """
-        Displays the GUI for room.
-                
+        Displays the GUI for the Room hub page with navigation buttons.
+
         Parameters:
-            None        
+            None
         Returns:
             None
         """
         GUITheme.applyTheming()
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
-            # Title
             ui.label('Room').classes('text-4xl mb-10 !text-black dark:!text-white')
-
             ui.button('Add Room').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;').on('click', lambda: ui.navigate.to('/room/add'))
             ui.button('Modify Room').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;').on('click', lambda: ui.navigate.to('/room/modify'))
             ui.button('Delete Room').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;').on('click', lambda: ui.navigate.to('/room/delete'))
@@ -41,84 +39,10 @@ class RoomGUIView:
     def room_add():
         """
         Displays the GUI for adding a room.
-                
-        Parameters:
-            None        
-        Returns:        
-            None
-        """
-        def handle_add():
-            success = RoomGUIView.room_controller.model.add_room(room_input.value)
 
-            if success:
-                result_label.set_text("Room added successfully.")
-                
-            else:
-                result_label.set_text("Room already exists or invalid.")
-        GUITheme.applyTheming()
-        with ui.column().classes('gap-6 items-center w-full'):
-            ui.label('Add Room').classes('text-3xl')
-
-            # Display existing rooms
-            rooms = RoomGUIView.room_controller.model.get_all_rooms()
-            ui.label("Existing Rooms:")
-            with ui.list():
-                for r in rooms:
-                    ui.item(r)
-            # Input
-            room_input = ui.input("Room name and number")
-
-            result_label = ui.label()
-            ui.button("Save to config").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-            ui.button("Save").on("click", handle_add).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
-
-
-
-
-    @ui.page('/room/modify')
-    @staticmethod
-    def room_modify():
-
-        def handle_modify():
-                if not selected_room.value:
-                    result_label.set_text("Select a room first.")
-                    return
-
-                success = RoomGUIView.room_controller.model.modify_room(
-                    selected_room.value,
-                    new_name.value
-                )
-
-                if success:
-                    result_label.set_text("Room modified.")
-                    
-                else:
-                    result_label.set_text("Modification failed.")
-
-        GUITheme.applyTheming()
-
-        with ui.column().classes('gap-6 items-center w-full'):
-
-            ui.label('Modify Room').classes('text-3xl')
-
-            rooms = RoomGUIView.room_controller.model.get_all_rooms()
-
-            selected_room = ui.select(options=rooms, label="Select Room")
-            new_name = ui.input("New Room Name")
-
-            result_label = ui.label()
-
-            
-            ui.button("Save to Config").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-            ui.button("Save").on("click", handle_modify).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl')
-            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', lambda: ui.navigate.to('/room'))
-
-    @ui.page('/room/delete')
-    @staticmethod
-    def room_delete():
-        """
-        Displays the GUI for deleting a room.
+        Allows the user to enter a room name and number. Save stores the
+        room in memory only. Save to Config additionally writes the change
+        to the configuration file.
 
         Parameters:
             None
@@ -126,12 +50,156 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+        with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Add Room').classes('text-3xl !text-black dark:!text-white')
+            ui.label('Enter a room name and number below. Press the "Save to Config" button to permanently save to the configuration file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+
+            rooms = RoomGUIView.room_controller.model.get_all_rooms()
+            ui.label("Existing Rooms:").classes('!text-black dark:!text-white')
+            with ui.list():
+                for r in rooms:
+                    ui.item(r).classes('!text-black dark:!text-white')
+
+            room_input = ui.input("Room name and number")
+            result_label = ui.label().classes('!text-black dark:!text-white')
+
+            ui.button("Save to Config").on("click", lambda: handle_save_to_config()).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black')
+            ui.button("Save").on("click", lambda: handle_save()).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
+
+            def handle_save():
+                """
+                Adds the room to the in-memory model only.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
+                success = RoomGUIView.room_controller.model.add_room(room_input.value)
+                if success:
+                    result_label.set_text("Room added to memory.")
+                else:
+                    result_label.set_text("Room already exists or invalid.")
+
+            def handle_save_to_config():
+                """
+                Adds the room to memory and writes the change to the config file.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
+                from views.gui_view import GUIView
+                success = RoomGUIView.room_controller.model.add_room(room_input.value)
+                if success:
+                    config_success = GUIView.controller.config_model.save_feature('config', 'rooms')
+                    if config_success:
+                        result_label.set_text("Room saved to config file.")
+                    else:
+                        result_label.set_text("Added to memory but config save failed.")
+                else:
+                    result_label.set_text("Room already exists or invalid.")
+
+    @ui.page('/room/modify')
+    @staticmethod
+    def room_modify():
+        """
+        Displays the GUI for modifying a room.
+
+        Allows the user to select an existing room and enter a new name.
+        Save stores the change in memory only. Save to Config additionally
+        writes the change to the configuration file.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
+        GUITheme.applyTheming()
+
+        with ui.column().classes('gap-6 items-center w-full'):
+            with ui.row().classes('w-full max-w-2xl justify-start'):
+                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
+            ui.label('Modify Room').classes('text-3xl !text-black dark:!text-white')
+            ui.label('Select a room to modify, then enter a new room name and number. Press the "Save to Config" button to permanently save to the configuration file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+
+            rooms = RoomGUIView.room_controller.model.get_all_rooms()
+            selected_room = ui.select(options=rooms, label="Select Room")
+            new_name = ui.input("New Room Name")
+            result_label = ui.label().classes('!text-black dark:!text-white')
+
+            def handle_save():
+                """
+                Modifies the selected room in the in-memory model only.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
+                if not selected_room.value:
+                    result_label.set_text("Select a room first.")
+                    return
+                success = RoomGUIView.room_controller.model.modify_room(selected_room.value, new_name.value)
+                if success:
+                    result_label.set_text("Room modified in memory.")
+                else:
+                    result_label.set_text("Modification failed.")
+
+            def handle_save_to_config():
+                """
+                Modifies the selected room in memory and writes the change to the config file.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
+                from views.gui_view import GUIView
+                if not selected_room.value:
+                    result_label.set_text("Select a room first.")
+                    return
+                success = RoomGUIView.room_controller.model.modify_room(selected_room.value, new_name.value)
+                if success:
+                    config_success = GUIView.controller.config_model.save_feature('config', 'rooms')
+                    if config_success:
+                        result_label.set_text("Room saved to config file.")
+                    else:
+                        result_label.set_text("Modified in memory but config save failed.")
+                else:
+                    result_label.set_text("Modification failed.")
+
+            ui.button("Save to Config").on("click", handle_save_to_config).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black')
+            ui.button("Save").on("click", handle_save).props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black')
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
+
+    @ui.page('/room/delete')
+    @staticmethod
+    def room_delete():
+        """
+        Displays the GUI for deleting a room.
+
+        Allows the user to select a room and delete it from memory.
+        Save to Config writes the deletion permanently to the configuration file.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
+        from views.gui_view import GUIView
+
+        GUITheme.applyTheming()
         ui.add_css('''
             .body--dark .q-field__control {
             background-color: #383838 !important;
             border-color: white !important;
         }
-        .body--dark .q-field__native, 
+        .body--dark .q-field__native,
         .body--dark .q-field__label,
         .body--dark .q-field__input,
         .body--dark .q-select__dropdown-icon {
@@ -143,42 +211,72 @@ class RoomGUIView:
         ''')
         ui.query('body').style('background-color: var(--q-delete)')
 
+        config_model = GUIView.controller.config_model
         rooms = RoomGUIView.room_controller.model.get_all_rooms() if RoomGUIView.room_controller else []
 
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('Delete Room').classes('text-4xl mb-10 !text-black dark:!text-white')
+            ui.label('Select a room to delete. Press the "Save to Config" button to permanently save to the configuration file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             selected_room = ui.select(rooms, label='Select Room to Delete').props('rounded outlined color=black').classes('w-80')
-
             result_label = ui.label('').classes('text-base !text-black dark:!text-white')
+            save_label = ui.label('').classes('text-lg')
 
             def delete():
+                """
+                Deletes the selected room from the in-memory model only.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
                 try:
-                    success, message = RoomGUIView.room_controller.gui_delete_room(
-                        selected_room.value
-                    )
+                    success, message = RoomGUIView.room_controller.gui_delete_room(selected_room.value)
                     result_label.set_text(message)
                     if success:
+                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
+                        save_label.classes(replace='text-lg text-orange-500')
                         updated_rooms = RoomGUIView.room_controller.model.get_all_rooms()
                         selected_room.set_options(updated_rooms)
                         selected_room.set_value(None)
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
+            def save_to_config():
+                """
+                Writes the current room list to the configuration file.
+
+                Parameters:
+                    None
+                Returns:
+                    None
+                """
+                success = config_model.save_feature('config', 'rooms')
+                if success:
+                    save_label.set_text('Configuration saved to file.')
+                    save_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_label.set_text('Save failed. Check terminal for details.')
+                    save_label.classes(replace='text-lg text-red-600')
+
             ui.button('Delete').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', delete)
+            ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))
 
     @ui.page('/room/view')
     @staticmethod
     def room_view():
         """
-        Displays the GUI for viewing a room.
-                
+        Displays the GUI for viewing all rooms.
+
+        Loads all rooms from the model and displays each as a card.
+
         Parameters:
-            None        
-        Returns:        
+            None
+        Returns:
             None
         """
         GUITheme.applyTheming()
@@ -191,11 +289,11 @@ class RoomGUIView:
             rooms = RoomGUIView.room_model.get_all_rooms() if RoomGUIView.room_model else []
 
             if not rooms:
-                ui.label('No rooms in configuration.').classes('text-gray-600')
+                ui.label('No rooms in configuration.').classes('text-gray-600 dark:!text-gray-300')
             else:
                 with ui.column().classes('w-full max-w-2xl gap-3'):
                     for room in rooms:
                         with ui.card().classes('w-full px-5 py-4'):
-                            ui.label(room).classes('text-base font-semibold')
+                            ui.label(room).classes('text-base font-semibold !text-black dark:!text-white')
 
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/room'))

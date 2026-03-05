@@ -70,10 +70,12 @@ class GUIView:
             # Wide buttons vertically stacked
             with ui.column().classes('gap-6 items-center w-full'):
                 ui.button('Print Config').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/print_config'))
-                ui.button('Run Scheduler').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/run_scheduler'))
-                ui.button('Display Schedules').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/display_schedules'))
-                ui.button('Load Configuration').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: load_dialog.open())
-                ui.button('Export Configuration File').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', GUIView.export_configuration)
+                with ui.row().classes('gap-6'):
+                    ui.button('Run Scheduler').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/run_scheduler'))
+                    ui.button('Display Schedules').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/display_schedules'))
+                with ui.row().classes('gap-6'):
+                    ui.button('Load Configuration').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: load_dialog.open())
+                    ui.button('Export Configuration').props('rounded no-caps').classes('w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', GUIView.export_configuration)
 
         with ui.dialog() as load_dialog:
             with ui.card().classes('w-96 gap-4 load-dialog').style('background: white;'):
@@ -203,39 +205,39 @@ class GUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         cm = GUIView.controller.config_model
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-6'):
             ui.label('Configuration').classes('text-4xl mb-10 !text-black dark:!text-white')
 
-            with ui.expansion('Rooms', icon='meeting_room').classes('w-3/4'):
+            with ui.expansion('Rooms', icon='meeting_room').classes('w-3/4 !text-black dark:!text-white'):
                 for room in cm.get_all_rooms():
-                    ui.label(room)
+                    ui.label(room).classes('!text-black dark:!text-white')
 
-            with ui.expansion('Labs', icon='computer').classes('w-3/4'): 
+            with ui.expansion('Labs', icon='computer').classes('w-3/4 !text-black dark:!text-white'): 
                 for lab in cm.get_all_labs():
-                    ui.label(lab)
+                    ui.label(lab).classes('!text-black dark:!text-white')
 
-            with ui.expansion('Courses', icon='book').classes('w-3/4'):
+            with ui.expansion('Courses', icon='book').classes('w-3/4 !text-black dark:!text-white'):
                 with ui.scroll_area().classes('w-full h-64'):
                     for course in cm.get_all_courses():
-                        with ui.card().classes('w-full mb-2 !bg-white dark:!bg-white'):
+                        with ui.card().classes('w-full mb-2 !bg-white dark:!bg-gray-800'):
                             with ui.row().classes('w-full justify-between items-center'):
-                                ui.label(course.course_id).classes('font-bold text-lg !text-black')
-                                ui.label(f'{course.credits} credits').classes('text-gray-500')
+                                ui.label(course.course_id).classes('font-bold text-lg !text-black dark:!text-white')
+                                ui.label(f'{course.credits} credits').classes('text-gray-500 dark:!text-gray-300')
                             with ui.row().classes('gap-4'):
-                                ui.label(f'Rooms: {", ".join(course.room) or "Any"}').classes('text-sm !text-black')
-                                ui.label(f'Labs: {", ".join(course.lab) or "None"}').classes('text-sm !text-black')
-                                ui.label(f'Faculty: {", ".join(course.faculty) or "Any"}').classes('text-sm !text-black')
+                                ui.label(f'Rooms: {", ".join(course.room) or "Any"}').classes('text-sm !text-black dark:!text-white')
+                                ui.label(f'Labs: {", ".join(course.lab) or "None"}').classes('text-sm !text-black dark:!text-white')
+                                ui.label(f'Faculty: {", ".join(course.faculty) or "Any"}').classes('text-sm !text-black dark:!text-white')
 
-            with ui.expansion('Faculty', icon='person').classes('w-3/4'):
+            with ui.expansion('Faculty', icon='person').classes('w-3/4 !text-black dark:!text-white'):
                 for f in cm.get_all_faculty():
-                    with ui.expansion(f.name).classes('w-full'):
-                        ui.label(f'Max credits: {f.maximum_credits}')
-                        ui.label(f'Min credits: {f.minimum_credits}')
+                    with ui.expansion(f.name).classes('w-full !text-black dark:!text-white'):
+                        ui.label(f'Max credits: {f.maximum_credits}').classes('!text-black dark:!text-white')
+                        ui.label(f'Min credits: {f.minimum_credits}').classes('!text-black dark:!text-white')
                         for day, slots in f.times.items():
-                            ui.label(f'{day}: {", ".join(str(s) for s in slots) or "Unavailable"}')
+                            ui.label(f'{day}: {", ".join(str(s) for s in slots) or "Unavailable"}').classes('!text-black dark:!text-white')
 
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
                 .classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))

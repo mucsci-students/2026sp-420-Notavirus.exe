@@ -137,6 +137,6 @@ class SchedulerController:
         print("  🚀 GUI SERVER STARTING")
         print("="*60)
         print("  🌐 Open your browser to: http://localhost:8080")
-        print("  🛑 Stop server: Press Ctrl+C in this terminal (will receive asyncio errors)")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal (may receive asyncio errors)")
         print("="*60 + "\n")
         ui.run(title='Scheduler', reload=False, storage_secret='scheduler_secret_key')

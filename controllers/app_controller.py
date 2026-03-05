@@ -105,11 +105,19 @@ class SchedulerController:
         RoomGUIView.room_model              = self.room_model
         RoomGUIView.room_controller         = self.room_controller
 
-        ScheduleGUIView.scheduler_model     = self.scheduler_model
         ScheduleGUIView.schedule_controller = self.schedule_controller
 
         GUIView.controller = self
     
+    def save_configuration(self) -> bool:
+        """
+        Saves the current configuration via the model.
+        
+        Returns:
+            bool: True if save successful, False otherwise
+        """
+        return self.config_model.safe_save()
+
     def run(self):
         """
         Main application loop.

@@ -47,6 +47,24 @@ class GUIView:
                 ui.button('Print Config').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/print_config'))
                 ui.button('Run Scheduler').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/run_scheduler'))
                 ui.button('Display Schedules').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: ui.navigate.to('/display_schedules'))
+                ui.button('Export Configuration File').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', GUIView.export_configuration)
+
+
+    @staticmethod
+    def export_configuration():
+        """
+        Exports the configuration file.
+        Asks the controller to save current in-memory configurations to disk, then downloads.
+        """
+        try:
+            success = GUIView.controller.save_configuration()
+            if success:
+                ui.download(GUIView.controller.config_path, 'scheduler_configuration.json')
+                ui.notify('Configuration exported successfully!', type='positive')
+            else:
+                ui.notify('Error saving configuration.', type='negative')
+        except Exception as e:
+            ui.notify(f'Failed to export configuration: {e}', type='negative')
 
 
     @ui.page('/print_config')

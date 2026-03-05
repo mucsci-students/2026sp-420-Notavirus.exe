@@ -209,44 +209,6 @@
                 "Linux": 1
             }
         },
-        "lab_preferences": {
-          "Mac": 3,
-          "Linux": 3
-        },
-        "mandatory_days": [
-          "WED"
-        ]
-      },
-      {
-        "name": "Schwartz",
-        "maximum_credits": 0,
-        "maximum_days": 5,
-        "minimum_credits": 0,
-        "unique_course_limit": 1,
-        "times": {
-          "MON": [],
-          "TUE": [],
-          "WED": [],
-          "THU": [],
-          "FRI": []
-        },
-        "course_preferences": {},
-        "room_preferences": {
-          "Roddy 140": 5,
-          "Roddy 136": 1,
-          "Roddy 147": 1
-        },
-        "lab_preferences": {
-          "Mac": 5,
-          "Linux": 1
-        },
-        "mandatory_days": []
-      }
-    ]
-  },
-  "time_slot_config": {
-    "times": {
-      "MON": [
         {
             "name": "Yang",
             "maximum_credits": 12,

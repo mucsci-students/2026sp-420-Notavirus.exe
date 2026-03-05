@@ -54,14 +54,6 @@ class FacultyGUIView:
             None
         """
         GUITheme.applyTheming()
-<<<<<<< HEAD
-        with ui.column().classes('gap-6 items-center w-full'):
-            with ui.row().classes('w-full max-w-2xl justify-start'):
-                ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
-            ui.label('Under Construction!').classes('text-4xl mb-10 !text-black dark:!text-white')
-            ui.button('Back').props('rounded color=black text-color=white no-caps') \
-                .classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
-=======
         ui.query('body').style('background-color: var(--q-add)')
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
@@ -249,7 +241,6 @@ class FacultyGUIView:
             with ui.row().classes('w-full max-w-6xl justify-between items-end mt-16'):
                 ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold').on('click', lambda: ui.navigate.to('/faculty'))
                 ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold').on('click', save_faculty)
->>>>>>> develop
 
     @ui.page('/faculty/modify')
     @staticmethod

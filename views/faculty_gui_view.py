@@ -21,6 +21,14 @@ class FacultyGUIView:
     @ui.page('/faculty')
     @staticmethod
     def faculty():
+        """
+        Displays the Faculty hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
@@ -36,6 +44,14 @@ class FacultyGUIView:
     @ui.page('/faculty/add')
     @staticmethod
     def faculty_add():
+        """
+        Displays the GUI for adding a faculty member.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)')
 
@@ -253,6 +269,19 @@ class FacultyGUIView:
     @ui.page('/faculty/modify')
     @staticmethod
     def faculty_modify():
+        """
+        Displays the GUI for modifying faculty.
+
+        User first selects a faculty member from a dropdown, then sees
+        all of their current information with structured button-based
+        controls for making changes. Changes are in-memory until Save
+        Configuration is clicked.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -606,6 +635,19 @@ class FacultyGUIView:
     @ui.page('/faculty/delete')
     @staticmethod
     def faculty_delete():
+        """
+        Displays the GUI for deleting a faculty member.
+
+        Loads all faculty from FacultyModel and displays them as cards.
+        Each card has a Delete button that opens a confirmation dialog
+        before calling model.delete_faculty(). The list refreshes after
+        each deletion.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
@@ -682,6 +724,17 @@ class FacultyGUIView:
     @ui.page('/faculty/view')
     @staticmethod
     def faculty_view():
+        """
+        Displays the GUI for viewing all faculty members.
+
+        Loads all faculty from FacultyModel and displays each as an
+        expandable card showing position, credits, course limit, and preferences.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = FacultyGUIView.faculty_model

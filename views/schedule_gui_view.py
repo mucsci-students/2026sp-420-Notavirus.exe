@@ -21,12 +21,42 @@ class _ScheduleState:
 _state = _ScheduleState()
 
 def _format_time(time_instance) -> str:
+    """
+    Formats a time instance as a string.
+
+    Parameters:
+        time_instance: A time object to format.
+    Returns:
+        str: String representation of the time instance.
+    """
     return str(time_instance)
 
 def _unique_key(prefix: str, idx: int) -> str:
+    """
+    Generates a unique key string for table row identification.
+
+    Parameters:
+        prefix (str): A short string prefix (e.g. 'r' for room, 'f' for faculty).
+        idx (int): The row index.
+    Returns:
+        str: A unique key in the format 'prefix_idx'.
+    """
     return f"{prefix}_{idx}"
 
 def _build_room_rows(schedule: list, location_filter: str | None = None) -> list[dict]:
+    """
+    Builds a list of row dicts for the room/lab table view.
+
+    Each course instance contributes one room row and optionally one lab row.
+    Rows are sorted by location, then course, then section. An optional
+    location filter narrows the result to a single room or lab.
+
+    Parameters:
+        schedule (list): List of course instance objects for the current schedule.
+        location_filter (str | None): If provided, only rows matching this location are returned.
+    Returns:
+        list[dict]: List of row dicts with keys: _key, location, type, course, section, faculty, times.
+    """
     rows = []
     idx = 0
     for ci in sorted(schedule, key=lambda c: (c.course_str,)):
@@ -70,6 +100,18 @@ def _build_room_rows(schedule: list, location_filter: str | None = None) -> list
     return rows
 
 def _build_faculty_rows(schedule: list, faculty_filter: str | None = None) -> list[dict]:
+    """
+    Builds a list of row dicts for the faculty table view.
+
+    Rows are sorted by faculty name then course. An optional faculty filter
+    narrows the result to a single faculty member.
+
+    Parameters:
+        schedule (list): List of course instance objects for the current schedule.
+        faculty_filter (str | None): If provided, only rows matching this faculty are returned.
+    Returns:
+        list[dict]: List of row dicts with keys: _key, faculty, course, section, room, lab, times.
+    """
     rows = []
     for idx, ci in enumerate(
         sorted(schedule, key=lambda c: (c.faculty, c.course_str))
@@ -91,6 +133,14 @@ def _build_faculty_rows(schedule: list, faculty_filter: str | None = None) -> li
     return rows
 
 def _location_options(schedule: list) -> list[str]:
+    """
+    Returns a sorted list of unique room and lab names in the schedule.
+
+    Parameters:
+        schedule (list): List of course instance objects for the current schedule.
+    Returns:
+        list[str]: Sorted list of location name strings.
+    """
     locations: set[str] = set()
     for ci in schedule:
         if ci.room:
@@ -100,13 +150,37 @@ def _location_options(schedule: list) -> list[str]:
     return sorted(locations)
 
 def _faculty_options(schedule: list) -> list[str]:
+    """
+    Returns a sorted list of unique faculty names in the schedule.
+
+    Parameters:
+        schedule (list): List of course instance objects for the current schedule.
+    Returns:
+        list[str]: Sorted list of faculty name strings.
+    """
     return sorted({ci.faculty for ci in schedule})
 
 def download_csv():
+    """
+    Exports all current schedules as a CSV file and triggers a browser download.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     data = ScheduleGUIView.schedule_controller.export_schedules("csv", _state.schedules)
     ui.download(data, filename="schedules.csv")
 
 def download_json():
+    """
+    Exports all current schedules as a JSON file and triggers a browser download.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     data = ScheduleGUIView.schedule_controller.export_schedules("json", _state.schedules)
     ui.download(data, filename="schedules.json")
 
@@ -143,6 +217,18 @@ class ScheduleGUIView:
     @ui.page('/run_scheduler')
     @staticmethod
     def run_scheduler():
+        """
+        Displays the GUI for configuring and generating schedules.
+
+        Shows a schedule limit input and optimization options selector.
+        On Generate, runs the scheduler asynchronously and navigates to
+        the display page if schedules are produced.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
@@ -154,7 +240,6 @@ class ScheduleGUIView:
         with ui.column().classes('gap-6 items-center w-full max-w-lg mx-auto pt-10'):
             ui.label('Generate Schedules').classes('text-4xl font-bold !text-black dark:!text-white')
 
-            # Schedule Limit card - dark mode aware
             with ui.card().classes('w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-gray-900'):
                 ui.label('Schedule Limit').classes('text-lg font-semibold !text-gray-700 dark:!text-white mb-1')
                 ui.label(
@@ -168,7 +253,6 @@ class ScheduleGUIView:
                     format='%d',
                 ).classes('w-full')
 
-            # Optimization Options card - dark mode aware
             with ui.card().classes('w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-gray-900'):
                 ui.label('Optimization Options').classes('text-lg font-semibold !text-gray-700 dark:!text-white mb-1')
                 ui.label(
@@ -205,6 +289,18 @@ class ScheduleGUIView:
                 ).classes('w-36 h-12 text-base dark:!bg-white dark:!text-black')
 
         async def on_generate():
+            """
+            Handles the Generate button click.
+
+            Validates configuration, runs the scheduler asynchronously in a
+            thread pool, stores results in shared state, and navigates to the
+            display page. Updates the status label on error.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             model = _state._scheduler_model
             if model is None or getattr(model, "config_model", None) is None:
                 status_label.set_text('Error: No configuration loaded.')
@@ -238,10 +334,33 @@ class ScheduleGUIView:
     @ui.page('/display_schedules')
     @staticmethod
     def display_schedules():
+        """
+        Displays the generated schedules in a tabbed viewer.
+
+        Shows schedules in two views: by Room/Lab and by Faculty. Supports
+        pagination through multiple schedules, per-column filtering, CSV/JSON
+        export of selected schedules, and importing schedule files.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)')
 
         async def handle_upload(e):
+            """
+            Handles an uploaded schedule file.
+
+            Reads the file content, delegates parsing to the schedule controller,
+            and reloads the display page with the imported schedules on success.
+
+            Parameters:
+                e: Upload event containing the file name and file-like object.
+            Returns:
+                None
+            """
             if ScheduleGUIView.schedule_controller is None:
                 ui.notify('Controller not initialized', type='negative')
                 return
@@ -278,6 +397,14 @@ class ScheduleGUIView:
                 result_label = ui.label("").classes("text-sm text-gray-500 italic text-center w-full")
 
                 def do_export():
+                    """
+                    Exports the selected schedules to the chosen file format and triggers a download.
+
+                    Parameters:
+                        None
+                    Returns:
+                        None
+                    """
                     if not schedule_select.value:
                         ui.notify("Please select at least one schedule", type="warning")
                         return
@@ -373,12 +500,28 @@ class ScheduleGUIView:
                 ).on('click', lambda: upload.run_method('pickFiles'))
 
         def on_room_filter(e):
+            """
+            Filters the room table by the selected location.
+
+            Parameters:
+                e: Select change event containing the new value.
+            Returns:
+                None
+            """
             val = e.value if e.value != 'All' else None
             room_filter[0] = val
             room_table.rows = _build_room_rows(_state.schedules[_state.current_index], location_filter=val)
             room_table.update()
 
         def on_faculty_filter(e):
+            """
+            Filters the faculty table by the selected faculty member.
+
+            Parameters:
+                e: Select change event containing the new value.
+            Returns:
+                None
+            """
             val = e.value if e.value != 'All' else None
             faculty_filter[0] = val
             faculty_table.rows = _build_faculty_rows(_state.schedules[_state.current_index], faculty_filter=val)
@@ -388,6 +531,14 @@ class ScheduleGUIView:
         faculty_select.on_value_change(on_faculty_filter)
 
         def _sync_btn_states():
+            """
+            Enables or disables the prev/next navigation buttons based on current index.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             if _state.current_index == 0:
                 prev_btn.props('disabled')
             else:
@@ -398,6 +549,14 @@ class ScheduleGUIView:
                 next_btn.props(remove='disabled')
 
         def _reload_schedule():
+            """
+            Reloads table data and filter options for the current schedule index.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             schedule = _state.schedules[_state.current_index]
             room_filter[0]    = None
             faculty_filter[0] = None
@@ -413,11 +572,27 @@ class ScheduleGUIView:
             _sync_btn_states()
 
         def go_prev():
+            """
+            Navigates to the previous schedule if available.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             if _state.current_index > 0:
                 _state.current_index -= 1
                 _reload_schedule()
 
         def go_next():
+            """
+            Navigates to the next schedule if available.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             if _state.current_index < total - 1:
                 _state.current_index += 1
                 _reload_schedule()
@@ -429,10 +604,29 @@ class ScheduleGUIView:
     @ui.page('/test_schedules')
     @staticmethod
     def test_schedules():
+        """
+        Displays a test schedule generation page for development use.
+
+        Reads a config path from sys.argv[1], generates up to 2 schedules,
+        and navigates to the display page on success.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         import os, sys
         status = ui.label('Generating test schedules…').classes('text-gray-600 italic p-4')
 
         async def _run():
+            """
+            Asynchronously generates test schedules from the CLI config path.
+
+            Parameters:
+                None
+            Returns:
+                None
+            """
             try:
                 if len(sys.argv) < 2 or not os.path.exists(sys.argv[1]):
                     status.set_text('Error: no valid config path in sys.argv[1]')

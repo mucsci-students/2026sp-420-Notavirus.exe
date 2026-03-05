@@ -21,6 +21,14 @@ class ConflictGUIView:
     @ui.page('/conflict')
     @staticmethod
     def conflict():
+        """
+        Displays the Conflict hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Conflict').classes('text-4xl mb-10 !text-black dark:!text-white')
@@ -34,6 +42,19 @@ class ConflictGUIView:
     @ui.page('/conflict/add')
     @staticmethod
     def conflict_add():
+        """
+        Displays the GUI for adding a conflict between two courses.
+
+        Loads all courses with section labels and allows the user to
+        select two courses to conflict. Validates that the conflict
+        does not already exist and that a course is not conflicted
+        with itself before adding.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
@@ -142,6 +163,14 @@ class ConflictGUIView:
     @ui.page('/conflict/modify')
     @staticmethod
     def conflict_modify():
+        """
+        Displays the GUI for modifying a conflict.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -318,6 +347,19 @@ class ConflictGUIView:
     @ui.page('/conflict/delete')
     @staticmethod
     def conflict_delete():
+        """
+        Displays the GUI for deleting a conflict.
+
+        Loads all existing conflicts and allows the user to select one
+        to delete. Supports both section-specific deletion and base
+        course deletion via a toggle. Requires confirmation before
+        deleting. Changes are in-memory until Save Configuration is clicked.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -472,6 +514,17 @@ class ConflictGUIView:
     @ui.page('/conflict/view')
     @staticmethod
     def conflict_view():
+        """
+        Displays the GUI for viewing all conflicts.
+
+        Groups course sections with identical conflict sets onto one card
+        and resolves conflict course IDs to their section labels for display.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = ConflictGUIView.conflict_model

@@ -13,6 +13,14 @@ class LabGUIView:
     @ui.page('/lab')
     @staticmethod
     def lab():
+        """
+        Displays the GUI for Lab.
+                
+        Parameters:
+            None        
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
@@ -26,6 +34,14 @@ class LabGUIView:
     @ui.page('/lab/add')
     @staticmethod
     def lab_add():
+        """
+        Displays the GUI for adding a lab.
+                
+        Parameters:
+            None        
+        Returns:        
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -109,6 +125,16 @@ class LabGUIView:
     @ui.page('/lab/modify')
     @staticmethod
     def lab_modify():
+        """
+        Displays the GUI for modifying a lab.
+
+        Changes are in-memory until Save Configuration is clicked.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -159,6 +185,14 @@ class LabGUIView:
     @ui.page('/lab/delete')
     @staticmethod
     def lab_delete():
+        """
+        Displays the GUI for deleting a lab.
+                
+        Parameters:
+            None        
+        Returns:        
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -270,6 +304,14 @@ class LabGUIView:
     @ui.page('/lab/view')
     @staticmethod
     def lab_view():
+        """
+        Displays the GUI for viewing a lab.
+                
+        Parameters:
+            None        
+        Returns:        
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):

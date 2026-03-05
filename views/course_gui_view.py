@@ -22,6 +22,14 @@ class CourseGUIView:
     @ui.page('/course')
     @staticmethod
     def course():
+        """
+        Displays the Course hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Course').classes('text-4xl mb-10 !text-black dark:!text-white')
@@ -36,6 +44,14 @@ class CourseGUIView:
     @ui.page('/course/add')
     @staticmethod
     def course_add():
+        """
+        Displays the GUI for adding a course.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
@@ -143,6 +159,14 @@ class CourseGUIView:
     @ui.page('/course/modify')
     @staticmethod
     def course_modify():
+        """
+        Displays the GUI for modifying an existing course.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
         model      = CourseGUIView.course_model
@@ -296,6 +320,14 @@ class CourseGUIView:
     @ui.page('/course/delete')
     @staticmethod
     def course_delete():
+        """
+        Displays the GUI for deleting a course.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -377,6 +409,14 @@ class CourseGUIView:
     @ui.page('/course/view')
     @staticmethod
     def course_view():
+        """
+        Displays the GUI for viewing all courses.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = CourseGUIView.course_model

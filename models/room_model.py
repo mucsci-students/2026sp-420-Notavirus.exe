@@ -87,8 +87,10 @@ class RoomModel:
             new_name (str): New room name
         
         Returns:
-            bool: True if successful, False if old room doesn't exist or new name already exists
+            bool: True if successful, False if old room doesn't exist, new name already exists, or new name is empty
         """
+        if not new_name or not new_name.strip():
+            return False
         if not self.room_exists(old_name):
             return False
         if self.room_exists(new_name):

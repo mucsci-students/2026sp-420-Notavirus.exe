@@ -246,15 +246,7 @@ class CourseGUIView:
                     updates = {}
 
                     if credits_input.value is not None:
-                        try:
-                            c = int(credits_input.value)
-                            if not (0 <= c <= 20):
-                                status.set_text('⚠ Credits must be between 0 and 20.')
-                                return
-                            updates['credits'] = c
-                        except (ValueError, TypeError):
-                            status.set_text('⚠ Credits must be a valid number.')
-                            return
+                        updates['credits'] = credits_input.value
 
                     # Only update if selection differs from current
                     current_rooms = list(course.room or [])
@@ -276,7 +268,7 @@ class CourseGUIView:
                         status.set_text('No changes detected.')
                         return
 
-                    ok = model.modify_course(cid, section_index=section_idx, **updates)
+                    ok, message = controller.modify_course(cid, section_idx, updates)
                     if ok:
                         from views.gui_view import GUIView
                         GUIView.controller.config_model.save_feature('temp', 'all')
@@ -289,7 +281,7 @@ class CourseGUIView:
                         section_map.update({lbl: (i, c) for lbl, i, c in new_sections})
                         refresh_info()
                     else:
-                        status.set_text(f"⚠ Failed to update '{selected_label.value}'.")
+                        status.set_text(f"⚠ {message}")
 
                 def do_save_to_config():
                     from views.gui_view import GUIView

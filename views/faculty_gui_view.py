@@ -187,6 +187,8 @@ class FacultyGUIView:
 
             def _collect_faculty_data():
                 """Collect form data into a dict. Returns None and notifies if invalid."""
+                import re
+                
                 name = name_input.value
                 if not name:
                     ui.notify('Faculty name is required!', type='negative')
@@ -195,10 +197,27 @@ class FacultyGUIView:
                 is_full_time = position_radio.value == 'Full Time'
 
                 times_data = {}
+                time_pattern = re.compile(r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
+                
                 for day, inputs in day_inputs.items():
                     if inputs['cb'].value:
                         start_time = inputs['start'].value or '09:00'
                         end_time = inputs['end'].value or '17:00'
+                        
+                        if not time_pattern.match(start_time):
+                            ui.notify(f'Invalid start time "{start_time}" for {day}. Use 24-hour HH:MM format.', type='negative')
+                            return None
+                        if not time_pattern.match(end_time):
+                            ui.notify(f'Invalid end time "{end_time}" for {day}. Use 24-hour HH:MM format.', type='negative')
+                            return None
+                            
+                        # Also validate start < end
+                        start_mins = int(start_time[:2]) * 60 + int(start_time[3:])
+                        end_mins = int(end_time[:2]) * 60 + int(end_time[3:])
+                        if end_mins <= start_mins:
+                            ui.notify(f'End time must be after start time for {day}.', type='negative')
+                            return None
+                            
                         times_data[day] = [{'start': start_time, 'end': end_time}]
 
                 course_prefs = {}
@@ -435,14 +454,32 @@ class FacultyGUIView:
                                 end_input = ui.input(label='End (HH:MM)', value='17:00').classes('w-32')
 
                                 def save_time():
+                                    import re
                                     from scheduler import TimeRange as TR
                                     if not day_select.value:
                                         times_feedback.set_text('Please select a day.')
                                         times_feedback.classes(replace='text-md text-red-600')
                                         return
+                                        
+                                    start_val = start_input.value.strip()
+                                    end_val = end_input.value.strip()
+                                    time_pattern = re.compile(r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
+                                    
+                                    if not time_pattern.match(start_val) or not time_pattern.match(end_val):
+                                        times_feedback.set_text('Invalid time. Use 24-hour HH:MM format.')
+                                        times_feedback.classes(replace='text-md text-red-600')
+                                        return
+                                        
+                                    start_mins = int(start_val[:2]) * 60 + int(start_val[3:])
+                                    end_mins = int(end_val[:2]) * 60 + int(end_val[3:])
+                                    if end_mins <= start_mins:
+                                        times_feedback.set_text('End time must be after start time.')
+                                        times_feedback.classes(replace='text-md text-red-600')
+                                        return
+                                        
                                     try:
                                         new_times = dict(selected_faculty['value'].times)
-                                        new_times[day_select.value] = [TR(start=start_input.value.strip(), end=end_input.value.strip())]
+                                        new_times[day_select.value] = [TR(start=start_val, end=end_val)]
                                         apply('times', new_times, times_feedback)
                                     except Exception as ex:
                                         times_feedback.set_text(f'Invalid time format: {ex}')

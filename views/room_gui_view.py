@@ -170,6 +170,9 @@ class RoomGUIView:
                 if not selected_room.value:
                     result_label.set_text("Select a room first.")
                     return
+                if not new_name.value or not new_name.value.strip():
+                    result_label.set_text("New room name cannot be empty.")
+                    return
                 success = RoomGUIView.room_controller.model.modify_room(selected_room.value, new_name.value)
                 if success:
                     result_label.set_text("Room modified in memory.")
@@ -189,7 +192,10 @@ class RoomGUIView:
                 """
                 from views.gui_view import GUIView
                 existing = RoomGUIView.room_controller.model.get_all_rooms()
-                if selected_room.value and selected_room.value in existing and new_name.value:
+                if not new_name.value or not new_name.value.strip():
+                    result_label.set_text("New room name cannot be empty.")
+                    return
+                if selected_room.value and selected_room.value in existing:
                     success = RoomGUIView.room_controller.model.modify_room(selected_room.value, new_name.value)
                     if not success:
                         result_label.set_text("Modification failed.")

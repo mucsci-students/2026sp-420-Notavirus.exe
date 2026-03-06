@@ -339,7 +339,7 @@ class FacultyGUIView:
                 f = selected_faculty['value']
                 success = controller.model.modify_faculty(f.name, field, value)
                 if success:
-                    config_model.save_feature('temp', 'faculty')
+                    config_model.save_feature('temp', 'all')
                     feedback_label.set_text('Updated in memory.')
                     feedback_label.classes(replace='text-md text-green-600')
                     reload_form()
@@ -361,7 +361,7 @@ class FacultyGUIView:
                                 ui.button('Set Full-time').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, True),
-                                        config_model.save_feature('temp', 'faculty'),
+                                        config_model.save_feature('temp', 'all'),
                                         position_feedback.set_text('Position set to Full-time.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -370,7 +370,7 @@ class FacultyGUIView:
                                 ui.button('Set Adjunct').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, False),
-                                        config_model.save_feature('temp', 'faculty'),
+                                        config_model.save_feature('temp', 'all'),
                                         position_feedback.set_text('Position set to Adjunct.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -392,7 +392,7 @@ class FacultyGUIView:
                                         selected_faculty['value'].name, int(max_credits_input.value)
                                     )
                                     if success:
-                                        config_model.save_feature('temp', 'faculty')
+                                        config_model.save_feature('temp', 'all')
                                         max_credits_feedback.set_text('Updated in memory.')
                                         max_credits_feedback.classes(replace='text-md text-green-600')
                                     reload_form()
@@ -617,7 +617,7 @@ class FacultyGUIView:
 
             def handle_save():
                 """Save changes to in-memory model only."""
-                success = config_model.save_feature('temp', 'faculty')
+                success = config_model.save_feature('temp', 'all')
                 if success:
                     save_config_label.set_text('Changes saved to memory.')
                     save_config_label.classes(replace='text-lg text-green-600')
@@ -627,8 +627,8 @@ class FacultyGUIView:
 
             def handle_save_to_config():
                 """Flush any temp changes then write permanently to config file."""
-                config_model.save_feature('temp', 'faculty')
-                success = config_model.save_feature('config', 'faculty')
+                config_model.save_feature('temp', 'all')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     save_config_label.set_text('Configuration saved to file.')
                     save_config_label.classes(replace='text-lg text-green-600')
@@ -728,7 +728,7 @@ class FacultyGUIView:
             def save_to_config():
                 from views.gui_view import GUIView
                 config_model = GUIView.controller.config_model
-                success = config_model.save_feature('config', 'faculty')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     save_label.set_text('Deletions saved to config file.')
                     save_label.classes(replace='text-sm text-green-600')

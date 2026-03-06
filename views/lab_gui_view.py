@@ -103,7 +103,7 @@ class LabGUIView:
                     success, message = LabGUIView._lab_controller.gui_add_lab(new_lab.value)
                     result_label.set_text(message)
                     if success:
-                        config_model.save_feature('temp', 'labs')
+                        config_model.save_feature('temp', 'all')
                         pending['dirty'] = True
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
@@ -114,7 +114,7 @@ class LabGUIView:
 
             def save_to_config():
                 """Write labs to config file."""
-                success = config_model.save_feature('config', 'labs')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     pending['dirty'] = False
                     save_label.set_text('Configuration saved to file.')
@@ -168,7 +168,7 @@ class LabGUIView:
                     )
                     result_label.set_text(message)
                     if success:
-                        config_model.save_feature('temp', 'labs')
+                        config_model.save_feature('temp', 'all')
                         existing_lab.set_options(LabGUIView._lab_controller.model.get_all_labs())
                         modified_lab.set_value('')
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
@@ -177,7 +177,7 @@ class LabGUIView:
                     result_label.set_text(f'Error: {e}')
 
             def handle_save_to_config():
-                success = config_model.save_feature('config', 'labs')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     save_label.set_text('Configuration saved to file.')
                     save_label.classes(replace='text-base text-green-600')
@@ -194,7 +194,10 @@ class LabGUIView:
     def lab_delete():
         """
         Displays the GUI for deleting a lab.
-                
+
+        Delete commits to memory immediately. Save to Config writes
+        current memory state to disk.
+
         Parameters:
             None        
         Returns:        
@@ -209,68 +212,7 @@ class LabGUIView:
 
         config_model = GUIView.controller.config_model
 
-        if LabGUIView._lab_controller:
-            initial_labs = LabGUIView._lab_controller.get_all_labs()
-        else:
-            initial_labs = []
-
-        state = {
-            'labs': list(initial_labs),
-            'deleted_labs': [],
-            'selected_labs': []
-        }
-
-        def on_delete():
-            if state['selected_labs']:
-                for lab in state['selected_labs']:
-                    if lab in state['labs']:
-                        state['labs'].remove(lab)
-                        state['deleted_labs'].append(lab)
-                state['selected_labs'] = []
-                update_lab_list()
-                if state['deleted_labs']:
-                    save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                    save_label.classes(replace='text-lg text-orange-500')
-
-        def on_save_to_config():
-            if not state['deleted_labs']:
-                ui.notify('No changes to save.', type='info')
-                return
-            if LabGUIView._lab_controller and LabGUIView._lab_controller.delete_labs_gui(state['deleted_labs']):
-                # Now persist to config file
-                success = config_model.save_feature('config', 'labs')
-                if success:
-                    save_label.set_text('Configuration saved to file.')
-                    save_label.classes(replace='text-lg text-green-600')
-                    state['deleted_labs'] = []
-                else:
-                    save_label.set_text('Deleted from memory but config save failed.')
-                    save_label.classes(replace='text-lg text-red-600')
-            else:
-                ui.notify('Error saving changes.', type='negative')
-
-        def on_save_memory():
-            if not state['deleted_labs']:
-                ui.notify('No changes to save.', type='info')
-                return
-            if LabGUIView._lab_controller and LabGUIView._lab_controller.delete_labs_gui(state['deleted_labs']):
-                config_model.save_feature('temp', 'labs')
-                save_label.set_text('Deletions saved to memory.')
-                save_label.classes(replace='text-lg text-green-600')
-                state['deleted_labs'] = []
-            else:
-                ui.notify('Error saving changes.', type='negative')
-
-        def on_cancel():
-            if state['deleted_labs']:
-                with ui.dialog() as dialog, ui.card():
-                    ui.label('Are you sure you want to discard your changes?').classes('text-lg')
-                    with ui.row().classes('w-full justify-end mt-4'):
-                        ui.button('No', on_click=dialog.close).props('flat text-color=black')
-                        ui.button('Yes', on_click=lambda: (dialog.close(), ui.navigate.to('/lab'))).props('color=red text-color=white')
-                dialog.open()
-            else:
-                ui.navigate.to('/lab')
+        selected_labs = []
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
@@ -281,34 +223,59 @@ class LabGUIView:
                 with ui.scroll_area().classes('w-full h-full p-4'):
                     list_container = ui.column().classes('w-full')
 
+            result_label = ui.label('').classes('text-base !text-black dark:!text-white mt-2')
             save_label = ui.label('').classes('text-lg mt-2')
 
             def update_lab_list():
                 list_container.clear()
+                selected_labs.clear()
+                labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
                 with list_container:
-                    if not state['labs']:
+                    if not labs:
                         ui.label('No labs available.').classes('text-gray-500 m-auto mt-4')
                     else:
-                        for lab in state['labs']:
-                            checked = lab in state['selected_labs']
+                        for lab in labs:
                             def toggle(e, l=lab):
                                 if e.value:
-                                    if l not in state['selected_labs']:
-                                        state['selected_labs'].append(l)
+                                    if l not in selected_labs:
+                                        selected_labs.append(l)
                                 else:
-                                    if l in state['selected_labs']:
-                                        state['selected_labs'].remove(l)
-                            ui.checkbox(lab, value=checked, on_change=toggle).classes('w-full text-lg').props('color=blue')
+                                    if l in selected_labs:
+                                        selected_labs.remove(l)
+                            ui.checkbox(lab, value=False, on_change=toggle).classes('w-full text-lg').props('color=blue')
 
             update_lab_list()
+
+            def on_delete():
+                """Delete selected labs from memory immediately."""
+                if not selected_labs:
+                    result_label.set_text('No labs selected.')
+                    return
+                if LabGUIView._lab_controller and LabGUIView._lab_controller.delete_labs_gui(list(selected_labs)):
+                    result_label.set_text(f"✓ Deleted from memory.")
+                    save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
+                    save_label.classes(replace='text-lg text-orange-500')
+                    update_lab_list()
+                else:
+                    result_label.set_text('Error deleting labs.')
+
+            def on_save_to_config():
+                """Dump current memory state to config file."""
+                success = config_model.save_feature('config', 'all')
+                if success:
+                    result_label.set_text('')  
+                    save_label.set_text('Configuration saved to file.')
+                    save_label.classes(replace='text-lg text-green-600')
+                else:
+                    save_label.set_text('Save failed. Check terminal for details.')
+                    save_label.classes(replace='text-lg text-red-600')
 
             ui.button('Delete').props('rounded color=red text-color=white no-caps').classes('w-40 h-10 text-lg mt-6 shadow-none').on('click', on_delete)
             ui.space().classes('h-10')
 
             with ui.row().classes('gap-4 mt-4'):
-                ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_cancel)
-                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_save_memory)
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-40 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_save_to_config)
+                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_save_to_config)
+                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/view')
     @staticmethod

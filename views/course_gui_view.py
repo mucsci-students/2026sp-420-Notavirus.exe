@@ -214,20 +214,27 @@ class CourseGUIView:
                             f"Labs: {', '.join(course.lab or [])}  |  "
                             f"Faculty: {', '.join(course.faculty or [])}"
                         )
+                        try:
+                            rooms_input.set_value(list(course.room or []))
+                            labs_input.set_value(list(course.lab or []))
+                            faculty_input.set_value(list(course.faculty or []))
+                            credits_input.set_value(course.credits)
+                        except NameError:
+                            pass
 
-                refresh_info()
                 selected_label.on('update:model-value', lambda _: refresh_info())
 
                 ui.label(
-                    'Leave blank/unselected to keep unchanged.  '
-                    'Faculty: Name to add, -Name to remove.'
+                    'Modify the fields below. Leave credits blank to keep unchanged.'
                 ).classes('text-xs text-gray-400')
 
                 credits_input = ui.number('New Credits', min=0, max=20).props('label-color=grey-7').classes('w-full')
-                rooms_input   = ui.select(resources['rooms'], label='Rooms').props('label-color=grey-7').classes('w-full')
-                labs_input    = ui.select(resources['labs'], label='Labs').props('label-color=grey-7').classes('w-full')
-                faculty_input = ui.input('Faculty (add: Name, remove: -Name)').props('label-color=grey-7').classes('w-full')
+                rooms_input   = ui.select(resources['rooms'], label='Rooms', multiple=True).props('label-color=grey-7').classes('w-full')
+                labs_input    = ui.select(resources['labs'], label='Labs', multiple=True).props('label-color=grey-7').classes('w-full')
+                faculty_input = ui.select(resources['faculty'], label='Faculty', multiple=True).props('label-color=grey-7').classes('w-full')
 
+                # Populate with current values on load
+                refresh_info()
                 def do_modify():
                     entry = section_map.get(selected_label.value)
                     if not entry:
@@ -249,37 +256,34 @@ class CourseGUIView:
                             status.set_text('⚠ Credits must be a valid number.')
                             return
 
-                    if rooms_input.value is not None:
-                        updates['room'] = [rooms_input.value]
+                    # Only update if selection differs from current
+                    current_rooms = list(course.room or [])
+                    new_rooms = list(rooms_input.value or [])
+                    if sorted(new_rooms) != sorted(current_rooms):
+                        updates['room'] = new_rooms
 
-                    if labs_input.value is not None:
-                        updates['lab'] = [labs_input.value]
+                    current_labs = list(course.lab or [])
+                    new_labs = list(labs_input.value or [])
+                    if sorted(new_labs) != sorted(current_labs):
+                        updates['lab'] = new_labs
 
-                    raw_faculty = faculty_input.value.strip()
-                    if raw_faculty:
-                        modifications = {'credits': '', 'room': '', 'lab': '', 'faculty': raw_faculty}
-                        parsed = controller._parse_modifications(modifications, course)
-                        if parsed is None:
-                            status.set_text('⚠ Invalid faculty input.')
-                            return
-                        if 'faculty' in parsed:
-                            updates['faculty'] = parsed['faculty']
+                    current_faculty = list(course.faculty or [])
+                    new_faculty = list(faculty_input.value or [])
+                    if sorted(new_faculty) != sorted(current_faculty):
+                        updates['faculty'] = new_faculty
 
                     if not updates:
-                        status.set_text('No changes entered.')
+                        status.set_text('No changes detected.')
                         return
 
-                    ok = model.modify_course(cid, **updates)
+                    ok = model.modify_course(cid, section_index=section_idx, **updates)
                     if ok:
                         from views.gui_view import GUIView
-                        GUIView.controller.config_model.save_feature('temp', 'courses')
+                        GUIView.controller.config_model.save_feature('temp', 'all')
                         status.set_text(f"'{selected_label.value}' updated in memory.")
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
                         credits_input.set_value(None)
-                        rooms_input.set_value([])
-                        labs_input.set_value([])
-                        faculty_input.value = ''
                         new_sections = model.get_courses_with_sections()
                         section_map.clear()
                         section_map.update({lbl: (i, c) for lbl, i, c in new_sections})
@@ -289,7 +293,7 @@ class CourseGUIView:
 
                 def do_save_to_config():
                     from views.gui_view import GUIView
-                    success = GUIView.controller.config_model.save_feature('config', 'courses')
+                    success = GUIView.controller.config_model.save_feature('config', 'all')
                     if success:
                         save_label.set_text('Configuration saved to file.')
                         save_label.classes(replace='text-lg text-green-600')
@@ -369,7 +373,7 @@ class CourseGUIView:
                                 selected['dirty'] = True
                                 save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                                 save_label.classes(replace='text-lg text-orange-500')
-                                config_model.save_feature('temp', 'courses')
+                                config_model.save_feature('temp', 'all')
                                 updated = controller.get_courses_with_sections()
                                 new_options = {label: (course.course_id, index) for label, index, course in updated}
                                 section_options.clear()
@@ -382,7 +386,7 @@ class CourseGUIView:
                 dialog.open()
 
             def handle_save():
-                success = config_model.save_feature('config', 'courses')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved to file.')

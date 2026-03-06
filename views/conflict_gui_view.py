@@ -22,14 +22,6 @@ class ConflictGUIView:
     @ui.page('/conflict')
     @staticmethod
     def conflict():
-        """
-        Displays the Conflict hub page with navigation buttons.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
             return
@@ -45,19 +37,6 @@ class ConflictGUIView:
     @ui.page('/conflict/add')
     @staticmethod
     def conflict_add():
-        """
-        Displays the GUI for adding a conflict between two courses.
-
-        Loads all courses with section labels and allows the user to
-        select two courses to conflict. Validates that the conflict
-        does not already exist and that a course is not conflicted
-        with itself before adding.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return
@@ -118,7 +97,6 @@ class ConflictGUIView:
             course_b.on('update:model-value', lambda _: preview())
 
             def do_add():
-                """Add conflict to memory only."""
                 label_a = course_a.value
                 label_b = course_b.value
                 course_id_a = course_map[label_a].course_id
@@ -152,7 +130,6 @@ class ConflictGUIView:
                     status.set_text(f'Error: {e}')
 
             def do_save_to_config():
-                """Write conflicts to config file."""
                 success = model.config_model.save_feature('config', 'courses')
                 if success:
                     pending['dirty'] = False
@@ -169,14 +146,6 @@ class ConflictGUIView:
     @ui.page('/conflict/modify')
     @staticmethod
     def conflict_modify():
-        """
-        Displays the GUI for modifying a conflict.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -207,6 +176,17 @@ class ConflictGUIView:
 
         conflict_options = build_section_options()
 
+        all_courses = config_model.get_all_courses()
+        course_map = {}
+        course_counts = {}
+        for c in all_courses:
+            cid = c.course_id
+            course_counts[cid] = course_counts.get(cid, 0) + 1
+            label = f"{cid}.{course_counts[cid]:02d}"
+            course_map[label] = c
+        all_section_labels = list(course_map.keys())
+        all_base_labels = sorted({c.course_id for c in all_courses})
+
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded no-caps').classes('h-10 !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: check_discard_and_navigate('/'))
@@ -236,16 +216,6 @@ class ConflictGUIView:
                     ui.button('Yes', on_click=lambda: (confirm_dialog.close(), ui.navigate.to(getattr(confirm_dialog, 'target_url', '/')))).props('color=red text-color=white')
                     ui.button('No', on_click=confirm_dialog.close).props('color=black text-color=white')
 
-            all_courses = config_model.get_all_courses()
-            course_map = {}
-            course_counts = {}
-            for c in all_courses:
-                cid = c.course_id
-                course_counts[cid] = course_counts.get(cid, 0) + 1
-                label = f"{cid}.{course_counts[cid]:02d}"
-                course_map[label] = c
-            all_labels = list(course_map.keys())
-
             def update_selection(e):
                 val = conflict_options.get(e.value)
                 if val:
@@ -253,20 +223,11 @@ class ConflictGUIView:
                     c1, c2, i1, i2 = val
                     s1 = section_label_map.get(i1, c1) if i1 is not None else c1
                     s2 = section_label_map.get(i2, c2) if i2 is not None else c2
-                    if s1 in all_labels:
-                        new_course_a.value = s1
-                    else:
-                        for l in all_labels:
-                            if l.startswith(s1):
-                                new_course_a.value = l
-                                break
-                    if s2 in all_labels:
-                        new_course_b.value = s2
-                    else:
-                        for l in all_labels:
-                            if l.startswith(s2):
-                                new_course_b.value = l
-                                break
+                    current_labels = new_course_a.options
+                    match_a = s1 if s1 in current_labels else next((l for l in current_labels if l == c1 or l.startswith(c1 + '.')), None)
+                    match_b = s2 if s2 in current_labels else next((l for l in current_labels if l == c2 or l.startswith(c2 + '.')), None)
+                    new_course_a.value = match_a
+                    new_course_b.value = match_b
 
             select_existing = ui.select(
                 options=list(conflict_options.keys()),
@@ -275,20 +236,28 @@ class ConflictGUIView:
             ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             with ui.row().classes('gap-4 w-full max-w-xl justify-center items-center mt-2'):
-                new_course_a = ui.select(all_labels, label='New Course A').props('label-color=grey-7').classes('w-64 max-w-xs')
-                new_course_b = ui.select(all_labels, label='New Course B').props('label-color=grey-7').classes('w-64 max-w-xs')
+                new_course_a = ui.select(all_section_labels, label='New Course A').props('label-color=grey-7').classes('w-64 max-w-xs')
+                new_course_b = ui.select(all_section_labels, label='New Course B').props('label-color=grey-7').classes('w-64 max-w-xs')
 
             def on_toggle(e):
                 selected['value'] = None
                 selected['is_base'] = e.value
                 select_existing.value = None
+                new_course_a.value = None
+                new_course_b.value = None
                 conflict_options.clear()
                 if e.value:
                     conflict_options.update(build_base_options())
+                    new_course_a.options = all_base_labels
+                    new_course_b.options = all_base_labels
                 else:
                     conflict_options.update(build_section_options())
+                    new_course_a.options = all_section_labels
+                    new_course_b.options = all_section_labels
                 select_existing.options = list(conflict_options.keys())
                 select_existing.update()
+                new_course_a.update()
+                new_course_b.update()
                 feedback.set_text('')
 
             ui.switch('Sort course conflicts without section preference', on_change=on_toggle).classes('!text-black dark:!text-white')
@@ -307,7 +276,7 @@ class ConflictGUIView:
                     feedback.set_text('Please select both new courses.')
                     feedback.classes(replace='text-lg text-red-600')
                     return
-                success, message = controller.gui_modify_conflict(old_c1, old_c2, new_c1, new_c2)
+                success, message = controller.gui_modify_conflict(old_c1, old_c2, new_c1, new_c2, i1=i1, i2=i2)
                 feedback.set_text(message)
                 feedback.classes(replace=f'text-lg {"!text-black dark:!text-white" if success else "text-red-600"}')
                 if success:
@@ -326,18 +295,7 @@ class ConflictGUIView:
                     new_course_a.value = None
                     new_course_b.value = None
 
-            def handle_save():
-                """Save to memory only."""
-                success = config_model.save_feature('temp', 'courses')
-                if success:
-                    save_label.set_text('Changes saved to memory.')
-                    save_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-lg text-red-600')
-
             def handle_save_to_config():
-                """Write to config file."""
                 success = config_model.save_feature('config', 'courses')
                 if success:
                     selected['dirty'] = False
@@ -348,26 +306,12 @@ class ConflictGUIView:
                     save_label.classes(replace='text-lg text-red-600')
 
             ui.button('Modify Conflict').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', on_modify)
-            ui.button('Save').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', handle_save)
             ui.button('Save to Config').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', handle_save_to_config)
             ui.button('Back').props('rounded no-caps').classes('w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black').on('click', lambda: check_discard_and_navigate('/conflict'))
 
     @ui.page('/conflict/delete')
     @staticmethod
     def conflict_delete():
-        """
-        Displays the GUI for deleting a conflict.
-
-        Loads all existing conflicts and allows the user to select one
-        to delete. Supports both section-specific deletion and base
-        course deletion via a toggle. Requires confirmation before
-        deleting. Changes are in-memory until Save Configuration is clicked.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
@@ -404,7 +348,7 @@ class ConflictGUIView:
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
             ui.label('Delete Conflict').classes('text-4xl mb-4 !text-black dark:!text-white')
-            ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+            ui.label('Select a conflict depicted by course sections or toggle the menu option down below to ignore sections and remove all conflicts associated with two courses. You must check the conflict first to delete it.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             if not existing_conflicts:
                 ui.label('There are no conflicts currently in the configuration.').classes('text-xl !text-black dark:!text-white')
@@ -524,17 +468,6 @@ class ConflictGUIView:
     @ui.page('/conflict/view')
     @staticmethod
     def conflict_view():
-        """
-        Displays the GUI for viewing all conflicts.
-
-        Groups course sections with identical conflict sets onto one card
-        and resolves conflict course IDs to their section labels for display.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return

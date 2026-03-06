@@ -40,7 +40,7 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
 
         # Build the updated data from Pydantic but only for sections we manage
         updated = json.loads(config.model_dump_json(exclude_unset=True))
-        
+
         # Determine the target file to read as our baseline
         target_read_path = config_path
         if save_type == 'temp' and os.path.exists(temp_path):
@@ -59,14 +59,43 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
             if feat_name in ['rooms', 'labs', 'courses']:
                 target_data['config'][feat_name] = updated['config'][feat_name]
             elif feat_name == 'faculty':
-                updated_faculty = updated['config']['faculty']
-                for fac in updated_faculty:
-                    prefs = fac.get('course_preferences', {})
-                    fac['course_preferences'] = {
-                        k: v for k, v in prefs.items()
-                        if k in valid_courses
-                    }
-                target_data['config']['faculty'] = updated_faculty
+                existing_raw_list = target_data['config'].get('faculty', [])
+                existing_raw_by_name = {fac['name']: fac for fac in existing_raw_list}
+                in_memory_faculty = updated['config']['faculty']
+                in_memory_by_name = {fac['name']: fac for fac in in_memory_faculty}
+
+                result = []
+
+                # Process existing faculty in their original order.
+                # Merge in-memory changes but preserve the original 'times' format
+                # (e.g. "11:00-16:00" strings) so saves don't reformat existing entries.
+                # Faculty not in memory anymore were deleted -- they are skipped.
+                for raw_fac in existing_raw_list:
+                    name = raw_fac['name']
+                    if name not in in_memory_by_name:
+                        continue  # deleted
+                    mem_fac = in_memory_by_name[name]
+                    merged = raw_fac.copy()
+                    for key, val in mem_fac.items():
+                        if key == 'times':
+                            pass  # keep original JSON format; times editing not yet implemented
+                        elif key == 'course_preferences':
+                            merged[key] = {k: v for k, v in val.items() if k in valid_courses}
+                        else:
+                            merged[key] = val
+                    result.append(merged)
+
+                # Append new faculty (in memory but not in the original JSON)
+                for fac in in_memory_faculty:
+                    if fac['name'] not in existing_raw_by_name:
+                        prefs = fac.get('course_preferences', {})
+                        fac['course_preferences'] = {
+                            k: v for k, v in prefs.items()
+                            if k in valid_courses
+                        }
+                        result.append(fac)
+
+                target_data['config']['faculty'] = result
 
         # Apply updates based on feature argument
         if feature == 'all':
@@ -76,7 +105,7 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
             update_feature(feature)
 
         dir_name = os.path.dirname(os.path.abspath(config_path))
-        
+
         # Write to a proper safe temporary file first
         with tempfile.NamedTemporaryFile(mode='w', dir=dir_name, delete=False, suffix='.tmp') as tmp:
             safe_tmp_path = tmp.name
@@ -87,17 +116,17 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
             shutil.copy(safe_tmp_path, temp_path)
             os.remove(safe_tmp_path)
             print(f"Temporary changes for '{feature}' saved successfully.")
-        
+
         elif save_type == 'config':
             # This is a master commit save.
             # Move our fully updated accumulator (safe_tmp_path) to the actual config file
             shutil.copy(safe_tmp_path, config_path)
             os.remove(safe_tmp_path)
-            
+
             # Clean up the .temp file since we've committed to main
             if os.path.exists(temp_path):
                 os.remove(temp_path)
-                
+
             print(f"Configuration committed successfully.")
 
         return True

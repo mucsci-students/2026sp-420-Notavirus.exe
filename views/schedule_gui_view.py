@@ -226,7 +226,13 @@ class ScheduleGUIView:
         config_limit = 100
         model = _state._scheduler_model
         if model is not None and getattr(model, "config_model", None) is not None:
-            config_limit = model.config_model.config.limit
+            try:
+                import json
+                with open(model.config_model.config_path, 'r') as f:
+                    raw = json.load(f)
+                config_limit = raw.get('limit', model.config_model.config.limit)
+            except Exception:
+                config_limit = model.config_model.config.limit
 
         with ui.column().classes('gap-6 items-center w-full max-w-lg mx-auto pt-10'):
             ui.label('Generate Schedules').classes('text-4xl font-bold !text-black dark:!text-white')

@@ -156,7 +156,7 @@ class GUIView:
                         ScheduleGUIView.schedule_controller = new_schedule_ctrl
 
                         GUIView.config_path = file_path
-
+                        GUIView.controller.config_path = file_path
                         os.remove(file_path)
 
                         status_label.style('color: green !important;')
@@ -184,6 +184,7 @@ class GUIView:
         Asks the controller to save current in-memory configurations to disk, then downloads.
         """
         try:
+            
             success = GUIView.controller.save_configuration()
             if success:
                 ui.download(GUIView.controller.config_path, 'scheduler_configuration.json')

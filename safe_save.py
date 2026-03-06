@@ -78,7 +78,7 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
                     merged = raw_fac.copy()
                     for key, val in mem_fac.items():
                         if key == 'times':
-                            pass  # keep original JSON format; times editing not yet implemented
+                            merged[key] = val
                         elif key == 'course_preferences':
                             merged[key] = {k: v for k, v in val.items() if k in valid_courses}
                         else:

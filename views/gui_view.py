@@ -101,7 +101,8 @@ class GUIView:
 
                     try:
                         real_name = e.file.name
-                        file_path = f'temp_{real_name}'
+                        file_path = real_name
+
                         with open(file_path, 'wb') as f:
                             f.write(await e.file.read())
 
@@ -162,13 +163,11 @@ class GUIView:
 
                         GUIView.config_path = file_path
                         GUIView.controller.config_path = file_path
-                        os.remove(file_path)
-                        real_path = os.path.join(os.getcwd(), real_name)
-                        new_config.config_path = real_path
-                        ctrl.config_path = real_path
-                        GUIView.config_path = real_path
-                        GUIView.controller.config_path = real_path
-
+                        
+                        ctrl.config_path = file_path
+                        GUIView.config_path = file_path
+                        GUIView.controller.config_path = file_path
+                        
                         status_label.style('color: green !important;')
                         status_label.set_text(f'✓ Loaded: {e.file.name}')
                         ui.notify('Configuration loaded successfully!', type='positive')

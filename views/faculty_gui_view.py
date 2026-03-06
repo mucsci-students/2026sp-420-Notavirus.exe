@@ -59,21 +59,20 @@ class FacultyGUIView:
         if not require_config(back_url='/faculty'):
             return
         from views.gui_view import GUIView
-        
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
             with ui.row().classes('w-full max-w-6xl justify-start mb-4'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
             ui.label('Add Faculty').classes('text-5xl mb-12 mt-4 !text-black dark:!text-white')
-            
+
             with ui.row().classes('w-full max-w-6xl justify-between items-start'):
                 # Left Column
                 with ui.column().classes('w-[50%] gap-6'):
                     with ui.row().classes('items-center gap-4 w-full'):
                         ui.label('Enter Faculty Name:').classes('text-2xl !text-black dark:!text-white')
                         name_input = ui.input().props('outlined dense square color=dark input-style="color: black !important"').classes('w-64 text-xl').style('background-color: white;')
-                        
+
                     with ui.row().classes('items-center gap-6 w-full'):
                         ui.label('Faculty Position:').classes('text-2xl !text-black dark:!text-white')
                         position_radio = ui.radio(['Full Time', 'Adjunct'], value='Full Time').props('inline').classes('text-xl !text-black dark:!text-white gap-4 faculty-radio')
@@ -82,30 +81,30 @@ class FacultyGUIView:
                         ''')
 
                     ui.label('Faculty Availability:').classes('text-2xl !text-black dark:!text-white')
-                    
+
                     day_inputs = {}
                     with ui.column().classes('w-full pl-4 gap-2'):
                         for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
                             with ui.row().classes('items-center w-full pr-4 gap-4'):
                                 cb = ui.checkbox(day).props('color=dark').classes('text-xl !text-black dark:!text-white')
-                                
+
                                 def handle_time_change(e, is_start, related_input):
                                     if e.value and not related_input.value:
                                         related_input.value = '17:00' if is_start else '09:00'
-                                
+
                                 with ui.row().classes('items-center gap-2').bind_visibility_from(cb, 'value'):
                                     start_input = ui.input('Start (e.g. 09:00)').props('outlined dense square color=dark label-color=grey-7 input-style="color: black !important"').classes('w-28').style('background-color: white;')
                                     ui.label('to').classes('text-lg !text-black dark:!text-white')
                                     end_input = ui.input('End (e.g. 17:00)').props('outlined dense square color=dark label-color=grey-7 input-style="color: black !important"').classes('w-28').style('background-color: white;')
-                                    
+
                                     start_input.on_value_change(lambda e, si=start_input, ei=end_input: handle_time_change(e, True, ei))
                                     end_input.on_value_change(lambda e, si=start_input, ei=end_input: handle_time_change(e, False, si))
-                                    
+
                                 day_inputs[day] = {'cb': cb, 'start': start_input, 'end': end_input}
 
                     with ui.column().classes('w-full mt-6 gap-2'):
                         ui.label('Courses and Preferences:').classes('text-2xl !text-black dark:!text-white')
-                        
+
                         course_container = ui.column().classes('w-full gap-2')
                         course_rows = []
                         def add_course_row():
@@ -119,23 +118,23 @@ class FacultyGUIView:
                                 with row_container:
                                     course_input = ui.select(options, label='Course Code', with_input=True).props('outlined dense square options-dense behavior="menu" label-color=grey-7 input-style="color: black !important"').classes('flex-grow').style('background-color: white; color: black; min-width: 150px;')
                                     weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square label-color=grey-7 input-style="color: black !important"').classes('w-40').style('background-color: white; color: black;')
-                                    
+
                                     row_data = {'course': course_input, 'weight': weight_input}
                                     course_rows.append(row_data)
-                                    
+
                                     def delete_row(e, rc=row_container, rd=row_data):
                                         rc.delete()
                                         if rd in course_rows:
                                             course_rows.remove(rd)
-                                            
+
                                     ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
-                        
+
                         add_course_row()
                         ui.button('+ Add Course', on_click=add_course_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
                     with ui.column().classes('w-full mt-6 gap-2'):
                         ui.label('Lab Preferences:').classes('text-2xl !text-black dark:!text-white')
-                        
+
                         lab_container = ui.column().classes('w-full gap-2')
                         lab_rows = []
                         def add_lab_row():
@@ -149,17 +148,17 @@ class FacultyGUIView:
                                 with row_container:
                                     lab_input = ui.select(options, label='Lab Name', with_input=True).props('outlined dense square options-dense behavior="menu" label-color=grey-7 input-style="color: black !important"').classes('flex-grow').style('background-color: white; color: black; min-width: 150px;')
                                     weight_input = ui.number('Weight (1-10)', min=1, max=10, value=5).props('outlined dense square label-color=grey-7 input-style="color: black !important"').classes('w-40').style('background-color: white; color: black;')
-                                    
+
                                     row_data = {'lab': lab_input, 'weight': weight_input}
                                     lab_rows.append(row_data)
-                                    
+
                                     def delete_row(e, rc=row_container, rd=row_data):
                                         rc.delete()
                                         if rd in lab_rows:
                                             lab_rows.remove(rd)
-                                            
+
                                     ui.button('X', on_click=delete_row).props('color=red text-color=white rounded glossy').classes('h-10 w-10 min-w-10')
-                        
+
                         add_lab_row()
                         ui.button('+ Add Lab', on_click=add_lab_row).props('color=black text-color=white rounded').classes('mt-2 px-6')
 
@@ -167,7 +166,7 @@ class FacultyGUIView:
                 with ui.column().classes('w-[45%] h-[500px] border-4 p-6 items-start justify-start overflow-hidden').style('border-color: black; background-color: white;') as right_panel:
                     ui.label('Existing Faculty').classes('text-3xl !text-black text-center w-full mb-4 font-bold pb-2').style('border-bottom: 2px solid black;')
                     scroll_area = ui.scroll_area().classes('w-full h-full pr-4')
-                    
+
                     def refresh_faculty_list():
                         scroll_area.clear()
                         with scroll_area:
@@ -183,7 +182,7 @@ class FacultyGUIView:
                                     ui.label('No existing faculty found.').classes('text-xl text-gray-500 dark:text-gray-400 italic')
                             except Exception as e:
                                 ui.label('Could not load faculty data.').classes('text-xl text-red-500')
-                    
+
                     refresh_faculty_list()
 
             def _collect_faculty_data():
@@ -192,28 +191,28 @@ class FacultyGUIView:
                 if not name:
                     ui.notify('Faculty name is required!', type='negative')
                     return None
-                
+
                 is_full_time = position_radio.value == 'Full Time'
-                
+
                 times_data = {}
                 for day, inputs in day_inputs.items():
                     if inputs['cb'].value:
                         start_time = inputs['start'].value or '09:00'
                         end_time = inputs['end'].value or '17:00'
                         times_data[day] = [{'start': start_time, 'end': end_time}]
-                
+
                 course_prefs = {}
                 for row in course_rows:
                     course = row['course'].value
                     if course:
                         course_prefs[course] = int(row['weight'].value or 5)
-                        
+
                 lab_prefs = {}
                 for row in lab_rows:
                     lab = row['lab'].value
                     if lab:
                         lab_prefs[lab] = int(row['weight'].value or 5)
-                        
+
                 return {
                     'name': name,
                     'is_full_time': is_full_time,
@@ -244,10 +243,10 @@ class FacultyGUIView:
                     ui.notify(f"Error saving: {e}", type='negative')
 
             def save_faculty_to_config():
-                """Save to in-memory model AND write to config file."""
-                faculty_data = _collect_faculty_data()
-                if faculty_data is None:
-                    return
+                """
+                Save to in-memory model if not already there, then write to config file.
+                If name field is empty, skips add and just dumps memory to disk.
+                """
                 try:
                     from views.gui_view import GUIView
                     if not GUIView.controller:
@@ -255,15 +254,25 @@ class FacultyGUIView:
                         return
                     controller = GUIView.controller.faculty_controller
                     config_model = GUIView.controller.config_model
-                    if controller.add_faculty(faculty_data):
-                        if config_model.save_feature('config', 'faculty'):
-                            ui.notify(f"Faculty '{faculty_data['name']}' saved to config file.", type='positive')
-                        else:
-                            ui.notify(f"Added to memory but config save failed.", type='warning')
-                        name_input.value = ''
-                        refresh_faculty_list()
+
+                    # Only try to add from form if a name is entered
+                    if name_input.value:
+                        faculty_data = _collect_faculty_data()
+                        if faculty_data is None:
+                            return
+                        existing = [f.name for f in controller.model.get_all_faculty()]
+                        if faculty_data['name'] not in existing:
+                            if not controller.add_faculty(faculty_data):
+                                ui.notify(f"Failed to add faculty.", type='negative')
+                                return
+
+                    # Always dump memory to disk
+                    if config_model.save_feature('config', 'faculty'):
+                        ui.notify("Faculty saved to config file.", type='positive')
                     else:
-                        ui.notify(f"Failed to add faculty. Maybe they already exist?", type='negative')
+                        ui.notify("Config save failed.", type='warning')
+                    name_input.value = ''
+                    refresh_faculty_list()
                 except Exception as e:
                     ui.notify(f"Error saving: {e}", type='negative')
 
@@ -617,7 +626,8 @@ class FacultyGUIView:
                     save_config_label.classes(replace='text-lg text-red-600')
 
             def handle_save_to_config():
-                """Write changes permanently to config file."""
+                """Flush any temp changes then write permanently to config file."""
+                config_model.save_feature('temp', 'faculty')
                 success = config_model.save_feature('config', 'faculty')
                 if success:
                     save_config_label.set_text('Configuration saved to file.')
@@ -666,8 +676,8 @@ class FacultyGUIView:
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('Delete Faculty').classes('text-4xl mb-6 !text-black dark:!text-white')
 
-            container = ui.column().classes('w-full max-w-lg gap-3 items-center')
-            status    = ui.label('').classes('text-sm !text-black dark:!text-white')
+            container  = ui.column().classes('w-full max-w-lg gap-3 items-center')
+            status     = ui.label('').classes('text-sm !text-black dark:!text-white')
             save_label = ui.label('').classes('text-sm !text-black dark:!text-white')
 
             def build(c):

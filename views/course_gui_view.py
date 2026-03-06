@@ -169,8 +169,10 @@ class CourseGUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
+        from views.gui_view import GUIView
         model      = CourseGUIView.course_model
         controller = CourseGUIView.course_controller
+        resources  = GUIView.controller.course_controller.get_available_resources()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
@@ -210,14 +212,13 @@ class CourseGUIView:
                 selected_label.on('update:model-value', lambda _: refresh_info())
 
                 ui.label(
-                    'Leave blank to keep unchanged.  '
-                    'Rooms/Labs: comma-separated to replace, -Name to remove one.  '
+                    'Leave blank/unselected to keep unchanged.  '
                     'Faculty: Name to add, -Name to remove.'
                 ).classes('text-xs text-gray-400')
 
-                credits_input = ui.input('New Credits').props('label-color=grey-7').classes('w-full')
-                rooms_input   = ui.input('Rooms (e.g. Roddy 136, Roddy 140  or  -Roddy 136)').props('label-color=grey-7').classes('w-full')
-                labs_input    = ui.input('Labs (e.g. Linux  or  -Mac)').props('label-color=grey-7').classes('w-full')
+                credits_input = ui.number('New Credits', min=0, max=20).props('label-color=grey-7').classes('w-full')
+                rooms_input   = ui.select(resources['rooms'], label='Rooms').props('label-color=grey-7').classes('w-full')
+                labs_input    = ui.select(resources['labs'], label='Labs').props('label-color=grey-7').classes('w-full')
                 faculty_input = ui.input('Faculty (add: Name, remove: -Name)').props('label-color=grey-7').classes('w-full')
 
                 def do_modify():
@@ -230,45 +231,22 @@ class CourseGUIView:
 
                     updates = {}
 
-                    raw_credits = credits_input.value.strip()
-                    if raw_credits:
+                    if credits_input.value is not None:
                         try:
-                            c = int(raw_credits)
-                            if c < 0:
-                                status.set_text('⚠ Credits cannot be negative.')
+                            c = int(credits_input.value)
+                            if not (0 <= c <= 20):
+                                status.set_text('⚠ Credits must be between 0 and 20.')
                                 return
                             updates['credits'] = c
-                        except ValueError:
-                            status.set_text(f"⚠ '{raw_credits}' is not a valid number.")
+                        except (ValueError, TypeError):
+                            status.set_text('⚠ Credits must be a valid number.')
                             return
 
-                    raw_rooms = rooms_input.value.strip()
-                    if raw_rooms:
-                        changes = [r.strip() for r in raw_rooms.split(',') if r.strip()]
-                        current = list(course.room or [])
-                        for change in changes:
-                            if change.startswith('-'):
-                                name = change[1:].strip()
-                                if name in current:
-                                    current.remove(name)
-                            else:
-                                if change not in current:
-                                    current.append(change)
-                        updates['room'] = current
+                    if rooms_input.value is not None:
+                        updates['room'] = [rooms_input.value]
 
-                    raw_labs = labs_input.value.strip()
-                    if raw_labs:
-                        changes = [l.strip() for l in raw_labs.split(',') if l.strip()]
-                        current = list(course.lab or [])
-                        for change in changes:
-                            if change.startswith('-'):
-                                name = change[1:].strip()
-                                if name in current:
-                                    current.remove(name)
-                            else:
-                                if change not in current:
-                                    current.append(change)
-                        updates['lab'] = current
+                    if labs_input.value is not None:
+                        updates['lab'] = [labs_input.value]
 
                     raw_faculty = faculty_input.value.strip()
                     if raw_faculty:
@@ -291,7 +269,10 @@ class CourseGUIView:
                         status.set_text(f"'{selected_label.value}' updated in memory.")
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
-                        credits_input.value = rooms_input.value = labs_input.value = faculty_input.value = ''
+                        credits_input.set_value(None)
+                        rooms_input.set_value([])
+                        labs_input.set_value([])
+                        faculty_input.value = ''
                         new_sections = model.get_courses_with_sections()
                         section_map.clear()
                         section_map.update({lbl: (i, c) for lbl, i, c in new_sections})

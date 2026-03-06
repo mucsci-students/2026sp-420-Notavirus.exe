@@ -12,6 +12,7 @@ This view class handles all GUI pages related to conflict management:
 import asyncio
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 
 
 class ConflictGUIView:
@@ -30,6 +31,8 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/'):
+            return
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Conflict').classes('text-4xl mb-10 !text-black dark:!text-white')
             ui.button('Add Conflict').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;').on('click', lambda: ui.navigate.to('/conflict/add'))
@@ -56,6 +59,9 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/conflict'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-add)').classes('dark:!bg-black')
 
         model = ConflictGUIView.conflict_model
@@ -174,6 +180,8 @@ class ConflictGUIView:
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
+        if not require_config(back_url='/conflict'):
+            return
 
         controller = GUIView.controller.conflict_controller
         course_model = GUIView.controller.course_model
@@ -363,6 +371,8 @@ class ConflictGUIView:
         from views.gui_view import GUIView
 
         GUITheme.applyTheming()
+        if not require_config(back_url='/conflict'):
+            return
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
         controller = GUIView.controller.conflict_controller
@@ -526,6 +536,9 @@ class ConflictGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/conflict'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         model = ConflictGUIView.conflict_model
 

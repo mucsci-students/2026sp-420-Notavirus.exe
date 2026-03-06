@@ -7,78 +7,48 @@ This application uses MVC architecture:
 - Views: Handle user input/output
 - Controllers: Coordinate models and views
 """
-
 import sys
 from pathlib import Path
 from controllers.app_controller import SchedulerController
 from views.gui_view import GUIView
 
+
 def main():
     """
     Main entry point for the scheduler application.
 
+    If a config file path is provided as a command-line argument it is loaded
+    automatically. Otherwise the GUI launches without a config and the user
+    can load one via the Load Configuration dialog.
+
     Parameters:
         None
-
     Returns:
         None
     """
-    # Get config file path from command line or prompt
-    if len(sys.argv) >= 2:
-        config_path = sys.argv[1]
-    else:
-        config_path = get_config_path()
-
-    # Validate config file exists
-    if not Path(config_path).exists():
-        print(f"Error: Configuration file '{config_path}' not found.")
-        sys.exit(1)
+    config_path = sys.argv[1] if len(sys.argv) >= 2 else None
 
     try:
-        # Create and run main controller
-        print(f"Loading configuration from: {config_path}")
+        if config_path:
+            if not Path(config_path).exists():
+                print(f"Error: Configuration file '{config_path}' not found.")
+                sys.exit(1)
+            print(f"Loading configuration from: {config_path}")
+        else:
+            print("No config file provided. Launching GUI — use Load Configuration to load a file.")
+
         controller = SchedulerController(config_path)
-
         GUIView.controller = controller
-
         controller.run()
 
     except KeyboardInterrupt:
         print("\n\nScheduler interrupted by user. Goodbye!")
         sys.exit(0)
-
     except Exception as e:
         print(f"\nFatal error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
-
-
-def get_config_path() -> str:
-    """
-    Prompt user for configuration file path.
-
-    Parameters:
-        None
-
-    Returns:
-        str: Path to configuration file
-    """
-    while True:
-        config_path = input("Enter the path to your configuration file: ").strip()
-
-        if not config_path:
-            print("Path cannot be empty.")
-            continue
-
-        if Path(config_path).exists():
-            return config_path
-
-        print(f"File '{config_path}' not found.")
-        retry = input("Would you like to try again? [y/n]: ").lower().strip()
-        if retry != 'y':
-            print("Exiting.")
-            sys.exit(0)
 
 
 if __name__ in {"__main__", "__mp_main__"}:

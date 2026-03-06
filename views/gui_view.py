@@ -105,9 +105,11 @@ class GUIView:
                             f.write(await e.file.read())
 
                         ctrl = GUIView.controller
+                        # Use the GUIView instance as view — works whether or not
+                        # a config was previously loaded
+                        view = ctrl.view if (ctrl and ctrl.view) else GUIView()
 
-                        new_config = ConfigModel(file_path)
-
+                        new_config          = ConfigModel(file_path)
                         new_faculty_model   = FacultyModel(new_config)
                         new_course_model    = CourseModel(new_config)
                         new_conflict_model  = ConflictModel(new_config)
@@ -115,12 +117,12 @@ class GUIView:
                         new_room_model      = RoomModel(new_config)
                         new_scheduler_model = SchedulerModel(new_config)
 
-                        new_faculty_ctrl   = FacultyController(new_faculty_model, ctrl.view)
+                        new_faculty_ctrl   = FacultyController(new_faculty_model, view)
                         new_course_ctrl    = CourseController(new_course_model, new_config)
-                        new_conflict_ctrl  = ConflictController(new_conflict_model, ctrl.view)
-                        new_lab_ctrl       = LabController(new_lab_model, ctrl.view)
-                        new_room_ctrl      = RoomController(new_room_model, ctrl.view)
-                        new_schedule_ctrl  = ScheduleController(new_scheduler_model, ctrl.view)
+                        new_conflict_ctrl  = ConflictController(new_conflict_model, view)
+                        new_lab_ctrl       = LabController(new_lab_model, view)
+                        new_room_ctrl      = RoomController(new_room_model, view)
+                        new_schedule_ctrl  = ScheduleController(new_scheduler_model, view)
 
                         ctrl.config_model        = new_config
                         ctrl.faculty_model       = new_faculty_model
@@ -135,6 +137,8 @@ class GUIView:
                         ctrl.lab_controller      = new_lab_ctrl
                         ctrl.room_controller     = new_room_ctrl
                         ctrl.schedule_controller = new_schedule_ctrl
+                        ctrl.view                = view
+                        ctrl.config_path         = file_path
 
                         FacultyGUIView.faculty_model        = new_faculty_model
                         FacultyGUIView.faculty_controller   = new_faculty_ctrl
@@ -199,7 +203,10 @@ class GUIView:
     def print_config():
         """
         Displays the GUI for printing the config file.
-                
+
+        If no configuration is loaded, shows a message and a Back button
+        instead of attempting to render config data.
+
         Parameters:
             None        
         Returns:
@@ -207,10 +214,19 @@ class GUIView:
         """
         GUITheme.applyTheming()
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
-        cm = GUIView.controller.config_model
+
+        cm = GUIView.controller.config_model if GUIView.controller else None
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-6'):
             ui.label('Configuration').classes('text-4xl mb-10 !text-black dark:!text-white')
+
+            if cm is None:
+                ui.label('No configuration loaded.').classes('text-xl italic !text-gray-500 dark:!text-gray-400')
+                ui.label('Return to the home page and use Load Configuration to load a file.').classes('text-base !text-gray-400 dark:!text-gray-500')
+                ui.button('Back').props('rounded color=black text-color=white no-caps') \
+                    .classes('w-80 h-16 text-xl mt-6 dark:!bg-white dark:!text-black') \
+                    .on('click', lambda: ui.navigate.to('/'))
+                return
 
             with ui.expansion('Rooms', icon='meeting_room').classes('w-3/4 !text-black dark:!text-white'):
                 for room in cm.get_all_rooms():

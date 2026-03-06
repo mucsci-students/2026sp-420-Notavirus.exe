@@ -6,6 +6,7 @@ This view class handles all files for the GUI that are related to labs.
 """
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 
 class LabGUIView:
     _lab_controller = None
@@ -22,6 +23,8 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/'):
+            return
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Lab').classes('text-4xl mb-10 !text-black dark:!text-white')
             ui.button('Add Lab').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;').on('click', lambda: ui.navigate.to('/lab/add'))
@@ -43,8 +46,10 @@ class LabGUIView:
             None
         """
         from views.gui_view import GUIView
-
         GUITheme.applyTheming()
+        if not require_config(back_url='/lab'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-add)')
         ui.add_css('''
             .body--dark .q-field__control {
@@ -136,8 +141,10 @@ class LabGUIView:
             None
         """
         from views.gui_view import GUIView
-
         GUITheme.applyTheming()
+        if not require_config(back_url='/lab'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
 
         labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
@@ -194,8 +201,10 @@ class LabGUIView:
             None
         """
         from views.gui_view import GUIView
-
         GUITheme.applyTheming()
+        if not require_config(back_url='/lab'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
         config_model = GUIView.controller.config_model
@@ -313,6 +322,9 @@ class LabGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/lab'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):

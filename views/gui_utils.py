@@ -93,7 +93,8 @@ def require_config(back_url: str = '/') -> bool:
                     from views.schedule_gui_view import _state as _schedule_state
 
                     try:
-                        file_path = f'temp_{e.file.name}'
+                        real_name = e.file.name
+                        file_path = real_name
                         with open(file_path, 'wb') as f:
                             f.write(await e.file.read())
 
@@ -129,7 +130,6 @@ def require_config(back_url: str = '/') -> bool:
                         ctrl.room_controller     = new_room_ctrl
                         ctrl.schedule_controller = new_schedule_ctrl
                         ctrl.view                = view
-                        ctrl.config_path         = file_path
 
                         FacultyGUIView.faculty_model        = new_faculty_model
                         FacultyGUIView.faculty_controller   = new_faculty_ctrl
@@ -144,9 +144,13 @@ def require_config(back_url: str = '/') -> bool:
                         RoomGUIView.room_controller         = new_room_ctrl
                         _schedule_state._scheduler_model    = new_scheduler_model
                         ScheduleGUIView.schedule_controller = new_schedule_ctrl
-                        GUIView.config_path                 = file_path
 
-                        os.remove(file_path)
+                        # Set config_path to the real file path
+                        real_path = os.path.join(os.getcwd(), real_name)
+                        new_config.config_path       = real_path
+                        ctrl.config_path             = real_path
+                        GUIView.config_path          = real_path
+                        GUIView.controller.config_path = real_path
 
                         status_label.style('color: green !important;')
                         status_label.set_text(f'✓ Loaded: {e.file.name}')
@@ -164,7 +168,6 @@ def require_config(back_url: str = '/') -> bool:
                     max_files=1,
                     on_upload=handle_upload,
                 ).classes('w-full')
-
                 ui.button('Cancel').props('flat no-caps').style('color: black !important;') \
                     .on('click', load_dialog.close)
 

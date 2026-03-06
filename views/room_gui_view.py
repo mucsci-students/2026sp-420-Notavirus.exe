@@ -194,7 +194,7 @@ class RoomGUIView:
                     if not success:
                         result_label.set_text("Modification failed.")
                         return
-                config_success = GUIView.controller.config_model.save_feature('config', 'rooms')
+                config_success = GUIView.controller.config_model.save_feature('config', 'all')
                 if config_success:
                     result_label.set_text("Room saved to config file.")
                     refresh_select()

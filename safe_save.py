@@ -46,9 +46,13 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
         if save_type == 'temp' and os.path.exists(temp_path):
             target_read_path = temp_path
 
-        # Load the baseline file as a raw dict to preserve formatting
-        with open(target_read_path, 'r') as f:
-            target_data = json.load(f)
+        # Load baseline data
+        if os.path.exists(target_read_path):
+            with open(target_read_path, 'r') as f:
+                target_data = json.load(f)
+        else:
+            # If no file exists yet (imported config), use in-memory config
+            target_data = json.loads(config.model_dump_json())
 
         # Helper to apply a specific feature update to the dictionary
         def update_feature(feat_name):

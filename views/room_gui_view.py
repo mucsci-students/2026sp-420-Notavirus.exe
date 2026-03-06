@@ -219,7 +219,7 @@ class RoomGUIView:
             color: white !important;
         }
         ''')
-        ui.query('body').style('background-color: var(--q-delete)')
+        
 
         config_model = GUIView.controller.config_model
         rooms = RoomGUIView.room_controller.model.get_all_rooms() if RoomGUIView.room_controller else []
@@ -293,7 +293,7 @@ class RoomGUIView:
         if not require_config(back_url='/room'):
             return
         from views.gui_view import GUIView
-        ui.query('body').style('background-color: var(--q-delete)')
+        
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))

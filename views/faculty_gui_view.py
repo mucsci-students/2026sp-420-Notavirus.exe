@@ -59,7 +59,7 @@ class FacultyGUIView:
         if not require_config(back_url='/faculty'):
             return
         from views.gui_view import GUIView
-        ui.query('body').style('background-color: var(--q-add)')
+        
 
         with ui.column().classes('w-full items-center font-sans p-8 gap-0'):
             with ui.row().classes('w-full max-w-6xl justify-start mb-4'):

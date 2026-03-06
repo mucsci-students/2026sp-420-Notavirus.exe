@@ -99,18 +99,19 @@ UV is a fast Python package manager. Install it with:
 
   ```
 
-4. Prepare your configuration file
-Use the included example.json as a template or create your own (see Configuration below).
+4. (Optional) Prepare your configuration file
+Use the included example.json as a template or create your own (see Configuration below). 
+Note: You can also skip this step and load a configuration file through the GUI after launch using the Load Configuration button.
 
 ---
 
 
 ## Usage
 
-Run the program by passing a path to your JSON config file:
+Run the program with an optional path to a JSON config file. If no path is provided, the application will start with an empty configuration that you can load or build through the GUI.
 
 ```bash
-python main.py <config_path>
+python main.py [config_path]
 ```
 
 Once running, you'll see an interactive menu.
@@ -127,7 +128,11 @@ To stop the server:
 Press Ctrl+C in the terminal
 
 ** Example:
+# With a config file
 python main.py example.json
+
+# Without a config file
+python main.py 
 
 Output:
 - Loading configuration from: example.json
@@ -336,6 +341,9 @@ Browser Doesn't Open
 
 Hypothetical Course Preferences
 Faculty course preferences can reference courses that don't exist yet. However, the configuration file on disk must always be valid. If the app fails to start with a validation error referencing a course preference, manually remove the invalid entry from the JSON file before restarting.
+
+Starting Without a Config File
+If you launch without a config path, you MUST load a config path to use the scheduler or editor.
 
 ---
 

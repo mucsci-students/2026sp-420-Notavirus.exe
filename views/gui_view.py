@@ -100,7 +100,8 @@ class GUIView:
                     from controllers.schedule_controller import ScheduleController
 
                     try:
-                        file_path = f'temp_{e.file.name}'
+                        real_name = e.file.name
+                        file_path = f'temp_{real_name}'
                         with open(file_path, 'wb') as f:
                             f.write(await e.file.read())
 
@@ -162,6 +163,11 @@ class GUIView:
                         GUIView.config_path = file_path
                         GUIView.controller.config_path = file_path
                         os.remove(file_path)
+                        real_path = os.path.join(os.getcwd(), real_name)
+                        new_config.config_path = real_path
+                        ctrl.config_path = real_path
+                        GUIView.config_path = real_path
+                        GUIView.controller.config_path = real_path
 
                         status_label.style('color: green !important;')
                         status_label.set_text(f'✓ Loaded: {e.file.name}')
@@ -191,7 +197,9 @@ class GUIView:
             
             success = GUIView.controller.save_configuration()
             if success:
-                ui.download(GUIView.controller.config_path, 'scheduler_configuration.json')
+                import os
+                real_name = os.path.basename(GUIView.controller.config_path)
+                ui.download(GUIView.controller.config_path, real_name)                
                 ui.notify('Configuration exported successfully!', type='positive')
             else:
                 ui.notify('Error saving configuration.', type='negative')

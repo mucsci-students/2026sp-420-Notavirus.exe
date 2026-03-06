@@ -45,14 +45,21 @@ class ScheduleController:
         """
 
         if fileName.endswith('.json'):
-            return self.model.import_from_json(fileData)
-
+            schedules = self.model.import_from_json(fileData)
         elif fileName.endswith('.csv'):
-            return self.model.import_from_csv(fileData)
-
+            schedules = self.model.import_from_csv(fileData)
         else:
             raise ValueError("Unsupported file type")
-        
+
+    # Update config_path so saves go to the imported file, not the original CLI config
+        if schedules and self.model.config_model:
+            self.model.config_model.config_path = os.path.join(
+                os.path.dirname(self.model.config_model.config_path),
+                fileName
+            )
+
+        return schedules
+    
     def export_schedules(self, format_type, schedules):
         """
         Handles file export request from view

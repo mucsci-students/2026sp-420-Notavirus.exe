@@ -388,9 +388,15 @@ class ScheduleGUIView:
                     multiple=True,
                     label="Select schedules"
                 ).classes("w-full")
-                filename_input = ui.input(label="File name", value="schedules").classes("w-full")
+                import os
+                config_path = (
+                    _state._scheduler_model.config_model.config_path
+                    if _state._scheduler_model and _state._scheduler_model.config_model
+                    else None
+                )
+                default_name = os.path.splitext(os.path.basename(config_path))[0] if config_path else "schedules"
+                filename_input = ui.input(label="File name", value=default_name).classes("w-full")                
                 format_select = ui.select(options=["csv", "json"], value="csv", label="Export format").classes("w-full")
-                result_label = ui.label("").classes("text-sm text-gray-500 italic text-center w-full")
 
                 def do_export():
                     """

@@ -347,7 +347,7 @@ class ScheduleGUIView:
             None
         """
         GUITheme.applyTheming()
-        ui.query('body').style('background-color: var(--q-primary)')
+       
 
         async def handle_upload(e):
             """

@@ -50,7 +50,7 @@ class LabGUIView:
         if not require_config(back_url='/lab'):
             return
         from views.gui_view import GUIView
-        ui.query('body').style('background-color: var(--q-add)')
+        
         ui.add_css('''
             .body--dark .q-field__control {
                 background-color: #383838 !important;

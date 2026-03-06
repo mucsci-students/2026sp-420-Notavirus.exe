@@ -22,7 +22,7 @@ from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
 
 from views.gui_view import GUIView
-from views.lab_gui_view import LabGUIView   
+from views.lab_gui_view import LabGUIView
 from views.room_gui_view import RoomGUIView
 from nicegui import ui
 
@@ -30,13 +30,13 @@ from nicegui import ui
 class SchedulerController:
     """
     Main application controller.
-    
+
     Coordinates all sub-controllers and manages the main menu loop.
-    
+
     Attributes:
         config_path (str): Path to configuration file
         config_model (ConfigModel): Central configuration model
-        view (CLIView): User interface
+        view (GUIView): User interface
         faculty_controller (FacultyController): Faculty operations
         course_controller (CourseController): Course operations
         conflict_controller (ConflictController): Conflict operations
@@ -44,42 +44,62 @@ class SchedulerController:
         room_controller (RoomController): Room operations
         schedule_controller (ScheduleController): Schedule operations
     """
-    
-    def __init__(self, config_path: str):
+
+    def __init__(self, config_path: str | None):
         """
         Initialize SchedulerController.
-        
-        Sets up all models, view, and sub-controllers.
-        
+
+        If config_path is None the controller starts in an unloaded state —
+        all models and sub-controllers are set to None. The GUI will still
+        launch and the user can load a configuration via the Load Configuration
+        dialog, which re-initializes everything.
+
         Parameters:
-            config_path (str): Path to configuration JSON file
-        
+            config_path (str | None): Path to configuration JSON file, or None
+                to launch without a config.
         Returns:
             None
         """
-        # Initialize view
         self.view = GUIView()
-        GUIView.config_path = config_path
-        GUIView.controller = self
-        
-        # Initialize config model
         self.config_path = config_path
+        GUIView.config_path = config_path or ''
+        GUIView.controller = self
+
+        if config_path is None:
+            # No config — set everything to None so the GUI can still launch.
+            # The Load Configuration dialog will call __init__ again with a real path.
+            self.config_model        = None
+            self.faculty_model       = None
+            self.course_model        = None
+            self.conflict_model      = None
+            self.lab_model           = None
+            self.room_model          = None
+            self.scheduler_model     = None
+            self.faculty_controller  = None
+            self.course_controller   = None
+            self.conflict_controller = None
+            self.lab_controller      = None
+            self.room_controller     = None
+            self.schedule_controller = None
+            return
+
+        # Initialize config model
         self.config_model = ConfigModel(config_path)
-        
+
         # Initialize all feature models
-        self.faculty_model = FacultyModel(self.config_model)
-        self.course_model = CourseModel(self.config_model)
-        self.conflict_model = ConflictModel(self.config_model)
-        self.lab_model = LabModel(self.config_model)
-        self.room_model = RoomModel(self.config_model)
+        self.faculty_model   = FacultyModel(self.config_model)
+        self.course_model    = CourseModel(self.config_model)
+        self.conflict_model  = ConflictModel(self.config_model)
+        self.lab_model       = LabModel(self.config_model)
+        self.room_model      = RoomModel(self.config_model)
         self.scheduler_model = SchedulerModel(self.config_model)
 
         # Initialize all feature controllers
-        self.faculty_controller = FacultyController(self.faculty_model, self.view)
-        self.course_controller = CourseController(self.course_model, self.config_model)
+        self.faculty_controller  = FacultyController(self.faculty_model, self.view)
+        self.course_controller   = CourseController(self.course_model, self.config_model)
         self.conflict_controller = ConflictController(self.conflict_model, self.view)
-        self.lab_controller = LabController(self.lab_model, self.view)
-        self.room_controller = RoomController(self.room_model, self.view)
+        self.lab_controller      = LabController(self.lab_model, self.view)
+        self.room_controller     = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
 
         LabGUIView._lab_controller = self.lab_controller
@@ -111,25 +131,26 @@ class SchedulerController:
         ScheduleGUIView.schedule_controller = self.schedule_controller
 
         GUIView.controller = self
-    
+
     def save_configuration(self) -> bool:
         """
         Saves the current configuration via the model.
-        
+
+        Parameters:
+            None
         Returns:
             bool: True if save successful, False otherwise
         """
+        if self.config_model is None:
+            return False
         return self.config_model.safe_save()
 
     def run(self):
         """
-        Main application loop.
-        
-        Displays the GUI.
-        
+        Main application loop. Starts the NiceGUI server.
+
         Parameters:
             None
-        
         Returns:
             None
         """
@@ -137,6 +158,6 @@ class SchedulerController:
         print("  🚀 GUI SERVER STARTING")
         print("="*60)
         print("  🌐 Open your browser to: http://localhost:8080")
-        print("  🛑 Stop server: Press Ctrl+C in this terminal (may receive asyncio errors)")
+        print("  🛑 Stop server: Press Ctrl+C in this terminal")
         print("="*60 + "\n")
         ui.run(title='Scheduler', reload=False, storage_secret='scheduler_secret_key')

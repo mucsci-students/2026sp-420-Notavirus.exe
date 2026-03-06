@@ -6,6 +6,7 @@ This view class handles all files for the GUI that are related to rooms.
 """
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 from controllers.room_controller import RoomController
 
 
@@ -25,6 +26,8 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/'):
+            return
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
             ui.label('Room').classes('text-4xl mb-10 !text-black dark:!text-white')
             ui.button('Add Room').props('rounded text-color=white no-caps').classes('w-80 h-16 text-xl').style('background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;').on('click', lambda: ui.navigate.to('/room/add'))
@@ -50,6 +53,9 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/room'):
+            return
+        from views.gui_view import GUIView
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
@@ -120,6 +126,9 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/room'):
+            return
+        from views.gui_view import GUIView
 
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
@@ -191,9 +200,10 @@ class RoomGUIView:
         Returns:
             None
         """
-        from views.gui_view import GUIView
-
         GUITheme.applyTheming()
+        if not require_config(back_url='/room'):
+            return
+        from views.gui_view import GUIView
         ui.add_css('''
             .body--dark .q-field__control {
             background-color: #383838 !important;
@@ -280,6 +290,9 @@ class RoomGUIView:
             None
         """
         GUITheme.applyTheming()
+        if not require_config(back_url='/room'):
+            return
+        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-delete)')
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):

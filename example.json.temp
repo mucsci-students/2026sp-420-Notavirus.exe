@@ -12,7 +12,7 @@
     "courses": [
       {
         "course_id": "CMSC 140",
-        "credits": 4,
+        "credits": 20,
         "room": [
           "Roddy 136",
           "Roddy 140",
@@ -23,13 +23,11 @@
           "CMSC 161",
           "CMSC 162"
         ],
-        "faculty": [
-          "Hardy"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 140",
-        "credits": 4,
+        "credits": 20,
         "room": [
           "Roddy 136",
           "Roddy 140",
@@ -38,12 +36,9 @@
         "lab": [],
         "conflicts": [
           "CMSC 161",
-          "CMSC 162",
-          "CMSC 453"
+          "CMSC 162"
         ],
-        "faculty": [
-          "Hardy"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 152",
@@ -58,9 +53,7 @@
           "Linux"
         ],
         "conflicts": [],
-        "faculty": [
-          "Hardy"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 161",
@@ -90,12 +83,7 @@
           "Linux"
         ],
         "conflicts": [],
-        "faculty": [
-          "Zoppetti",
-          "Wertz",
-          "MikeH",
-          "Mike"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 161",
@@ -111,12 +99,7 @@
         "conflicts": [
           "CMSC 140"
         ],
-        "faculty": [
-          "Zoppetti",
-          "Wertz",
-          "MikeH",
-          "Mike"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 162",
@@ -130,9 +113,7 @@
         "conflicts": [
           "CMSC 140"
         ],
-        "faculty": [
-          "Hogg"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 330",
@@ -150,9 +131,7 @@
           "CMSC 362",
           "CMSC 366"
         ],
-        "faculty": [
-          "Xie"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 340",
@@ -172,9 +151,7 @@
           "CMSC 453",
           "CMSC 476"
         ],
-        "faculty": [
-          "Yang"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 340",
@@ -193,9 +170,7 @@
           "CMSC 366",
           "CMSC 330"
         ],
-        "faculty": [
-          "Yang"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 362",
@@ -210,9 +185,7 @@
           "CMSC 330",
           "CMSC 366"
         ],
-        "faculty": [
-          "Zoppetti"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 366",
@@ -231,9 +204,7 @@
           "CMSC 362",
           "CMSC 330"
         ],
-        "faculty": [
-          "Xie"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 366",
@@ -251,9 +222,7 @@
           "CMSC 362",
           "CMSC 330"
         ],
-        "faculty": [
-          "Xie"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 380",
@@ -270,9 +239,7 @@
           "CMSC 453",
           "CMSC 476"
         ],
-        "faculty": [
-          "Hogg"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 420",
@@ -288,9 +255,7 @@
           "CMSC 453",
           "CMSC 476"
         ],
-        "faculty": [
-          "Hobbs"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 453",
@@ -309,9 +274,7 @@
           "CMSC 420",
           "CMSC 476"
         ],
-        "faculty": [
-          "Yang"
-        ]
+        "faculty": []
       },
       {
         "course_id": "CMSC 476",
@@ -327,16 +290,6 @@
           "CMSC 420",
           "CMSC 453"
         ],
-        "faculty": [
-          "Zoppetti"
-        ]
-      },
-      {
-        "course_id": "CMSC 556",
-        "credits": 2,
-        "room": [],
-        "lab": [],
-        "conflicts": [],
         "faculty": []
       }
     ],

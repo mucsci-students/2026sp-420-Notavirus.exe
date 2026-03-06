@@ -272,7 +272,7 @@ class CourseGUIView:
                     ok = model.modify_course(cid, **updates)
                     if ok:
                         from views.gui_view import GUIView
-                        GUIView.controller.config_model.save_feature('temp', 'courses')
+                        GUIView.controller.config_model.save_feature('temp', 'all')
                         status.set_text(f"'{selected_label.value}' updated in memory.")
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
@@ -289,7 +289,7 @@ class CourseGUIView:
 
                 def do_save_to_config():
                     from views.gui_view import GUIView
-                    success = GUIView.controller.config_model.save_feature('config', 'courses')
+                    success = GUIView.controller.config_model.save_feature('config', 'all')
                     if success:
                         save_label.set_text('Configuration saved to file.')
                         save_label.classes(replace='text-lg text-green-600')
@@ -369,7 +369,7 @@ class CourseGUIView:
                                 selected['dirty'] = True
                                 save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                                 save_label.classes(replace='text-lg text-orange-500')
-                                config_model.save_feature('temp', 'courses')
+                                config_model.save_feature('temp', 'all')
                                 updated = controller.get_courses_with_sections()
                                 new_options = {label: (course.course_id, index) for label, index, course in updated}
                                 section_options.clear()
@@ -382,7 +382,7 @@ class CourseGUIView:
                 dialog.open()
 
             def handle_save():
-                success = config_model.save_feature('config', 'courses')
+                success = config_model.save_feature('config', 'all')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved to file.')

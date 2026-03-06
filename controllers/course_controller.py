@@ -142,7 +142,7 @@ class CourseController:
             return False, f"Failed to delete course: {e}"
 
 
-    def modify_course(self, course_id: str, modifications: dict) -> tuple[bool, str]:
+    def modify_course(self, course_id: str, section_index: int, modifications: dict) -> tuple[bool, str]:
         """
         Complete workflow for modifying a course (GUI version).
 
@@ -154,6 +154,7 @@ class CourseController:
 
         Parameters:
             course_id (str): ID of the course to modify
+            section_index (int): Index of the section to modify
             modifications (dict): Raw modification inputs from GUI
 
         Returns:
@@ -166,11 +167,11 @@ class CourseController:
             if not course:
                 return False, f"No course '{course_id}' found."
 
-            updates = self._parse_modifications(modifications, course)
+            updates, error_msg = self._parse_modifications(modifications, course)
             if updates is None:
-                return False, "Invalid modification input."
+                return False, error_msg
 
-            success = self.model.modify_course(course_id, **updates)
+            success = self.model.modify_course(course_id, section_index=section_index, **updates)
 
             if success:
                 return True, f"Course '{course_id}' updated successfully."
@@ -198,7 +199,7 @@ class CourseController:
             conflicts=data['conflicts']
         )
 
-    def _parse_modifications(self, modifications: dict, current_course) -> dict | None:
+    def _parse_modifications(self, modifications: dict, current_course) -> tuple[dict | None, str]:
         """
         Parse modification inputs into update dictionary.
 
@@ -206,40 +207,58 @@ class CourseController:
         - Converting comma-separated lists
         - Adding/removing faculty members (prefix with -)
         - Validating credit values
+        - Validating existence of rooms, labs, and faculty
 
         Parameters:
             modifications (dict): Raw modification inputs from GUI
             current_course: Current course object for reference
 
         Returns:
-            dict | None:
-                - Dictionary of updates if valid
-                - None if validation fails
+            tuple[dict | None, str]:
+                - Dictionary of updates if valid, error message string
+                - None if validation fails, error message string
         """
         updates = {}
 
-        if modifications.get('credits'):
+        if 'credits' in modifications and modifications['credits'] is not None:
             try:
                 credits_int = int(modifications['credits'])
                 if credits_int < 0:
-                    return None
+                    return None, "Credits must be a positive integer."
                 updates['credits'] = credits_int
-            except ValueError:
-                return None
+            except (ValueError, TypeError):
+                return None, "Credits must be a valid number."
 
-        if modifications.get('room'):
-            updates['room'] = [
-                r.strip() for r in modifications['room'].split(",") if r.strip()
-            ]
+        # Handle lists and comma-separated strings for backwards compatibility
+        def _to_list(val):
+            if isinstance(val, list):
+                return val
+            if isinstance(val, str):
+                return [x.strip() for x in val.split(",") if x.strip()]
+            return []
 
-        if modifications.get('lab'):
-            updates['lab'] = [
-                l.strip() for l in modifications['lab'].split(",") if l.strip()
-            ]
+        if 'room' in modifications and modifications['room'] is not None:
+            rooms = _to_list(modifications['room'])
+            valid_rooms = self.config_model.get_all_rooms()
+            for r in rooms:
+                if r not in valid_rooms:
+                    return None, f"Invalid room '{r}'. Room does not exist in configuration."
+            updates['room'] = rooms
 
-        if modifications.get('faculty'):
-            updates['faculty'] = [
-                f.strip() for f in modifications['faculty'].split(",") if f.strip()
-            ]
+        if 'lab' in modifications and modifications['lab'] is not None:
+            labs = _to_list(modifications['lab'])
+            valid_labs = self.config_model.get_all_labs()
+            for l in labs:
+                if l not in valid_labs:
+                    return None, f"Invalid lab '{l}'. Lab does not exist in configuration."
+            updates['lab'] = labs
 
-        return updates
+        if 'faculty' in modifications and modifications['faculty'] is not None:
+            faculties = _to_list(modifications['faculty'])
+            valid_faculty = [f.name for f in self.config_model.get_all_faculty()]
+            for f in faculties:
+                if f not in valid_faculty:
+                    return None, f"Invalid faculty '{f}'. Faculty does not exist."
+            updates['faculty'] = faculties
+
+        return updates, ""

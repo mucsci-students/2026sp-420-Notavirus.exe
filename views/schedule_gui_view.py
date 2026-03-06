@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from nicegui import ui
 from scheduler import OptimizerFlags
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 
 
 class _ScheduleState:
@@ -217,19 +218,9 @@ class ScheduleGUIView:
     @ui.page('/run_scheduler')
     @staticmethod
     def run_scheduler():
-        """
-        Displays the GUI for configuring and generating schedules.
-
-        Shows a schedule limit input and optimization options selector.
-        On Generate, runs the scheduler asynchronously and navigates to
-        the display page if schedules are produced.
-
-        Parameters:
-            None
-        Returns:
-            None
-        """
         GUITheme.applyTheming()
+        if not require_config(back_url='/'):
+            return
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
 
         config_limit = 100
@@ -347,7 +338,12 @@ class ScheduleGUIView:
             None
         """
         GUITheme.applyTheming()
-       
+        ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
+        ui.add_css('''
+            .body--dark .schedule-card {
+                background-color: #1a1a1a !important;
+            }
+        ''')
 
         async def handle_upload(e):
             """
@@ -447,12 +443,12 @@ class ScheduleGUIView:
                 ).classes('text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center')
                 next_btn = ui.button(icon='chevron_right').props('round flat color=black').classes('dark:!text-white')
 
-            with ui.card().classes('w-full max-w-7xl rounded-2xl shadow-md'):
-                with ui.tabs().classes('!text-black dark:!text-white') as tabs:
+            with ui.card().style('background-color: white; border: none;').classes('w-full max-w-7xl rounded-2xl shadow-md schedule-card'):
+                with ui.tabs().style('background-color: transparent;').classes('!text-black dark:!text-white schedule-tabs') as tabs:
                     room_tab    = ui.tab('By Room / Lab')
                     faculty_tab = ui.tab('By Faculty')
 
-                with ui.tab_panels(tabs, value=room_tab).classes('w-full'):
+                with ui.tab_panels(tabs, value=room_tab).style('background-color: transparent;').classes('w-full'):
                     with ui.tab_panel(room_tab):
                         with ui.row().classes('items-center gap-3 px-2 pt-2 pb-1'):
                             ui.label('Filter:').classes('text-sm text-gray-500')
@@ -460,7 +456,7 @@ class ScheduleGUIView:
                                 options=['All'] + _location_options(_state.schedules[_state.current_index]),
                                 value='All',
                                 label='Location',
-                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
+                            ).classes('min-w-[180px]')
                         room_table = ui.table(
                             columns=ROOM_COLUMNS,
                             rows=_build_room_rows(_state.schedules[_state.current_index], location_filter=None),
@@ -476,7 +472,7 @@ class ScheduleGUIView:
                                 options=['All'] + _faculty_options(_state.schedules[_state.current_index]),
                                 value='All',
                                 label='Faculty',
-                            ).classes('min-w-[180px]').props('bg-color=white color=black text-color=black')
+                            ).classes('min-w-[180px]')
                         faculty_table = ui.table(
                             columns=FACULTY_COLUMNS,
                             rows=_build_faculty_rows(_state.schedules[_state.current_index], faculty_filter=None),
@@ -486,17 +482,17 @@ class ScheduleGUIView:
                         faculty_table.props('flat dense')
 
             with ui.row().classes('gap-4 justify-center'):
-                ui.button('Back to Home').props('rounded outline color=black no-caps text-color=black').classes(
+                ui.button('Back to Home').props('rounded color=black text-color=white no-caps').classes(
                     'w-44 h-12 text-base dark:!bg-white dark:!text-black'
                 ).on('click', lambda: ui.navigate.to('/'))
                 ui.button('Generate New').props('rounded color=black text-color=white no-caps').classes(
-                    'w-44 h-12 text-base'
+                    'w-44 h-12 text-base dark:!bg-white dark:!text-black'
                 ).on('click', lambda: ui.navigate.to('/run_scheduler'))
                 ui.button('Export Schedules').props('rounded color=black text-color=white no-caps').classes(
-                    'w-44 h-12 text-base'
+                    'w-44 h-12 text-base dark:!bg-white dark:!text-black'
                 ).on('click', export_dialog.open)
                 ui.button('Import Schedules').props('rounded color=black text-color=white no-caps').classes(
-                    'w-48 h-12 text-base'
+                    'w-48 h-12 text-base dark:!bg-white dark:!text-black'
                 ).on('click', lambda: upload.run_method('pickFiles'))
 
         def on_room_filter(e):

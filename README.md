@@ -268,23 +268,23 @@ The project includes a comprehensive test suite:
 # Run all tests
 pytest tests/ -v
 
-# Run only model tests (99 tests)
+# Run only model tests (114 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (13 tests)
+# Run only controller tests (22 tests)
 pytest tests/test_controllers/ -v
 
-# Run only controller tests (3 tests)
-pytest tests/test_integration/ -v
+# Run only safe_save.py test (1 test)
+pytest tests/test_safe_save.py -v
 
 # Run with coverage
 pytest tests/ --cov=models --cov=controllers
 ```
 Test Coverage:
 
-✅ 99 model tests - Data operations and business logic
-✅ 13 controller tests - Integration and workflow
-✅ 3 integration tests - End-to-end workflows
+✅ 114 model tests - Data operations and business logic
+✅ 22 controller tests - Integration and workflow
+✅ 1 safe_save test - The save feature used by save and save to config 
 
 ---
 

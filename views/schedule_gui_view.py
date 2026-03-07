@@ -378,7 +378,7 @@ class ScheduleGUIView:
                     e.file.name, content
                 )
                 if schedules:
-                    _state.schedules = schedules
+                    _state.schedules += schedules
                     _state.current_index = 0
                     ui.notify(f'Imported {e.file.name}')
                     ui.navigate.to('/display_schedules')

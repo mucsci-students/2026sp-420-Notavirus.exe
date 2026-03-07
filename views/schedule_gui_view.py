@@ -349,7 +349,13 @@ class ScheduleGUIView:
             .body--dark .schedule-card {
                 background-color: #1a1a1a !important;
             }
+            .q-uploader__title,
+            .q-uploader__subtitle,
+            .q-uploader .q-btn {
+                color: black !important;
+            }
         ''')
+       
 
         async def handle_upload(e):
             """
@@ -382,7 +388,20 @@ class ScheduleGUIView:
                 ui.notify(f'Import failed: {ex}', type='negative')
                 print({ex})
 
-        upload = ui.upload(multiple=True, auto_upload=True, on_upload=handle_upload).classes('hidden')
+        with ui.dialog() as upload_dialog:
+            with ui.card():
+                ui.label('Import Schedule')
+                ui.upload(
+                    label='Select schedule file',
+                    multiple=True,
+                    auto_upload=True,
+                    on_upload=handle_upload,
+                ).classes('w-full text-black').style('color: black !important; background-color: white;')
+
+                
+
+        
+                ui.button('Close', on_click=upload_dialog.close).style('color: black !important;')
       #  upload.on_upload(handle_upload)
 
         export_dialog = ui.dialog()
@@ -438,7 +457,7 @@ class ScheduleGUIView:
                 ).on('click', lambda: ui.navigate.to('/run_scheduler'))
                 ui.button('Import Schedules').props('rounded color=black text-color=white no-caps').classes(
                     'w-48 h-12 text-base dark:!bg-white dark:!text-black'
-                ).on('click', lambda: upload.run_method('pickFiles'))
+                ).on('click', upload_dialog.open)
             return
 
         total = len(_state.schedules)
@@ -505,7 +524,7 @@ class ScheduleGUIView:
                 ).on('click', export_dialog.open)
                 ui.button('Import Schedules').props('rounded color=black text-color=white no-caps').classes(
                     'w-48 h-12 text-base dark:!bg-white dark:!text-black'
-                ).on('click', lambda: upload.run_method('pickFiles'))
+                ).on('click', upload_dialog.open)
 
         def on_room_filter(e):
             """

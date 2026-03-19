@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install pytest pytest-cov nicegui course-constraint-scheduler
+          uv pip install --system pytest pytest-cov nicegui course-constraint-scheduler
 
       - name: Run tests
         run: |

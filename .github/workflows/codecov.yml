@@ -21,16 +21,13 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-cov nicegui course-constraint-scheduler
-
       - name: Run tests
+        # This command creates a temporary environment with ALL needed packages
         run: |
-          uv run -m pytest --trace-config --cov=. --cov-branch --cov-report=xml
-          
+          uv run --with pytest-cov --with nicegui --with course-constraint-scheduler \
+          pytest --cov=. --cov-branch --cov-report=xml
+
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./2026sp-420-Notavirus.exe

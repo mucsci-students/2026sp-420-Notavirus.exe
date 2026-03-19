@@ -23,13 +23,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          git clone https://github.com/mucsci-students/2026sp-420-Notavirus.exe.git
-          cd 2026sp-420-Notavirus.exe
           uv pip install pytest pytest-cov nicegui course-constraint-scheduler
 
       - name: Run tests
         run: |
-          cd 2026sp-420-Notavirus.exe
           uv run pytest --cov --cov-branch --cov-report=xml
 
       - name: Upload results to Codecov

@@ -16,8 +16,17 @@ jobs:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: pip install pytest pytest-cov
-
+        run: |
+          pip install pytest pytest-cov
+          pip install uv
+          git clone <https://github.com/mucsci-students/2026sp-420-Notavirus.exe.git>
+          cd 2026sp-420-Notavirus.exe
+          uv init
+          uv pip install nicegui
+          uv pip install course-constraint-scheduler
+          uv sync
+          source .venv/bin/activate       
+            
       - name: Run tests
         run: pytest --cov --cov-branch --cov-report=xml
 

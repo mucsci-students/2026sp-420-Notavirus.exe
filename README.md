@@ -82,13 +82,6 @@ UV is a fast Python package manager. Install it with:
 
 3. Install dependencies
   ```bash
-    # Initialize UV environment
-    uv init
-
-    # Install required packages
-    uv pip install nicegui
-    uv pip install course-constraint-scheduler
-
     # Sync environment
     uv sync
 
@@ -277,7 +270,8 @@ pytest tests/test_controllers/ -v
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
 
-# Run with coverage
+# Run with coverage (need to first install pytest-cov if not already installed)
+# Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
 pytest tests/ --cov=models --cov=controllers
 ```
 Test Coverage:

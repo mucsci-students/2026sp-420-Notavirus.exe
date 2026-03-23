@@ -64,8 +64,8 @@ class SchedulerController:
         """
         self.view = GUIView()
 
-        #  Tell the View about this controller — the View owns this reference.
-        #  The Controller does NOT set any other attributes on View classes.
+        # ✅ Tell the View about this controller — the View owns this reference.
+        #    The Controller does NOT set any other attributes on View classes.
         GUIView.controller = self
 
         if config_path is None:
@@ -196,6 +196,67 @@ class SchedulerController:
         if self.config_model is None:
             return False
         return self.config_model.save_feature('config', feature)
+
+    def has_config(self) -> bool:
+        """
+        Returns True if a configuration is currently loaded.
+
+        Parameters:
+            None
+        Returns:
+            bool
+        """
+        return self.config_model is not None
+
+    def get_schedule_limit(self) -> int:
+        """
+        Returns the schedule generation limit from the loaded config.
+
+        Reads the raw JSON so the View always sees the value that is
+        actually on disk, not a potentially stale in-memory value.
+        Falls back to 100 if the config is missing or the key is absent.
+
+        Parameters:
+            None
+        Returns:
+            int: The schedule limit.
+        """
+        if self.config_model is None:
+            return 100
+        try:
+            import json
+            with open(self.config_model.config_path, 'r') as f:
+                raw = json.load(f)
+            return raw.get('limit', getattr(self.config_model.config, 'limit', 100))
+        except Exception:
+            return getattr(self.config_model.config, 'limit', 100)
+
+    def validate_schedule_config(self) -> str:
+        """
+        Validates the current configuration for schedule generation.
+
+        Parameters:
+            None
+        Returns:
+            str: An error message if invalid, or an empty string if valid.
+        """
+        if self.scheduler_model is None:
+            return "No scheduler model loaded."
+        errors = getattr(self.scheduler_model, "validate_config", lambda: "")()
+        return errors or ""
+
+    def generate_schedules(self, limit: int) -> list:
+        """
+        Generates schedules via the scheduler model and returns them.
+
+        Parameters:
+            limit (int): Maximum number of schedules to generate.
+        Returns:
+            list: Generated schedules (may be empty).
+        """
+        if self.scheduler_model is None:
+            return []
+        return list(self.scheduler_model.generate_schedules(limit=limit))
 
     # ------------------------------------------------------------------
     # Application entry-point

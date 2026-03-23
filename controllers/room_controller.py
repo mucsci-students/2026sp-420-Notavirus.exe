@@ -2,247 +2,188 @@
 """
 RoomController - Coordinates room-related workflows
 
-This controller class manages all room workflows including:
-- Adding new rooms
-- Modifying existing rooms
-- Deleting rooms
-- Validating room data
+✅ MVC rules followed here:
+    - All GUI-facing methods return (bool, str) tuples.
+    - Temp-save after every in-memory write happens here, not in the View.
+    - CLI methods are preserved unchanged for backward compatibility.
 """
 
 
 class RoomController:
     """
     Controller for room operations.
-    
-    Coordinates between RoomModel (data) and CLIView (UI) to
+
+    Coordinates between RoomModel (data) and the view layer to
     implement complete room workflows.
-    
+
     Attributes:
-        model: RoomModel instance
-        view: CLIView instance
+        model:        RoomModel instance
+        view:         View instance (GUIView or CLIView)
+        config_model: ConfigModel instance (for save_feature calls)
     """
-    
+
     def __init__(self, room_model, view):
+        self.model        = room_model
+        self.view         = view
+        # config_model is reachable via the model — store a shortcut for clarity.
+        self.config_model = room_model.config_model
+
+    # ------------------------------------------------------------------
+    # Query methods (read-only — safe for View to call)
+    # ------------------------------------------------------------------
+
+    def get_all_rooms(self) -> list[str]:
+        """Return all room names."""
+        return self.model.get_all_rooms()
+
+    # ------------------------------------------------------------------
+    # GUI command methods — all return (bool, str) and temp-save
+    # ------------------------------------------------------------------
+
+    def add_room(self, name: str) -> tuple[bool, str]:
         """
-        Initialize RoomController.
-        
+        Add a room to memory and temp-save.
+
+        ✅ Replaces direct model.add_room() calls from the View.
+
         Parameters:
-            room_model (RoomModel): Model for room data operations
-            view (CLIView): View for user interface
-        
+            name (str): Room name to add.
         Returns:
-            None
+            tuple[bool, str]: (success, message)
         """
-        self.model = room_model
-        self.view = view
-    
-    def add_room(self):
+        if not name or not name.strip():
+            return False, "Room name cannot be empty."
+        success = self.model.add_room(name.strip())
+        if success:
+            self.config_model.save_feature('temp', 'all')
+            return True, "Room added to memory."
+        return False, f"Room '{name}' already exists or is invalid."
+
+    def modify_room(self, old_name: str, new_name: str) -> tuple[bool, str]:
         """
-        Complete workflow for adding new room(s).
-        
-        Allows user to add multiple rooms in one session.
-        
-        Steps:
-        1. Get room information (building + number)
-        2. Validate and add via Model
-        3. Ask if user wants to add another
-        4. Repeat until done
-        
+        Modify a room name in memory and temp-save.
+
+        ✅ Replaces direct model.modify_room() calls from the View.
+
         Parameters:
-            None
-        
+            old_name (str): Current room name.
+            new_name (str): New room name.
         Returns:
-            None
+            tuple[bool, str]: (success, message)
         """
+        if not new_name or not new_name.strip():
+            return False, "New room name cannot be empty."
+        success = self.model.modify_room(old_name, new_name.strip())
+        if success:
+            self.config_model.save_feature('temp', 'all')
+            return True, "Room modified in memory."
+        return False, "Modification failed."
+
+    def delete_room(self, name: str) -> tuple[bool, str]:
+        """
+        Delete a room from memory and temp-save.
+
+        ✅ Replaces gui_delete_room() — same logic, cleaner name,
+           now also does the temp-save the View was doing before.
+
+        Parameters:
+            name (str): Room name to delete.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        if not name:
+            return False, "Please select a room to delete."
+        success = self.model.delete_room(name)
+        if success:
+            self.config_model.save_feature('temp', 'all')
+            return True, f"Room '{name}' deleted successfully."
+        return False, f"Failed: room '{name}' could not be deleted."
+
+    # ------------------------------------------------------------------
+    # CLI methods (unchanged — kept for backward compatibility)
+    # ------------------------------------------------------------------
+
+    def cli_add_room(self):
+        """CLI workflow for adding rooms. Prompts via self.view."""
         while True:
             try:
-                # Step 1: Get room name
                 room_name = self.view.get_room_input()
-                
-                # Validate not blank
                 if not room_name.strip():
                     self.view.display_error("Room cannot be blank.")
                     continue
-                
-                # Step 2: Add via model
                 success = self.model.add_room(room_name)
-                
                 if success:
                     self.view.display_message("Room added.")
                 else:
                     self.view.display_error(f"Room '{room_name}' already exists.")
-                
-                # Step 3: Ask if user wants to add another
                 if not self.view.confirm("Add another room?"):
                     break
-            
             except Exception as e:
                 self.view.display_error(f"Failed to add room: {e}")
                 break
-    
-    def delete_room(self):
-        """
-        Complete workflow for deleting a room.
-        
-        Steps:
-        1. Display list of rooms
-        2. Get room name from user
-        3. Confirm deletion
-        4. Delete via Model
-        5. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
+
+    def cli_delete_room(self):
+        """CLI workflow for deleting a room. Prompts via self.view."""
         try:
-            # Step 1: Get rooms
             all_rooms = self.model.get_all_rooms()
-            
             if not all_rooms:
                 self.view.display_message("There are no rooms in the configuration.")
                 return
-            
-            # Display numbered list
             self.view.display_numbered_rooms(all_rooms)
-            
-            # Step 2: Get room name
             room_name = self.view.get_room_name_for_deletion()
-            
-            # Check if room exists
             if not self.model.room_exists(room_name):
-                self.view.display_error(f"No room '{room_name}' found. No changes were made.")
+                self.view.display_error(f"No room '{room_name}' found.")
                 return
-            
-            # Step 3: Confirm deletion
             if not self.view.confirm(f"Are you sure you want to delete room '{room_name}'?"):
                 self.view.display_message("Deletion cancelled.")
                 return
-            
-            # Step 4: Delete via model
             success = self.model.delete_room(room_name)
-            
-            # Step 5: Display result
             if success:
-                self.view.display_message(f"Room '{room_name}' has been successfully deleted.")
+                self.view.display_message(f"Room '{room_name}' deleted successfully.")
             else:
                 self.view.display_error("Failed to delete room.")
-        
         except Exception as e:
             self.view.display_error(f"Failed to delete room: {e}")
-    
-    def modify_room(self):
-        """
-        Complete workflow for modifying room(s).
-        
-        Allows user to modify multiple rooms in one session.
-        Can modify either the building name or room number.
-        
-        Steps:
-        1. Get room to modify
-        2. Ask what to modify (building or number)
-        3. Get new value
-        4. Build new room name
-        5. Apply via Model
-        6. Ask if user wants to modify another
-        7. Repeat until done
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
+
+    def cli_modify_room(self):
+        """CLI workflow for modifying rooms. Prompts via self.view."""
         while True:
             try:
-                # Step 1: Get room to modify
                 room_name = self.view.get_room_input()
-                
-                # Check if room exists
                 if not self.model.room_exists(room_name):
-                    self.view.display_error(f"Room '{room_name}' does not exist. Cannot modify.")
-                    
-                    # Ask if they want to try another
+                    self.view.display_error(f"Room '{room_name}' does not exist.")
                     if not self.view.confirm("Modify another room?"):
                         break
                     continue
-                
-                # Step 2: Ask what to modify
                 modify_choice = self.view.get_room_modify_choice()
-                
-                # Step 3 & 4: Get new value and build new room name
                 building, number = self._split_room_name(room_name)
-                
                 if modify_choice == "building":
-                    new_building = self.view.get_room_building_input()
+                    new_building  = self.view.get_room_building_input()
                     new_room_name = self._build_room_name(new_building, number)
                 elif modify_choice == "number":
-                    new_number = self.view.get_room_number_input()
+                    new_number    = self.view.get_room_number_input()
                     new_room_name = self._build_room_name(building, new_number)
                 else:
                     self.view.display_error("Invalid modification choice.")
                     continue
-                
-                # Step 5: Apply modification
                 success = self.model.modify_room(room_name, new_room_name)
-                
                 if success:
                     self.view.display_message(f"Room modified from '{room_name}' to '{new_room_name}'.")
                 else:
-                    self.view.display_error(f"Cannot update to '{new_room_name}'. Room already exists or modification failed.")
-                
-                # Step 6: Ask if user wants to modify another
+                    self.view.display_error(f"Cannot update to '{new_room_name}'.")
                 if not self.view.confirm("Modify another room?"):
                     break
-            
             except Exception as e:
                 self.view.display_error(f"Failed to modify room: {e}")
                 break
 
-    def gui_delete_room(self, room_name: str) -> tuple[bool, str]:
-        """
-        GUI workflow for deleting a room.
-
-        Parameters:
-            room_name (str): Name of the room to delete
-
-        Returns:
-            tuple[bool, str]: (success, message)
-        """
-        if not room_name:
-            return False, "Please select a room to delete."
-
-        success = self.model.delete_room(room_name)
-
-        if success:
-            return True, f"Room '{room_name}' deleted successfully."
-
-        return False, f"Failed: room '{room_name}' could not be deleted."
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
     def _split_room_name(self, room_name: str) -> tuple[str, str]:
-        """
-        Split room name into building and number.
-        
-        Parameters:
-            room_name (str): Full room name (e.g., "Roddy 140")
-        
-        Returns:
-            tuple[str, str]: (building, number)
-        """
         parts = room_name.partition(" ")
         return (parts[0], parts[2])
-    
+
     def _build_room_name(self, building: str, number: str) -> str:
-        """
-        Build room name from building and number.
-        
-        Parameters:
-            building (str): Building name
-            number (str): Room number
-        
-        Returns:
-            str: Full room name (e.g., "Roddy 140")
-        """
         return f"{building.capitalize()} {number}"

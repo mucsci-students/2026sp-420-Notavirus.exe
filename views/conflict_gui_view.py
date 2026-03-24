@@ -2,11 +2,12 @@
 """
 ConflictGUIView - Graphical-user interface for conflict interactions
 
-   MVC rules followed in this file:
-    - No class-level model or controller attributes.
-    - No Model methods are called directly.
-    - All data operations go through GUIView.controller.conflict_controller.
-    - Save orchestration is delegated to GUIView.controller methods.
+This view class handles all GUI pages related to conflict management:
+- /conflict        : Conflict hub with navigation buttons
+- /conflict/add    : Add a conflict between two courses
+- /conflict/modify : Modify an existing conflict
+- /conflict/delete : Delete a conflict
+- /conflict/view   : View all conflicts
 """
 from nicegui import ui
 from views.gui_theme import GUITheme
@@ -14,12 +15,18 @@ from views.gui_utils import require_config
 
 
 class ConflictGUIView:
-    # No class-level model or controller attributes.
-    pass
 
     @ui.page('/conflict')
     @staticmethod
     def conflict():
+        """
+        Displays the Conflict hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
             return
@@ -35,6 +42,19 @@ class ConflictGUIView:
     @ui.page('/conflict/add')
     @staticmethod
     def conflict_add():
+        """
+        Displays the GUI for adding a conflict between two course sections.
+
+        The user selects two course sections from dropdowns. The course_map
+        stores (global_index, course) tuples so the exact section indices can
+        be passed to the controller, ensuring only the selected sections are
+        affected rather than all sections sharing that course ID.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return
@@ -54,13 +74,15 @@ class ConflictGUIView:
                 ui.button('Back').props('rounded color=black text-color=white no-caps').classes('dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/conflict'))
                 return
 
+            # Build course_map as {label: (global_index, course)} so we can pass
+            # the exact section index to add_conflict, affecting only that section.
             course_map    = {}
             course_counts = {}
-            for c in all_courses:
+            for idx, c in enumerate(all_courses):
                 cid = c.course_id
                 course_counts[cid] = course_counts.get(cid, 0) + 1
                 label = f"{cid}.{course_counts[cid]:02d}"
-                course_map[label] = c
+                course_map[label] = (idx, c)
             labels = list(course_map.keys())
 
             course_a   = ui.select(labels, label='Course A', value=labels[0]).props('label-color=grey-7').classes('w-full max-w-md')
@@ -70,17 +92,17 @@ class ConflictGUIView:
             pending    = {'dirty': False}
 
             def section_conflict_exists(label_a, label_b):
-                obj_a = course_map[label_a]
-                obj_b = course_map[label_b]
+                _, obj_a = course_map[label_a]
+                _, obj_b = course_map[label_b]
                 return (obj_b.course_id in obj_a.conflicts or obj_a.course_id in obj_b.conflicts)
 
             def preview():
                 label_a, label_b = course_a.value, course_b.value
                 if not label_a or not label_b:
                     return
-                course_id_a = course_map[label_a].course_id
-                course_id_b = course_map[label_b].course_id
-                if label_a == label_b or course_id_a == course_id_b:
+                _, obj_a = course_map[label_a]
+                _, obj_b = course_map[label_b]
+                if label_a == label_b or obj_a.course_id == obj_b.course_id:
                     status.set_text('⚠ Cannot conflict a course with itself.')
                     return
                 if section_conflict_exists(label_a, label_b):
@@ -93,27 +115,29 @@ class ConflictGUIView:
             course_b.on('update:model-value', lambda _: preview())
 
             def do_add():
-                label_a     = course_a.value
-                label_b     = course_b.value
-                course_id_a = course_map[label_a].course_id
-                course_id_b = course_map[label_b].course_id
+                label_a      = course_a.value
+                label_b      = course_b.value
+                idx_a, obj_a = course_map[label_a]
+                idx_b, obj_b = course_map[label_b]
+                course_id_a  = obj_a.course_id
+                course_id_b  = obj_b.course_id
                 if label_a == label_b or course_id_a == course_id_b:
                     status.set_text('⚠ Cannot conflict a course with itself.')
                     return
                 if section_conflict_exists(label_a, label_b):
                     status.set_text(f'⚠ Conflict already exists between {label_a} and {label_b}.')
                     return
-                success, message = controller.add_conflict(course_id_a, course_id_b)
+                success, message = controller.add_conflict(course_id_a, course_id_b, idx_a, idx_b)
                 if success:
-                    # Refresh local course_map from controller so preview stays accurate.
+                    # Rebuild course_map with fresh indices after the model update.
                     fresh_courses = controller.get_all_courses()
+                    course_map.clear()
                     fresh_counts: dict[str, int] = {}
-                    for c in fresh_courses:
+                    for i, c in enumerate(fresh_courses):
                         cid = c.course_id
                         fresh_counts[cid] = fresh_counts.get(cid, 0) + 1
                         fresh_label = f"{cid}.{fresh_counts[cid]:02d}"
-                        if fresh_label in course_map:
-                            course_map[fresh_label] = c
+                        course_map[fresh_label] = (i, c)
                     pending['dirty'] = True
                     save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                     save_label.classes(replace='text-lg text-orange-500')
@@ -139,12 +163,24 @@ class ConflictGUIView:
     @ui.page('/conflict/modify')
     @staticmethod
     def conflict_modify():
+        """
+        Displays the GUI for modifying an existing conflict.
+
+        The user selects an existing conflict from a dropdown, then selects
+        the new courses to replace it with. A toggle switch allows viewing
+        conflicts by section or by base course ID.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return
         from views.gui_view import GUIView
 
-        controller  = GUIView.controller.conflict_controller
+        controller = GUIView.controller.conflict_controller
 
         courses_with_sections = controller.get_courses_with_sections()
         section_label_map     = {i: label for label, i, _ in courses_with_sections}
@@ -165,9 +201,9 @@ class ConflictGUIView:
 
         conflict_options = build_section_options()
 
-        all_courses   = controller.get_all_courses()
-        course_map    = {}
-        course_counts = {}
+        all_courses        = controller.get_all_courses()
+        course_map         = {}
+        course_counts      = {}
         for c in all_courses:
             cid = c.course_id
             course_counts[cid] = course_counts.get(cid, 0) + 1
@@ -228,8 +264,8 @@ class ConflictGUIView:
                 new_course_b = ui.select(all_section_labels, label='New Course B').props('label-color=grey-7').classes('w-64 max-w-xs')
 
             def on_toggle(e):
-                selected['value'] = None
-                selected['is_base'] = e.value
+                selected['value']     = None
+                selected['is_base']   = e.value
                 select_existing.value = None
                 new_course_a.value    = None
                 new_course_b.value    = None
@@ -300,6 +336,19 @@ class ConflictGUIView:
     @ui.page('/conflict/delete')
     @staticmethod
     def conflict_delete():
+        """
+        Displays the GUI for deleting a conflict.
+
+        The user selects a conflict to delete and confirms the action.
+        A toggle switch allows viewing conflicts by section or by base
+        course ID, where the latter removes all section conflicts between
+        two courses at once.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return
@@ -386,7 +435,6 @@ class ConflictGUIView:
                         c1, c2, i1, i2 = selected['value']
                         s1 = section_label_map.get(i1, c1) if i1 is not None else c1
                         s2 = section_label_map.get(i2, c2) if i2 is not None else c2
-
                         success, message = controller.gui_delete_conflict(s1, s2, i1, i2)
                         feedback.set_text(message)
                         feedback.classes(replace=f'text-lg {"!text-black dark:!text-white" if success else "text-red-600"}')
@@ -447,6 +495,18 @@ class ConflictGUIView:
     @ui.page('/conflict/view')
     @staticmethod
     def conflict_view():
+        """
+        Displays the GUI for viewing all conflicts.
+
+        Groups conflicts by their conflict set so that courses sharing the
+        same set of conflicts are displayed together. Each group shows the
+        section labels of all courses in the group and their conflict partners.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/conflict'):
             return
@@ -466,6 +526,8 @@ class ConflictGUIView:
                 ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/conflict'))
                 return
 
+            # Build label maps: each course object gets a unique section label
+            # (e.g. CMSC 161.01, CMSC 161.02) keyed by object identity.
             course_label_map  = {}
             course_counts     = {}
             for c in all_courses:
@@ -477,6 +539,8 @@ class ConflictGUIView:
             for c in all_courses:
                 course_id_to_labels.setdefault(c.course_id, []).append(course_label_map[id(c)])
 
+            # Group courses by their conflict set so each unique conflict
+            # relationship is shown once rather than duplicated per section.
             groups: dict = {}
             for course in all_courses:
                 if not course.conflicts:

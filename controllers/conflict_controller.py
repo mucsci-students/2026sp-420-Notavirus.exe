@@ -2,11 +2,11 @@
 """
 ConflictController - Coordinates conflict-related workflows
 
-  MVC rules followed here:
-    - All GUI-facing methods return (bool, str) tuples.
-    - Temp-save after every in-memory write happens here, not in the View.
-    - get_all_courses() and get_courses_with_sections() added so the View
-      never needs to touch config_model or course_model directly.
+This controller class manages all conflict workflows including:
+- Adding new conflicts
+- Modifying existing conflicts
+- Deleting conflicts
+- Validating conflict data
 """
 
 from scheduler.config import CourseConfig
@@ -30,22 +30,25 @@ class ConflictController:
         self.view         = view
         self.config_model = conflict_model.config_model
 
-    # ------------------------------------------------------------------
-    # Query methods (read-only — safe for View to call)
-    # ------------------------------------------------------------------
-
     def get_all_courses(self) -> list:
         """
         Return all course objects from the config.
+
+        Parameters:
+            None
+        Returns:
+            list: All course objects.
         """
         return self.config_model.get_all_courses()
 
     def get_courses_with_sections(self) -> list:
         """
-        Return courses with section labels: list of (label, index, course).
+        Return courses with section labels as a list of (label, index, course).
 
-           The conflict controller reaches the course list through its own
-           config_model to avoid depending on the course_model directly.
+        Parameters:
+            None
+        Returns:
+            list: Tuples of (section_label, global_index, course_object).
         """
         courses       = self.config_model.get_all_courses()
         course_counts: dict[str, int] = {}
@@ -113,21 +116,31 @@ class ConflictController:
             return False, "No conflict found for the selected pair."
         return True, ""
 
-    # ------------------------------------------------------------------
-    # GUI command methods — all return (bool, str) and temp-save
-    # ------------------------------------------------------------------
-
-    def add_conflict(self, course_id_a: str, course_id_b: str) -> tuple[bool, str]:
+    def add_conflict(
+        self,
+        course_id_a: str,
+        course_id_b: str,
+        section_index_a: int = None,
+        section_index_b: int = None,
+    ) -> tuple[bool, str]:
         """
         Add a conflict between two courses and temp-save.
 
+        If section indices are provided, only that specific section pair is
+        affected. If not provided, all sections of both courses receive the
+        conflict (base-level behavior used by CLI and base-mode GUI).
+
         Parameters:
-            course_id_a (str): First course ID.
-            course_id_b (str): Second course ID.
+            course_id_a     (str):      First course ID.
+            course_id_b     (str):      Second course ID.
+            section_index_a (int|None): Global index of first section, or None.
+            section_index_b (int|None): Global index of second section, or None.
         Returns:
             tuple[bool, str]: (success, message)
         """
-        ok = self.model.add_conflict(course_id_a, course_id_b)
+        ok = self.model.add_conflict(
+            course_id_a, course_id_b, section_index_a, section_index_b
+        )
         if ok:
             self.config_model.save_feature('temp', 'courses')
             return True, f"Conflict added between '{course_id_a}' and '{course_id_b}'."
@@ -141,7 +154,7 @@ class ConflictController:
         index_2: int,
     ) -> tuple[bool, str]:
         """
-        Delete a conflict and temp-save.
+        Delete a conflict by section ID and temp-save.
 
         Parameters:
             section_id_1 (str): First section ID.
@@ -225,10 +238,6 @@ class ConflictController:
             self.config_model.save_feature('temp', 'courses')
             return True, "Conflict modified successfully."
         return False, "Failed to modify conflict."
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     def _strip_section(self, section_id: str) -> str:
         """

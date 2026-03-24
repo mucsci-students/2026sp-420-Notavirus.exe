@@ -70,19 +70,16 @@ class FacultyModel:
         """
         if not self.faculty_exists(name):
             return False
+
         faculty_to_delete = self.get_faculty_by_name(name)
-        try:
-            for course in self.config_model.config.config.courses:
-                if faculty_to_delete.name in course.faculty:
-                    course.faculty = [f for f in course.faculty if f != faculty_to_delete.name]
-            self.config_model.config.config.faculty = [
-                f for f in self.config_model.config.config.faculty
-                if f.name.lower() != name.lower()
-            ]
-            return True
-        except Exception as e:
-            print(f"DEBUG delete_faculty exception: {e}")
-            return False
+        for course in self.config_model.config.config.courses:
+            if faculty_to_delete.name in course.faculty:
+                course.faculty = [f for f in course.faculty if f != faculty_to_delete.name]
+        self.config_model.config.config.faculty = [
+            f for f in self.config_model.config.config.faculty
+            if f.name.lower() != name.lower()
+        ]
+        return True
     
     def modify_faculty(self, faculty_name: str, field: str, new_value) -> bool:
         """
@@ -103,15 +100,12 @@ class FacultyModel:
         """
         if not self.faculty_exists(faculty_name):
             return False
-        try:
-            faculty = self.get_faculty_by_name(faculty_name)
-            if not faculty:
-                return False
-            setattr(faculty, field, new_value)
-            return True
-        except Exception as e:
-            print(f"DEBUG modify_faculty exception: {e}")
+
+        faculty = self.get_faculty_by_name(faculty_name)
+        if not faculty:
             return False
+        setattr(faculty, field, new_value)
+        return True
     
     def faculty_exists(self, name: str) -> bool:
         """

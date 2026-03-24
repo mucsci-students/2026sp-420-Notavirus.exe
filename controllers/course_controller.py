@@ -2,7 +2,7 @@
 """
 CourseController - Coordinates course-related workflows
 
-✅ MVC rules followed here:
+   MVC rules followed here:
     - All write operations (add, modify, delete) temp-save after success.
       Previously the View was responsible for calling config_model.save_feature()
       after each operation — that now happens here.
@@ -61,10 +61,6 @@ class CourseController:
         """
         Validate input, add a course, and temp-save.
 
-        ✅ Validation lives here, not in the View.
-           Temp-save happens here — the View no longer calls
-           config_model.save_feature() after this method.
-
         Parameters:
             data (dict): Course data from the GUI (course_id, credits, room,
                          lab, faculty, conflicts).
@@ -91,7 +87,6 @@ class CourseController:
             course_config     = self._build_course_config(data)
             success           = self.model.add_course(course_config)
             if success:
-                # ✅ Temp-save happens here — View never touches config_model.
                 self.config_model.save_feature('temp', 'courses')
                 return True, f"Course '{course_id}' added successfully."
             return False, f"Course '{course_id}' already exists."
@@ -106,9 +101,6 @@ class CourseController:
     ) -> tuple[bool, str]:
         """
         Validate, apply modifications to a course section, and temp-save.
-
-        ✅ Temp-save happens here — the View no longer calls
-           config_model.save_feature() after this method.
 
         Parameters:
             course_id     (str):  Course ID.
@@ -128,7 +120,6 @@ class CourseController:
 
             success = self.model.modify_course(course_id, section_index=section_index, **updates)
             if success:
-                # ✅ Temp-save happens here — View never touches config_model.
                 self.config_model.save_feature('temp', 'all')
                 return True, f"Course '{course_id}' updated successfully."
             return False, f"Failed to update course '{course_id}'."
@@ -139,9 +130,6 @@ class CourseController:
         """
         Delete a course section and temp-save.
 
-        ✅ Temp-save happens here — the View no longer calls
-           config_model.save_feature() after this method.
-
         Parameters:
             course_id     (str): Course ID.
             section_index (int): Section index to delete.
@@ -151,7 +139,6 @@ class CourseController:
         try:
             success = self.model.delete_course(course_id, section_index)
             if success:
-                # ✅ Temp-save happens here — View never touches config_model.
                 self.config_model.save_feature('temp', 'all')
                 return True, "Course section deleted successfully."
             return False, "Failed to delete course section."

@@ -2,7 +2,7 @@
 """
 RoomController - Coordinates room-related workflows
 
-✅ MVC rules followed here:
+   MVC rules followed here:
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - CLI methods are preserved unchanged for backward compatibility.
@@ -44,8 +44,6 @@ class RoomController:
         """
         Add a room to memory and temp-save.
 
-        ✅ Replaces direct model.add_room() calls from the View.
-
         Parameters:
             name (str): Room name to add.
         Returns:
@@ -62,8 +60,6 @@ class RoomController:
     def modify_room(self, old_name: str, new_name: str) -> tuple[bool, str]:
         """
         Modify a room name in memory and temp-save.
-
-        ✅ Replaces direct model.modify_room() calls from the View.
 
         Parameters:
             old_name (str): Current room name.
@@ -82,9 +78,6 @@ class RoomController:
     def delete_room(self, name: str) -> tuple[bool, str]:
         """
         Delete a room from memory and temp-save.
-
-        ✅ Replaces gui_delete_room() — same logic, cleaner name,
-           now also does the temp-save the View was doing before.
 
         Parameters:
             name (str): Room name to delete.

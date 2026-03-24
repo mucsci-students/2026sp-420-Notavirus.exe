@@ -2,7 +2,7 @@
 """
 LabController - Coordinates lab-related workflows
 
-✅ MVC rules followed here:
+   MVC rules followed here:
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - CLI methods are preserved unchanged for backward compatibility.
@@ -43,9 +43,6 @@ class LabController:
         """
         Add a lab to memory and temp-save.
 
-        ✅ Replaces gui_add_lab() — same logic, cleaner name,
-           now also does the temp-save the View was doing before.
-
         Parameters:
             lab_name (str): Name of the lab to add.
         Returns:
@@ -63,9 +60,6 @@ class LabController:
     def modify_lab(self, old_name: str, new_name: str) -> tuple[bool, str]:
         """
         Modify a lab name in memory and temp-save.
-
-        ✅ Replaces gui_modify_lab() — same logic, cleaner name,
-           now also does the temp-save the View was doing before.
 
         Parameters:
             old_name (str): Current lab name.
@@ -91,9 +85,6 @@ class LabController:
     def delete_labs(self, labs_to_delete: list[str]) -> tuple[bool, str]:
         """
         Delete a list of labs from memory and temp-save.
-
-        ✅ Replaces delete_labs_gui() which returned bare bool and
-           left temp-save to the View.
 
         Parameters:
             labs_to_delete (list[str]): Lab names to delete.

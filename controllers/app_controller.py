@@ -64,8 +64,6 @@ class SchedulerController:
         """
         self.view = GUIView()
 
-        # ✅ Tell the View about this controller — the View owns this reference.
-        #    The Controller does NOT set any other attributes on View classes.
         GUIView.controller = self
 
         if config_path is None:
@@ -122,9 +120,6 @@ class SchedulerController:
         self.room_controller     = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
 
-        # ✅ No View class attributes are set here.
-        #    Every View page reads what it needs via GUIView.controller at
-        #    render time, so there is nothing to synchronise.
 
     # ------------------------------------------------------------------
     # Public API used by Views

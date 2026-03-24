@@ -2,7 +2,7 @@
 """
 FacultyController - Coordinates faculty-related workflows
 
-✅ MVC rules followed here:
+   MVC rules followed here:
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - CLI methods are preserved unchanged for backward compatibility.
@@ -72,7 +72,7 @@ class FacultyController:
         """
         Add a new faculty member and temp-save.
 
-        ✅ Returns (bool, str) for the View to display.
+          Returns (bool, str) for the View to display.
            Temp-save happens here, not in the View.
 
         Parameters:
@@ -108,7 +108,7 @@ class FacultyController:
         """
         Delete a faculty member by name and temp-save.
 
-        ✅ Returns (bool, str) for the View to display.
+           Returns (bool, str) for the View to display.
            Temp-save happens here, not in the View.
 
         Parameters:
@@ -126,7 +126,7 @@ class FacultyController:
         """
         Modify a single field on a faculty member and temp-save.
 
-        ✅ Replaces the old pattern of calling controller.model.modify_faculty()
+           Replaces the old pattern of calling controller.model.modify_faculty()
            directly from the View.
 
         Parameters:
@@ -146,8 +146,6 @@ class FacultyController:
         """
         Set a faculty member's position type (full-time / adjunct) and temp-save.
 
-        ✅ Replaces gui_set_position() + manual config_model.save_feature() in View.
-
         Parameters:
             name         (str):  Faculty name.
             is_full_time (bool): True for full-time, False for adjunct.
@@ -164,8 +162,6 @@ class FacultyController:
     def set_maximum_credits(self, name: str, credits: int) -> tuple[bool, str]:
         """
         Set a faculty member's maximum credits and temp-save.
-
-        ✅ Replaces gui_set_maximum_credits() + manual config_model.save_feature() in View.
 
         Parameters:
             name    (str): Faculty name.

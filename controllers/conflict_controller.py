@@ -2,7 +2,7 @@
 """
 ConflictController - Coordinates conflict-related workflows
 
-✅ MVC rules followed here:
+  MVC rules followed here:
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - get_all_courses() and get_courses_with_sections() added so the View
@@ -37,8 +37,6 @@ class ConflictController:
     def get_all_courses(self) -> list:
         """
         Return all course objects from the config.
-
-        ✅ Replaces: ConflictGUIView.conflict_model.config_model.get_all_courses()
         """
         return self.config_model.get_all_courses()
 
@@ -46,7 +44,6 @@ class ConflictController:
         """
         Return courses with section labels: list of (label, index, course).
 
-        ✅ Replaces: GUIView.controller.course_model.get_courses_with_sections()
            The conflict controller reaches the course list through its own
            config_model to avoid depending on the course_model directly.
         """
@@ -124,9 +121,6 @@ class ConflictController:
         """
         Add a conflict between two courses and temp-save.
 
-        ✅ Replaces direct model.add_conflict() + model.config_model.save_feature()
-           calls from the View.
-
         Parameters:
             course_id_a (str): First course ID.
             course_id_b (str): Second course ID.
@@ -148,8 +142,6 @@ class ConflictController:
     ) -> tuple[bool, str]:
         """
         Delete a conflict and temp-save.
-
-        ✅ Now includes the temp-save that the View was previously doing.
 
         Parameters:
             section_id_1 (str): First section ID.
@@ -178,8 +170,6 @@ class ConflictController:
     ) -> tuple[bool, str]:
         """
         Modify an existing conflict and temp-save.
-
-        ✅ Temp-save now happens here instead of in the View.
 
         Parameters:
             old_c1 (str):      Original first class (section label or base ID).

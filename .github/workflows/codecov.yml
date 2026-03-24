@@ -1,7 +1,7 @@
 name: Run tests and upload coverage
 description: Run Codecov testing on a push and/or on a manual trigger.
 
-on: [push, pull_request, workflow_dispatch]
+on: [pull_request, workflow_dispatch]
 
 jobs:
   test:

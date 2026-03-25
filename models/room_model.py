@@ -63,19 +63,16 @@ class RoomModel:
         """
         if not self.room_exists(room_name):
             return False
-        try:
-            for course in self.config_model.config.config.courses:
-                course.room = [r for r in course.room if r != room_name]
-            for faculty in self.config_model.config.config.faculty:
-                if room_name in faculty.room_preferences:
-                    del faculty.room_preferences[room_name]
-            self.config_model.config.config.rooms = [
-                r for r in self.config_model.config.config.rooms if r != room_name
-            ]
-            return True
-        except Exception as e:
-            print(f"DEBUG delete_room exception: {e}")
-            return False
+
+        for course in self.config_model.config.config.courses:
+            course.room = [r for r in course.room if r != room_name]
+        for faculty in self.config_model.config.config.faculty:
+            if room_name in faculty.room_preferences:
+                del faculty.room_preferences[room_name]
+        self.config_model.config.config.rooms = [
+            r for r in self.config_model.config.config.rooms if r != room_name
+        ]
+        return True
     
     def modify_room(self, old_name: str, new_name: str) -> bool:
         """
@@ -95,19 +92,16 @@ class RoomModel:
             return False
         if self.room_exists(new_name):
             return False
-        try:
-            rooms = self.config_model.config.config.rooms
-            index = rooms.index(old_name)
-            rooms[index] = new_name
-            for course in self.config_model.config.config.courses:
-                course.room = [new_name if r == old_name else r for r in course.room]
-            for faculty in self.config_model.config.config.faculty:
-                if old_name in faculty.room_preferences:
-                    faculty.room_preferences[new_name] = faculty.room_preferences.pop(old_name)
-            return True
-        except Exception as e:
-            print(f"DEBUG modify_room exception: {e}")
-            return False
+
+        rooms = self.config_model.config.config.rooms
+        index = rooms.index(old_name)
+        rooms[index] = new_name
+        for course in self.config_model.config.config.courses:
+            course.room = [new_name if r == old_name else r for r in course.room]
+        for faculty in self.config_model.config.config.faculty:
+            if old_name in faculty.room_preferences:
+                faculty.room_preferences[new_name] = faculty.room_preferences.pop(old_name)
+        return True
     
     def room_exists(self, room_name: str) -> bool:
         """

@@ -60,19 +60,16 @@ class LabModel:
         """
         if not self.lab_exists(lab_name):
             return False
-        try:
-            for course in self.config_model.config.config.courses:
-                course.lab = [l for l in course.lab if l != lab_name]
-            for faculty in self.config_model.config.config.faculty:
-                if lab_name in faculty.lab_preferences:
-                    del faculty.lab_preferences[lab_name]
-            self.config_model.config.config.labs = [
-                l for l in self.config_model.config.config.labs if l != lab_name
-            ]
-            return True
-        except Exception as e:
-            print(f"DEBUG delete_lab exception: {e}")
-            return False
+
+        for course in self.config_model.config.config.courses:
+            course.lab = [l for l in course.lab if l != lab_name]
+        for faculty in self.config_model.config.config.faculty:
+            if lab_name in faculty.lab_preferences:
+                del faculty.lab_preferences[lab_name]
+        self.config_model.config.config.labs = [
+            l for l in self.config_model.config.config.labs if l != lab_name
+        ]
+        return True
     
     def modify_lab(self, old_name: str, new_name: str) -> bool:
         """
@@ -90,19 +87,16 @@ class LabModel:
             return False
         if self.lab_exists(new_name):
             return False
-        try:
-            labs = self.config_model.config.config.labs
-            index = labs.index(old_name)
-            labs[index] = new_name
-            for course in self.config_model.config.config.courses:
-                course.lab = [new_name if l == old_name else l for l in course.lab]
-            for faculty in self.config_model.config.config.faculty:
-                if old_name in faculty.lab_preferences:
-                    faculty.lab_preferences[new_name] = faculty.lab_preferences.pop(old_name)
-            return True
-        except Exception as e:
-            print(f"DEBUG modify_lab exception: {e}")
-            return False
+
+        labs = self.config_model.config.config.labs
+        index = labs.index(old_name)
+        labs[index] = new_name
+        for course in self.config_model.config.config.courses:
+            course.lab = [new_name if l == old_name else l for l in course.lab]
+        for faculty in self.config_model.config.config.faculty:
+            if old_name in faculty.lab_preferences:
+                faculty.lab_preferences[new_name] = faculty.lab_preferences.pop(old_name)
+        return True
     
     def lab_exists(self, lab_name: str) -> bool:
         """

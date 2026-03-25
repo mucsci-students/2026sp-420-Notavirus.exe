@@ -16,6 +16,7 @@ dev = [
     "pluggy>=1.6.0",
     "pygments>=2.19.2",
     "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
 ]
 [tool.pytest.ini_options]
 testpaths = ["tests"]

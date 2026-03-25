@@ -82,13 +82,6 @@ UV is a fast Python package manager. Install it with:
 
 3. Install dependencies
   ```bash
-    # Initialize UV environment
-    uv init
-
-    # Install required packages
-    uv pip install nicegui
-    uv pip install course-constraint-scheduler
-
     # Sync environment
     uv sync
 
@@ -245,7 +238,7 @@ and time slots.
 
 The main GUI presents a menu with buttons for each feature:
 ┌─────────────────────────┐
-│      Scheduler          │
+│      Scheduler        @ │
 ├─────────────────────────┤
 │  Faculty   │    Room    │
 │  Course    │  Conflict  │
@@ -257,6 +250,7 @@ The main GUI presents a menu with buttons for each feature:
 └─────────────────────────┘
 Click any button to access that feature's interface. Each feature page includes 
 forms for input and displays results in a user-friendly format.
+@ represents the sun, if you click the sun the appearance will change.
 
 ---
 
@@ -271,19 +265,20 @@ pytest tests/ -v
 # Run only model tests (114 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (22 tests)
+# Run only controller tests (61 tests)
 pytest tests/test_controllers/ -v
 
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
 
-# Run with coverage
+# Run with coverage (need to first install pytest-cov if not already installed)
+#   Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
 pytest tests/ --cov=models --cov=controllers
 ```
 Test Coverage:
 
 ✅ 114 model tests - Data operations and business logic
-✅ 22 controller tests - Integration and workflow
+✅ 61 controller tests - Integration and workflow
 ✅ 1 safe_save test - The save feature used by save and save to config 
 
 ---
@@ -307,11 +302,28 @@ def your_function():
         None
     """
     GUITheme.applyTheming()
-    ui.query('body').style('background-color: var(--q-primary)')
+    if not require_config(back_url='/feature_group'):
+        return
+    from views.gui_view import GUIView
+    ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
+
+    # Read controller at render time — never store as class attribute
+    controller = GUIView.controller.your_controller
+
     with ui.column().classes('gap-6 items-center w-full'):
         # Your GUI code here
-```
+        pass
 
+    def handle_save():
+        # Delegate to Controller — never call config_model directly
+        success = GUIView.controller.save_to_config('feature')
+        # React to result
+
+    def handle_action():
+        # Collect input, pass to Controller, react to (bool, str) result
+        success, message = controller.do_something(input_value)
+        result_label.set_text(message)
+```
 ---
 
 

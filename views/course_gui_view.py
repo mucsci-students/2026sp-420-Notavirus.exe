@@ -4,10 +4,18 @@ CourseGUIView - Graphical-user interface for course interactions
 
 This view class handles all GUI pages related to course management:
 - /course        : Course hub with navigation buttons
-- /course/add    : Add a new course (Under Construction)
+- /course/add    : Add a new course
 - /course/modify : Modify an existing course
-- /course/delete : Delete a course (Under Construction)
+- /course/delete : Delete a course
 - /course/view   : View all courses
+
+MVC rules followed in this file:
+    - No Model references are stored or imported.
+    - No Model methods are called directly.
+    - All data operations go through GUIView.controller (the main Controller)
+      or GUIView.controller.course_controller (the Course sub-controller).
+    - Input validation lives in the Controller, not here.
+    - Save orchestration (temp vs. config) is delegated to Controller methods.
 """
 
 from nicegui import ui
@@ -16,9 +24,7 @@ from views.gui_utils import require_config
 
 
 class CourseGUIView:
-    # Injected by main.py before ui.run()
-    course_model      = None
-    course_controller = None
+    #  Course GUI View
 
     @ui.page('/course')
     @staticmethod
@@ -62,9 +68,9 @@ class CourseGUIView:
 
         from views.gui_view import GUIView
 
+        # Read controller reference at render time — never stored as class attr.
         controller = GUIView.controller.course_controller
-        config_model = GUIView.controller.config_model
-        resources = controller.get_available_resources()
+        resources  = controller.get_available_resources()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
@@ -95,47 +101,41 @@ class CourseGUIView:
                                         ui.label(val)
 
             def handle_add():
-                try:
-                    course_id = course_id_input.value.strip() if course_id_input.value else ''
-                    if not course_id:
-                        result_label.set_text('Course ID is required.')
-                        return
+                """
+                   The View collects raw input values and passes them to the
+                   Controller. Validation (empty ID, bad credits, etc.) happens
+                   inside controller.add_course(), not here. The Controller also
+                   handles the temp-save after a successful add.
+                """
+                data = {
+                    'course_id': course_id_input.value.strip() if course_id_input.value else '',
+                    'credits':   credits_input.value,
+                    'room':      room_select.value    or [],
+                    'lab':       lab_select.value     or [],
+                    'faculty':   faculty_select.value or [],
+                    'conflicts': []
+                }
 
-                    try:
-                        credits = int(credits_input.value)
-                    except (ValueError, TypeError):
-                        result_label.set_text('Credits must be a valid number.')
-                        return
+                success, message = controller.add_course(data)
+                result_label.set_text(message)
 
-                    data = {
-                        'course_id': course_id,
-                        'credits': credits,
-                        'room': room_select.value or [],
-                        'lab': lab_select.value or [],
-                        'faculty': faculty_select.value or [],
-                        'conflicts': []
-                    }
-
-                    success, message = controller.add_course(data)
-                    result_label.set_text(message)
-
-                    if success:
-                        selected['dirty'] = True
-                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                        save_label.classes(replace='text-lg text-orange-500')
-                        config_model.save_feature('temp', 'courses')
-                        course_id_input.set_value('')
-                        credits_input.set_value(4)
-                        room_select.set_value([])
-                        lab_select.set_value([])
-                        faculty_select.set_value([])
-                        course_table.refresh()
-
-                except Exception as e:
-                    result_label.set_text(f'Error: {e}')
+                if success:
+                    selected['dirty'] = True
+                    save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
+                    save_label.classes(replace='text-lg text-orange-500')
+                    course_id_input.set_value('')
+                    credits_input.set_value(4)
+                    room_select.set_value([])
+                    lab_select.set_value([])
+                    faculty_select.set_value([])
+                    course_table.refresh()
 
             def handle_save():
-                success = config_model.save_feature('config', 'courses')
+                """
+                   Delegates persistence entirely to the Controller.
+                   The View never calls model methods directly.
+                """
+                success = GUIView.controller.save_to_config('courses')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved successfully.')
@@ -147,12 +147,12 @@ class CourseGUIView:
             with ui.row().classes('justify-center items-start w-full gap-[150px]'):
                 with ui.column().classes('items-center gap-4 pt-10'):
                     course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined label-color=grey-7').classes('w-80')
-                    credits_input = ui.number(label='Credits ', min=0, value=4).props('rounded outlined label-color=grey-7').classes('w-80')
-                    room_select = ui.select(resources['rooms'], label='Rooms', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
-                    lab_select = ui.select(resources['labs'], label='Labs', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
-                    faculty_select = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
-                    result_label = ui.label('').classes('text-base')
-                    save_label = ui.label('').classes('text-lg')
+                    credits_input   = ui.number(label='Credits ', min=0, value=4).props('rounded outlined label-color=grey-7').classes('w-80')
+                    room_select     = ui.select(resources['rooms'],   label='Rooms',   multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
+                    lab_select      = ui.select(resources['labs'],    label='Labs',    multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
+                    faculty_select  = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
+                    result_label    = ui.label('').classes('text-base')
+                    save_label      = ui.label('').classes('text-lg')
                     ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_add)
                     ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
                     ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
@@ -176,31 +176,35 @@ class CourseGUIView:
         if not require_config(back_url='/course'):
             return
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
+
         from views.gui_view import GUIView
-        model      = CourseGUIView.course_model
-        controller = CourseGUIView.course_controller
-        resources  = GUIView.controller.course_controller.get_available_resources()
+
+        # Read controller reference at render time — never stored as class attr.
+        controller = GUIView.controller.course_controller
+        resources  = controller.get_available_resources()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('Modify Course').classes('text-4xl mb-6 !text-black dark:!text-white')
 
-            sections = model.get_courses_with_sections() if model else []
+            # Data comes from the controller, not a stored model reference.
+            sections = controller.get_courses_with_sections()
             if not sections:
                 ui.label('No courses on file.').classes('text-gray-600')
                 ui.button('Back').props('rounded color=black text-color=white no-caps') \
                     .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
                 return
 
-            section_map = {label: (idx, course) for label, idx, course in sections}
+            section_map    = {label: (idx, course) for label, idx, course in sections}
             section_labels = [label for label, _, _ in sections]
-            status = ui.label('').classes('text-sm !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-lg')
+            status         = ui.label('').classes('text-sm !text-black dark:!text-white')
+            save_label     = ui.label('').classes('text-lg')
 
             with ui.card().classes('w-full max-w-lg p-6 gap-4'):
-                selected_label = ui.select(section_labels, label='Section to Modify',
-                                           value=section_labels[0]).props('label-color=grey-7').classes('w-full')
+                selected_label = ui.select(
+                    section_labels, label='Section to Modify', value=section_labels[0]
+                ).props('label-color=grey-7').classes('w-full')
 
                 info = ui.label('').classes('text-xs text-gray-500')
 
@@ -229,38 +233,47 @@ class CourseGUIView:
                 ).classes('text-xs text-gray-400')
 
                 credits_input = ui.number('New Credits', min=0, max=20).props('label-color=grey-7').classes('w-full')
-                rooms_input   = ui.select(resources['rooms'], label='Rooms', multiple=True).props('label-color=grey-7').classes('w-full')
-                labs_input    = ui.select(resources['labs'], label='Labs', multiple=True).props('label-color=grey-7').classes('w-full')
+                rooms_input   = ui.select(resources['rooms'],   label='Rooms',   multiple=True).props('label-color=grey-7').classes('w-full')
+                labs_input    = ui.select(resources['labs'],    label='Labs',    multiple=True).props('label-color=grey-7').classes('w-full')
                 faculty_input = ui.select(resources['faculty'], label='Faculty', multiple=True).props('label-color=grey-7').classes('w-full')
 
-                # Populate with current values on load
                 refresh_info()
+
                 def do_modify():
+                    """
+                       The View builds a plain dict of what changed and passes it
+                       to the Controller. Change-detection logic could also move
+                       to the Controller, but keeping it here is acceptable since
+                       it is purely about comparing UI state — no model knowledge
+                       is required.
+
+                       Critically: the View no longer calls config_model methods.
+                       Temp-saving after a successful modify is handled by the
+                       Controller's modify_course() method.
+                    """
                     entry = section_map.get(selected_label.value)
                     if not entry:
                         status.set_text('Section not found!')
                         return
                     section_idx, course = entry
-                    cid = course.course_id
-
+                    cid     = course.course_id
                     updates = {}
 
                     if credits_input.value is not None:
                         updates['credits'] = credits_input.value
 
-                    # Only update if selection differs from current
                     current_rooms = list(course.room or [])
-                    new_rooms = list(rooms_input.value or [])
+                    new_rooms     = list(rooms_input.value or [])
                     if sorted(new_rooms) != sorted(current_rooms):
                         updates['room'] = new_rooms
 
                     current_labs = list(course.lab or [])
-                    new_labs = list(labs_input.value or [])
+                    new_labs     = list(labs_input.value or [])
                     if sorted(new_labs) != sorted(current_labs):
                         updates['lab'] = new_labs
 
                     current_faculty = list(course.faculty or [])
-                    new_faculty = list(faculty_input.value or [])
+                    new_faculty     = list(faculty_input.value or [])
                     if sorted(new_faculty) != sorted(current_faculty):
                         updates['faculty'] = new_faculty
 
@@ -268,15 +281,14 @@ class CourseGUIView:
                         status.set_text('No changes detected.')
                         return
 
+                    # Controller handles the modify AND the temp-save.
                     ok, message = controller.modify_course(cid, section_idx, updates)
                     if ok:
-                        from views.gui_view import GUIView
-                        GUIView.controller.config_model.save_feature('temp', 'all')
                         status.set_text(f"'{selected_label.value}' updated in memory.")
                         save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                         save_label.classes(replace='text-lg text-orange-500')
                         credits_input.set_value(None)
-                        new_sections = model.get_courses_with_sections()
+                        new_sections = controller.get_courses_with_sections()
                         section_map.clear()
                         section_map.update({lbl: (i, c) for lbl, i, c in new_sections})
                         refresh_info()
@@ -284,8 +296,11 @@ class CourseGUIView:
                         status.set_text(f"⚠ {message}")
 
                 def do_save_to_config():
-                    from views.gui_view import GUIView
-                    success = GUIView.controller.config_model.save_feature('config', 'all')
+                    """
+                       Delegates persistence entirely to the Controller.
+                       The View never calls model methods directly.
+                    """
+                    success = GUIView.controller.save_to_config('all')
                     if success:
                         save_label.set_text('Configuration saved to file.')
                         save_label.classes(replace='text-lg text-green-600')
@@ -315,11 +330,12 @@ class CourseGUIView:
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):
             return
-        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
-        controller = GUIView.controller.course_controller
-        config_model = GUIView.controller.config_model
+        from views.gui_view import GUIView
+
+        # Read controller reference at render time — never stored as class attr.
+        controller       = GUIView.controller.course_controller
         existing_courses = controller.get_courses_with_sections()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
@@ -335,7 +351,7 @@ class CourseGUIView:
                 return
 
             status_label = ui.label('').classes('text-lg !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
+            save_label   = ui.label('').classes('text-lg !text-black dark:!text-white')
 
             section_options = {label: (course.course_id, index) for label, index, course in existing_courses}
             selected = {'value': None, 'dirty': False}
@@ -343,7 +359,9 @@ class CourseGUIView:
             select = ui.select(
                 options=list(section_options.keys()),
                 label='Select Course Section',
-                on_change=lambda e: selected.update({'value': section_options[e.value]}) if e.value in section_options else selected.update({'value': None})
+                on_change=lambda e: selected.update(
+                    {'value': section_options[e.value]} if e.value in section_options else {'value': None}
+                )
             ).props('label-color=grey-7').classes('w-full max-w-xl text-xl')
 
             def handle_delete():
@@ -357,7 +375,12 @@ class CourseGUIView:
                     ui.label(f"Are you sure you want to delete '{select.value}'?").classes('text-lg')
                     with ui.row():
                         ui.button('Cancel', on_click=dialog.close).props('rounded color=black text-color=white no-caps')
+
                         def confirm_delete():
+                            """
+                               Controller handles delete AND temp-save.
+                               The View reacts to the result message only.
+                            """
                             dialog.close()
                             success, message = controller.delete_course(course_id, section_index)
                             status_label.set_text(message)
@@ -365,20 +388,23 @@ class CourseGUIView:
                                 selected['dirty'] = True
                                 save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
                                 save_label.classes(replace='text-lg text-orange-500')
-                                config_model.save_feature('temp', 'all')
-                                updated = controller.get_courses_with_sections()
-                                new_options = {label: (course.course_id, index) for label, index, course in updated}
+                                updated    = controller.get_courses_with_sections()
+                                new_options = {lbl: (c.course_id, i) for lbl, i, c in updated}
                                 section_options.clear()
                                 section_options.update(new_options)
                                 select.options = list(new_options.keys())
-                                select.value = None
+                                select.value   = None
                                 select.update()
+
                         ui.button('Delete', on_click=confirm_delete).props('rounded color=red text-color=white no-caps')
 
                 dialog.open()
 
             def handle_save():
-                success = config_model.save_feature('config', 'all')
+                """
+                  Delegates persistence entirely to the Controller.
+                """
+                success = GUIView.controller.save_to_config('all')
                 if success:
                     selected['dirty'] = False
                     save_label.set_text('Configuration saved to file.')
@@ -405,16 +431,19 @@ class CourseGUIView:
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):
             return
-        from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
-        model = CourseGUIView.course_model
+
+        from views.gui_view import GUIView
+
+        # Read controller reference at render time — never stored as class attr.
+        controller = GUIView.controller.course_controller
 
         with ui.column().classes('w-full items-center pt-12 pb-12 gap-4'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('View Courses').classes('text-4xl mb-6 !text-black dark:!text-white')
             with ui.column().classes('w-full max-w-lg gap-3'):
-                sections = model.get_courses_with_sections() if model else []
+                sections = controller.get_courses_with_sections()
                 if not sections:
                     ui.label('No courses on file.').classes('text-gray-600')
                 else:

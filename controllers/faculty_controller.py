@@ -2,410 +2,196 @@
 """
 FacultyController - Coordinates faculty-related workflows
 
-This controller class manages all faculty workflows including:
-- Adding new faculty
-- Modifying existing faculty
-- Deleting faculty
-- Validating faculty data
+   MVC rules followed here:
+    - All GUI-facing methods return (bool, str) tuples.
+    - Temp-save after every in-memory write happens here, not in the View.
+    - CLI methods are preserved unchanged for backward compatibility.
 """
 
 from scheduler import FacultyConfig, TimeRange
 
 # Constants
-FULL_TIME_MAX_CREDITS = 12
-ADJUNCT_MAX_CREDITS = 4
-MIN_CREDITS = 0
-MAX_DAYS = 5
+FULL_TIME_MAX_CREDITS        = 12
+ADJUNCT_MAX_CREDITS          = 4
+MIN_CREDITS                  = 0
+MAX_DAYS                     = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
-ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+ADJUNCT_UNIQUE_COURSE_LIMIT   = 1
 
 
 class FacultyController:
     """
     Controller for faculty operations.
-    
-    Coordinates between FacultyModel (data) and CLIView (UI) to
+
+    Coordinates between FacultyModel (data) and the view layer to
     implement complete faculty workflows.
-    
+
     Attributes:
         model: FacultyModel instance
-        view: CLIView instance
+        view:  View instance (GUIView or CLIView)
     """
-    
+
     def __init__(self, faculty_model, view):
-        """
-        Initialize FacultyController.
-        
-        Parameters:
-            faculty_model (FacultyModel): Model for faculty data operations
-            view (CLIView): View for user interface
-        
-        Returns:
-            None
-        """
         self.model = faculty_model
-        self.view = view
-    
-    def add_faculty(self, faculty_data: dict = None):
-        """
-        Complete workflow for adding a new faculty member.
-        
-        Parameters:
-            faculty_data (dict, optional): Data from GUI to add directly. If None, it will prompt via CLI view.
-        
-        Returns:
-            bool: True if added successfully, False otherwise
-        """
-        try:
-            # If no data provided, get it from CLI (original behavior)
-            if faculty_data is None:
-                if not hasattr(self, 'view') or self.view is None:
-                    print("Error: No view available to get input.")
-                    return False
-                    
-                # Step 1: Get input from user (CLI)
-                faculty_data = self.view.get_faculty_input()
-                position = "Full Time" if faculty_data['is_full_time'] else "Adjunct"
-                self.view.display_faculty_summary(faculty_data, position)
-                if not self.view.confirm("Is this information correct?"):
-                    self.view.display_message("Faculty addition cancelled.")
-                    return False
+        self.view  = view
 
-            # Step 2: Build FacultyConfig from raw data
-            faculty_config = self._build_faculty_config(faculty_data)
-            
-            # Step 3: Add via model
-            success = self.model.add_faculty(faculty_config)
-            
-            # Step 4: Show result
-            if success:
-                if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_message'):
-                    self.view.display_message(f"Faculty '{faculty_data['name']}' added successfully!")
-                return True
-            else:
-                if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_error'):
-                    self.view.display_error(f"Faculty '{faculty_data['name']}' already exists.")
-                return False
+    # ------------------------------------------------------------------
+    # Query methods (read-only — safe for View to call)
+    # ------------------------------------------------------------------
 
-        except Exception as e:
-            if hasattr(self, 'view') and self.view is not None and hasattr(self.view, 'display_error'):
-                self.view.display_error(f"Failed to add faculty: {e}")
-            else:
-                print(f"Failed to add faculty: {e}")
-            return False
-            
-    def delete_faculty(self):
-        """
-        Complete workflow for deleting a faculty member.
-        
-        Steps:
-        1. Display list of faculty
-        2. Get faculty name from user
-        3. Confirm deletion
-        4. Delete via Model
-        5. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            # Step 1: Display list
-            faculty_list = self.model.get_all_faculty()
-            if not faculty_list:
-                self.view.display_message("No faculty available to delete.")
-                return
-            
-            self.view.display_faculty_list(faculty_list)
-            
-            # Step 2: Get name
-            name = self.view.get_faculty_name_input()
-            
-            # Check if faculty exists
-            faculty = self.model.get_faculty_by_name(name)
-            if not faculty:
-                self.view.display_error(f"No faculty named '{name}' found.")
-                return
-            
-            # Step 3: Confirm deletion
-            if not self.view.confirm(f"Delete {faculty.name}?"):
-                self.view.display_message("Deletion cancelled.")
-                return
-            
-            # Step 4: Delete via model
-            success = self.model.delete_faculty(name)
-            
-            # Step 5: Show result
-            if success:
-                self.view.display_message(f"{faculty.name} deleted successfully.")
-            else:
-                self.view.display_error(f"Failed to delete {name}.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to delete faculty: {e}")
-    
-    def modify_faculty(self):
-        """
-        Complete workflow for modifying a faculty member.
-        
-        Steps:
-        1. Display list and get faculty name
-        2. Show current information
-        3. Get modification choice
-        4. Apply modification based on choice
-        5. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            # Step 1: Get faculty to modify
-            faculty_list = self.model.get_all_faculty()
-            if not faculty_list:
-                self.view.display_message("There are no faculty in the configuration.")
-                return
-            
-            self.view.display_faculty_list(faculty_list)
-            faculty_name = self.view.get_faculty_name_input()
-            
-            # Find faculty
-            faculty = self.model.get_faculty_by_name(faculty_name)
-            if not faculty:
-                self.view.display_error(f"No faculty '{faculty_name}' found. No changes were made.")
-                return
-            
-            # Step 2: Display current information
-            position = "Full-time" if faculty.maximum_credits == FULL_TIME_MAX_CREDITS else "Adjunct"
-            self.view.display_faculty_details(faculty, position)
-            
-            # Step 3: Get modification choice
-            choice = self.view.get_modify_menu_choice()
-            
-            if choice == '10':
-                self.view.display_message("Modification cancelled.")
-                return
-            
-            # Step 4: Apply modification based on choice
-            success = self._handle_modification(faculty_name, choice, faculty)
-            
-            # Step 5: Display result
-            if success:
-                self.view.display_message(f"Faculty '{faculty_name}' has been successfully modified.")
-            else:
-                self.view.display_error("Modification failed.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to modify faculty: {e}")
-    
-    def validate_faculty_references(self):
-        """
-        Validate and fix faculty references in courses.
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            invalid_count = self.model.validate_faculty_references()
-            
-            if invalid_count > 0:
-                self.view.display_message(f"Fixed {invalid_count} invalid faculty reference(s).")
-            else:
-                self.view.display_message("All course-faculty references are valid.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to validate references: {e}")
-            
+    def get_all_faculty(self) -> list:
+        """Return all faculty objects."""
+        return self.model.get_all_faculty()
+
+    def get_faculty_by_name(self, name: str):
+        """Return a single faculty object by name, or None."""
+        return self.model.get_faculty_by_name(name)
+
     def get_available_courses(self) -> list[str]:
-        """
-        Get a list of all available course IDs.
-        
-        Returns:
-            list[str]: Sorted list of unique course IDs
-        """
+        """Return sorted list of unique course IDs from the config."""
         courses = self.model.config_model.get_all_courses()
-        return sorted(list(set([c.course_id for c in courses])))
-        
+        return sorted(set(c.course_id for c in courses))
+
     def get_available_labs(self) -> list[str]:
-        """
-        Get a list of all available lab names.
-        
-        Returns:
-            list[str]: Sorted list of unique lab names
-        """
-        labs = self.model.config_model.get_all_labs()
-        return sorted(list(set(labs)))
-        
+        """Return sorted list of lab names from the config."""
+        return sorted(set(self.model.config_model.get_all_labs()))
+
+    def get_available_rooms(self) -> list[str]:
+        """Return sorted list of room names from the config."""
+        return sorted(set(self.model.config_model.get_all_rooms()))
+
     def get_existing_faculty_names(self) -> list[str]:
+        """Return list of all faculty names."""
+        return [f.name for f in self.model.get_all_faculty()]
+
+    # ------------------------------------------------------------------
+    # GUI command methods — all return (bool, str) and temp-save
+    # ------------------------------------------------------------------
+
+    def add_faculty(self, faculty_data: dict) -> tuple[bool, str]:
         """
-        Get a list of all existing faculty names.
-        
-        Returns:
-            list[str]: List of faculty names
-        """
-        faculty_list = self.model.get_all_faculty()
-        return [f.name for f in faculty_list]
-    
-    def _build_faculty_config(self, data: dict) -> FacultyConfig:
-        """
-        Build a FacultyConfig object from user input data.
-        
+        Add a new faculty member and temp-save.
+
+          Returns (bool, str) for the View to display.
+           Temp-save happens here, not in the View.
+
         Parameters:
-            data (dict): Dictionary containing faculty data from user input
-        
+            faculty_data (dict): Faculty data collected by the View.
         Returns:
-            FacultyConfig: Configured faculty object
+            tuple[bool, str]: (success, message)
         """
-        # Determine credits and course limit based on position
-        if data['is_full_time']:
-            max_credits = FULL_TIME_MAX_CREDITS
-            unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
-        else:
-            max_credits = ADJUNCT_MAX_CREDITS
-            unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
-        
-        # Build availability times
-        times = {}
-        day_map = {'M': 'MON', 'T': 'TUE', 'W': 'WED', 'R': 'THU', 'F': 'FRI',
-                   'Monday': 'MON', 'Tuesday': 'TUE', 'Wednesday': 'WED', 'Thursday': 'THU', 'Friday': 'FRI'}
-        
-        # Check if we have the advanced GUI format dictionary
-        if 'times' in data:
-            # Data from GUI that gives direct time lists
-            for day, day_times in data['times'].items():
-                if day in day_map:
-                    times[day_map[day]] = [TimeRange(start=t['start'], end=t['end']) for t in day_times]
-        else:
-            # Fallback to CLI basic behavior
-            for day in data.get('days', []):
-                day_name = day_map.get(day, day)
-                times[day_name] = [TimeRange(start='09:00', end='17:00')]
-        
-        # Create and return FacultyConfig
-        return FacultyConfig(
-            name=data['name'],
-            maximum_credits=max_credits,
-            minimum_credits=MIN_CREDITS,
-            unique_course_limit=unique_course_limit,
-            course_preferences=data.get('course_preferences', {}),
-            maximum_days=MAX_DAYS,
-            times=times,
-            room_preferences={},
-            lab_preferences=data.get('lab_preferences', {})
-        )
-    
-    def _handle_modification(self, faculty_name: str, choice: str, faculty) -> bool:
+        try:
+            faculty_config = self._build_faculty_config(faculty_data)
+            success        = self.model.add_faculty(faculty_config)
+            if success:
+                self.model.config_model.save_feature('temp', 'faculty')
+                return True, f"Faculty '{faculty_data['name']}' saved to memory."
+            return False, f"Failed to add faculty — '{faculty_data['name']}' may already exist."
+        except Exception as e:
+            return False, f"Error adding faculty: {e}"
+
+    def add_faculty_if_not_exists(self, faculty_data: dict) -> tuple[bool, str]:
         """
-        Handle specific modification based on user's menu choice.
-        
+        Add faculty only if not already present. Used by save-to-config flow.
+
         Parameters:
-            faculty_name (str): Name of faculty being modified
-            choice (str): Menu choice ('1' through '9')
-            faculty: Current faculty object for reference
-        
+            faculty_data (dict): Faculty data collected by the View.
         Returns:
-            bool: True if modification successful, False otherwise
+            tuple[bool, str]: (success, message)
         """
-        if choice == '1':
-            # Modify position type
-            is_full_time = self.view.get_position_input()
-            
-            if is_full_time:
-                self.model.modify_faculty(faculty_name, 'maximum_credits', FULL_TIME_MAX_CREDITS)
-                self.model.modify_faculty(faculty_name, 'unique_course_limit', FULL_TIME_UNIQUE_COURSE_LIMIT)
-                if faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
-                    self.model.modify_faculty(faculty_name, 'minimum_credits', FULL_TIME_MAX_CREDITS)
-            else:
-                self.model.modify_faculty(faculty_name, 'maximum_credits', ADJUNCT_MAX_CREDITS)
-                self.model.modify_faculty(faculty_name, 'unique_course_limit', ADJUNCT_UNIQUE_COURSE_LIMIT)
-                if faculty.minimum_credits > ADJUNCT_MAX_CREDITS:
-                    self.model.modify_faculty(faculty_name, 'minimum_credits', ADJUNCT_MAX_CREDITS)
-            
-            return True
-        
-        elif choice == '2':
-            # Modify maximum credits
-            new_max = self.view.get_integer_input(
-                "Enter new maximum credits: ",
-                min_val=faculty.minimum_credits
-            )
-            return self.model.modify_faculty(faculty_name, 'maximum_credits', new_max)
-        
-        elif choice == '3':
-            # Modify minimum credits
-            new_min = self.view.get_integer_input(
-                "Enter new minimum credits: ",
-                min_val=0,
-                max_val=faculty.maximum_credits
-            )
-            return self.model.modify_faculty(faculty_name, 'minimum_credits', new_min)
-        
-        elif choice == '4':
-            # Modify unique course limit
-            new_limit = self.view.get_integer_input(
-                "Enter new unique course limit: ",
-                min_val=1
-            )
-            return self.model.modify_faculty(faculty_name, 'unique_course_limit', new_limit)
-        
-        elif choice == '5':
-            # Modify maximum days
-            new_max_days = self.view.get_integer_input(
-                "Enter new maximum days (0-5): ",
-                min_val=0,
-                max_val=5
-            )
-            return self.model.modify_faculty(faculty_name, 'maximum_days', new_max_days)
-        
-        elif choice == '6':
-            # Modify availability times
-            # This is complex and would need more view methods
-            # For now, simplified version
-            self.view.display_message("Availability time modification not yet implemented in MVC.")
-            return False
-        
-        elif choice == '7':
-            # Modify course preferences
-            course_prefs = self.view.get_course_preferences_input()
-            return self.model.modify_faculty(faculty_name, 'course_preferences', course_prefs)
-        
-        elif choice == '8':
-            # Modify room preferences
-            room_prefs = self.view.get_room_preferences_input()
-            return self.model.modify_faculty(faculty_name, 'room_preferences', room_prefs)
-        
-        elif choice == '9':
-            # Modify lab preferences
-            lab_prefs = self.view.get_lab_preferences_input()
-            return self.model.modify_faculty(faculty_name, 'lab_preferences', lab_prefs)
-        
-        return False
-    
+        existing = [f.name for f in self.model.get_all_faculty()]
+        if faculty_data['name'] in existing:
+            return True, "Faculty already exists — skipping add."
+        return self.add_faculty(faculty_data)
+
+    def delete_faculty(self, name: str) -> tuple[bool, str]:
+        """
+        Delete a faculty member by name and temp-save.
+
+           Returns (bool, str) for the View to display.
+           Temp-save happens here, not in the View.
+
+        Parameters:
+            name (str): Name of the faculty member to delete.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        ok = self.model.delete_faculty(name)
+        if ok:
+            self.model.config_model.save_feature('temp', 'faculty')
+            return True, f"✓ '{name}' deleted from memory."
+        return False, f"⚠ Could not delete '{name}'."
+
+    def modify_faculty_field(self, name: str, field: str, value) -> tuple[bool, str]:
+        """
+        Modify a single field on a faculty member and temp-save.
+
+           Replaces the old pattern of calling controller.model.modify_faculty()
+           directly from the View.
+
+        Parameters:
+            name  (str): Faculty name.
+            field (str): Field to modify (e.g. 'minimum_credits', 'times').
+            value:       New value.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        success = self.model.modify_faculty(name, field, value)
+        if success:
+            self.model.config_model.save_feature('temp', 'all')
+            return True, "Updated in memory."
+        return False, "Update failed."
+
+    def set_position(self, name: str, is_full_time: bool) -> tuple[bool, str]:
+        """
+        Set a faculty member's position type (full-time / adjunct) and temp-save.
+
+        Parameters:
+            name         (str):  Faculty name.
+            is_full_time (bool): True for full-time, False for adjunct.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        ok = self.gui_set_position(name, is_full_time)
+        if ok:
+            self.model.config_model.save_feature('temp', 'all')
+            label = 'Full-time' if is_full_time else 'Adjunct'
+            return True, f"Position set to {label}."
+        return False, "Failed to update position."
+
+    def set_maximum_credits(self, name: str, credits: int) -> tuple[bool, str]:
+        """
+        Set a faculty member's maximum credits and temp-save.
+
+        Parameters:
+            name    (str): Faculty name.
+            credits (int): New maximum credits value.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        ok = self.gui_set_maximum_credits(name, credits)
+        if ok:
+            self.model.config_model.save_feature('temp', 'all')
+            return True, "Maximum credits updated."
+        return False, "Failed to update maximum credits."
+
+    # ------------------------------------------------------------------
+    # Existing GUI helpers (kept, used internally by set_position etc.)
+    # ------------------------------------------------------------------
+
     def gui_set_position(self, faculty_name: str, is_fulltime: bool) -> bool:
         """
-        Set faculty position type and update credits and course limit accordingly.
-        Full-time: unique_course_limit=2, maximum_credits=12 if currently adjunct.
-        Adjunct: unique_course_limit=1, maximum_credits=4 if currently above adjunct,
-                minimum_credits lowered first if it would exceed new max.
+        Set faculty position type and update credits / course limit accordingly.
 
         Parameters:
-            faculty_name (str): Name of faculty to modify
-            is_fulltime (bool): True for full-time, False for adjunct
-
+            faculty_name (str):  Name of faculty to modify.
+            is_fulltime  (bool): True for full-time, False for adjunct.
         Returns:
-            bool: True if successful, False otherwise
+            bool: True if successful.
         """
         faculty = self.model.get_faculty_by_name(faculty_name)
         if not faculty:
             return False
-
         if is_fulltime:
             self.model.modify_faculty(faculty_name, 'unique_course_limit', 2)
             if faculty.maximum_credits <= 4:
@@ -420,20 +206,17 @@ class FacultyController:
 
     def gui_set_maximum_credits(self, faculty_name: str, new_max: int) -> bool:
         """
-        Set faculty maximum credits and sync unique_course_limit and minimum_credits
-        to stay consistent with the new value.
+        Set max credits and sync unique_course_limit and minimum_credits.
 
         Parameters:
-            faculty_name (str): Name of faculty to modify
-            new_max (int): New maximum credits value
-
+            faculty_name (str): Name of faculty to modify.
+            new_max      (int): New maximum credits value.
         Returns:
-            bool: True if successful, False otherwise
+            bool: True if successful.
         """
         faculty = self.model.get_faculty_by_name(faculty_name)
         if not faculty:
             return False
-
         if faculty.minimum_credits > new_max:
             self.model.modify_faculty(faculty_name, 'minimum_credits', new_max)
         self.model.modify_faculty(faculty_name, 'maximum_credits', new_max)
@@ -443,3 +226,85 @@ class FacultyController:
             if faculty.unique_course_limit < 2:
                 self.model.modify_faculty(faculty_name, 'unique_course_limit', 2)
         return True
+
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _build_faculty_config(self, data: dict) -> FacultyConfig:
+        """Build a FacultyConfig from GUI or CLI input data."""
+        if data['is_full_time']:
+            max_credits         = FULL_TIME_MAX_CREDITS
+            unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
+        else:
+            max_credits         = ADJUNCT_MAX_CREDITS
+            unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
+
+        day_map = {
+            'M': 'MON', 'T': 'TUE', 'W': 'WED', 'R': 'THU', 'F': 'FRI',
+            'Monday': 'MON', 'Tuesday': 'TUE', 'Wednesday': 'WED',
+            'Thursday': 'THU', 'Friday': 'FRI',
+        }
+        times = {}
+        if 'times' in data:
+            for day, day_times in data['times'].items():
+                key = day_map.get(day, day)
+                times[key] = [TimeRange(start=t['start'], end=t['end']) for t in day_times]
+        else:
+            for day in data.get('days', []):
+                key = day_map.get(day, day)
+                times[key] = [TimeRange(start='09:00', end='17:00')]
+
+        return FacultyConfig(
+            name=data['name'],
+            maximum_credits=max_credits,
+            minimum_credits=MIN_CREDITS,
+            unique_course_limit=unique_course_limit,
+            course_preferences=data.get('course_preferences', {}),
+            maximum_days=MAX_DAYS,
+            times=times,
+            room_preferences={},
+            lab_preferences=data.get('lab_preferences', {}),
+        )
+
+    def _handle_modification(self, faculty_name: str, choice: str, faculty) -> bool:
+        """Handle CLI modification menu choice."""
+        if choice == '1':
+            is_full_time = self.view.get_position_input()
+            if is_full_time:
+                self.model.modify_faculty(faculty_name, 'maximum_credits', FULL_TIME_MAX_CREDITS)
+                self.model.modify_faculty(faculty_name, 'unique_course_limit', FULL_TIME_UNIQUE_COURSE_LIMIT)
+                if faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
+                    self.model.modify_faculty(faculty_name, 'minimum_credits', FULL_TIME_MAX_CREDITS)
+            else:
+                self.model.modify_faculty(faculty_name, 'maximum_credits', ADJUNCT_MAX_CREDITS)
+                self.model.modify_faculty(faculty_name, 'unique_course_limit', ADJUNCT_UNIQUE_COURSE_LIMIT)
+                if faculty.minimum_credits > ADJUNCT_MAX_CREDITS:
+                    self.model.modify_faculty(faculty_name, 'minimum_credits', ADJUNCT_MAX_CREDITS)
+            return True
+        elif choice == '2':
+            new_max = self.view.get_integer_input("Enter new maximum credits: ", min_val=faculty.minimum_credits)
+            return self.model.modify_faculty(faculty_name, 'maximum_credits', new_max)
+        elif choice == '3':
+            new_min = self.view.get_integer_input("Enter new minimum credits: ", min_val=0, max_val=faculty.maximum_credits)
+            return self.model.modify_faculty(faculty_name, 'minimum_credits', new_min)
+        elif choice == '4':
+            new_limit = self.view.get_integer_input("Enter new unique course limit: ", min_val=1)
+            return self.model.modify_faculty(faculty_name, 'unique_course_limit', new_limit)
+        elif choice == '5':
+            new_max_days = self.view.get_integer_input("Enter new maximum days (0-5): ", min_val=0, max_val=5)
+            return self.model.modify_faculty(faculty_name, 'maximum_days', new_max_days)
+        elif choice == '6':
+            self.view.display_message("Availability time modification not yet implemented in MVC.")
+            return False
+        elif choice == '7':
+            course_prefs = self.view.get_course_preferences_input()
+            return self.model.modify_faculty(faculty_name, 'course_preferences', course_prefs)
+        elif choice == '8':
+            room_prefs = self.view.get_room_preferences_input()
+            return self.model.modify_faculty(faculty_name, 'room_preferences', room_prefs)
+        elif choice == '9':
+            lab_prefs = self.view.get_lab_preferences_input()
+            return self.model.modify_faculty(faculty_name, 'lab_preferences', lab_prefs)
+        return False

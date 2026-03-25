@@ -50,29 +50,29 @@ class CourseModel:
         """
         if not self.course_exists(course_id):
             return False
-        try:
-            # Remove conflict references from other courses
-            for course in self.config_model.config.config.courses:
-                if course.course_id != course_id:
-                    if course_id in course.conflicts:
-                        course.conflicts = [c for c in course.conflicts if c != course_id]
-            # Remove from faculty preferences
-            for faculty in self.config_model.config.config.faculty:
-                if course_id in faculty.course_preferences:
-                    del faculty.course_preferences[course_id]
-            # Remove course using list.pop() to avoid assignment validation
-            courses = self.config_model.config.config.courses
-            if section_index is not None:
-                if section_index < len(courses):
-                    courses.pop(section_index)
-            else:
-                for i in range(len(courses) - 1, -1, -1):
-                    if courses[i].course_id == course_id:
-                        courses.pop(i)
-            return True
-        except Exception as e:
-            print(f"DEBUG delete_course exception: {e}")
-            return False
+
+        # Remove conflict references from other courses
+        for course in self.config_model.config.config.courses:
+            if course.course_id != course_id:
+                if course_id in course.conflicts:
+                    course.conflicts = [c for c in course.conflicts if c != course_id]
+
+        # Remove from faculty preferences
+        for faculty in self.config_model.config.config.faculty:
+            if course_id in faculty.course_preferences:
+                del faculty.course_preferences[course_id]
+
+        # Remove course using list.pop() to avoid assignment validation
+        courses = self.config_model.config.config.courses
+        if section_index is not None:
+            if section_index < len(courses):
+                courses.pop(section_index)
+        else:
+            for i in range(len(courses) - 1, -1, -1):
+                if courses[i].course_id == course_id:
+                    courses.pop(i)
+
+        return True
 
     def modify_course(self, course_id: str, section_index: int = None, **updates) -> bool:
         """
@@ -86,26 +86,24 @@ class CourseModel:
         """
         if not self.course_exists(course_id):
             return False
-        try:
-            courses = self.config_model.config.config.courses
-            for i, course in enumerate(courses):
-                if course.course_id == course_id:
-                    if section_index is not None and i != section_index:
-                        continue
-                    if 'credits' in updates:
-                        if updates['credits'] < 0:
-                            return False
-                        course.credits = updates['credits']
-                    if 'room' in updates:
-                        course.room = updates['room']
-                    if 'lab' in updates:
-                        course.lab = updates['lab']
-                    if 'faculty' in updates:
-                        course.faculty = updates['faculty']
-            return True
-        except Exception as e:
-            print(f"DEBUG modify_course exception: {e}")
-            return False
+
+        courses = self.config_model.config.config.courses
+        for i, course in enumerate(courses):
+            if course.course_id == course_id:
+                if section_index is not None and i != section_index:
+                    continue
+                if 'credits' in updates:
+                    if updates['credits'] < 0:
+                        return False
+                    course.credits = updates['credits']
+                if 'room' in updates:
+                    course.room = updates['room']
+                if 'lab' in updates:
+                    course.lab = updates['lab']
+                if 'faculty' in updates:
+                    course.faculty = updates['faculty']
+
+        return True
 
     def course_exists(self, course_id: str) -> bool:
         """

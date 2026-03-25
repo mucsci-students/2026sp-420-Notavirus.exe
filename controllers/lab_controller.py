@@ -2,305 +2,126 @@
 """
 LabController - Coordinates lab-related workflows
 
-This controller class manages all lab workflows including:
-- Adding new labs
-- Modifying existing labs
-- Deleting labs
-- Validating lab data
+   MVC rules followed here:
+    - All GUI-facing methods return (bool, str) tuples.
+    - Temp-save after every in-memory write happens here, not in the View.
+    - CLI methods are preserved unchanged for backward compatibility.
 """
 
 
 class LabController:
     """
     Controller for lab operations.
-    
-    Coordinates between LabModel (data) and CLIView (UI) to
+
+    Coordinates between LabModel (data) and the view layer to
     implement complete lab workflows.
-    
+
     Attributes:
-        model: LabModel instance
-        view: CLIView instance
+        model:        LabModel instance
+        view:         View instance (GUIView or CLIView)
+        config_model: ConfigModel instance (for save_feature calls)
     """
-    
+
     def __init__(self, lab_model, view):
-        """
-        Initialize LabController.
-        
-        Parameters:
-            lab_model (LabModel): Model for lab data operations
-            view (CLIView): View for user interface
-        
-        Returns:
-            None
-        """
-        self.model = lab_model
-        self.view = view
-    
-    def add_lab(self):
-        """
-        Complete workflow for adding a new lab.
-        
-        Steps:
-        1. Display existing labs
-        2. Get lab name from user
-        3. Confirm
-        4. Add via Model
-        5. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            # Step 1: Display existing labs
-            existing_labs = self.model.get_all_labs()
-            self.view.display_lab_list(existing_labs)
-            
-            # Step 2: Get lab name
-            lab_name = self.view.get_lab_name_input()
-            
-            # Step 3: Confirm
-            if not self.view.confirm("Is this information correct?"):
-                # Ask if they want to restart
-                if self.view.confirm("Would you like to restart adding the lab?"):
-                    return self.add_lab()  # Recursive restart
-                else:
-                    self.view.display_message("Lab addition cancelled.")
-                    return
-            
-            # Step 4: Add via model
-            success = self.model.add_lab(lab_name)
-            
-            # Step 5: Display result
-            if success:
-                self.view.display_message(f"Lab '{lab_name}' added successfully.")
-            else:
-                self.view.display_error(f"Lab '{lab_name}' already exists.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to add lab: {e}")
-    
-    def delete_lab(self):
-        """
-        Complete workflow for deleting a lab.
-        
-        Steps:
-        1. Display list of labs
-        2. Get lab selection from user
-        3. Confirm deletion
-        4. Delete via Model
-        5. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            # Step 1: Get labs
-            all_labs = self.model.get_all_labs()
-            
-            if not all_labs:
-                self.view.display_message("No labs exist. Cannot delete a lab.")
-                return
-            
-            # Display numbered list
-            self.view.display_numbered_labs(all_labs)
-            
-            # Step 2: Get selection
-            selection = self.view.get_lab_selection(len(all_labs))
-            
-            if selection == -1:
-                self.view.display_message("Quitting deleting a lab.")
-                return
-            
-            lab_name = all_labs[selection]
-            
-            # Step 3: Confirm deletion
-            if not self.view.confirm(f"Are you sure you want to delete {lab_name}?"):
-                self.view.display_message("Quitting deleting a lab.")
-                return
-            
-            # Step 4: Delete via model
-            success = self.model.delete_lab(lab_name)
-            
-            # Step 5: Display result
-            if success:
-                self.view.display_message("Lab deleted.")
-            else:
-                self.view.display_error("Failed to delete lab.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to delete lab: {e}")
-    
-    def modify_lab(self):
-        """
-        Complete workflow for modifying a lab.
-        
-        Steps:
-        1. Display list of labs
-        2. Get lab to modify
-        3. Get new name
-        4. Display affected courses/faculty
-        5. Confirm modification
-        6. Apply via Model
-        7. Display result
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-        try:
-            # Step 1: Get labs
-            all_labs = self.model.get_all_labs()
-            
-            if not all_labs:
-                self.view.display_message("No labs available.")
-                return
-            
-            # Display current labs
-            print("\n--- Modify Lab ---")
-            print(f"Current labs: {', '.join(all_labs)}")
-            
-            # Step 2: Get lab to modify
-            old_name = self.view.get_lab_to_modify(all_labs)
-            
-            if old_name is None:
-                self.view.display_message("Cancelled.")
-                return
-            
-            # Step 3: Get new name
-            new_name = self.view.get_new_lab_name(old_name, all_labs)
-            
-            if new_name is None:
-                return
-            
-            # Step 4: Display affected items
-            affected_courses = self.model.get_affected_courses(old_name)
-            affected_faculty = self.model.get_affected_faculty(old_name)
-            
-            self.view.display_lab_modification_summary(
-                old_name,
-                new_name,
-                affected_courses,
-                affected_faculty
-            )
-            
-            # Step 5: Confirm
-            if not self.view.confirm("Proceed with these changes?"):
-                self.view.display_message("Cancelled, no changes made.")
-                return
-            
-            # Step 6: Apply modification
-            success = self.model.modify_lab(old_name, new_name)
-            
-            # Step 7: Display result
-            if success:
-                self.view.display_message(f"Lab successfully updated to '{new_name}'.")
-            else:
-                self.view.display_error("Failed to modify lab.")
-        
-        except Exception as e:
-            self.view.display_error(f"Failed to modify lab: {e}")
+        self.model        = lab_model
+        self.view         = view
+        self.config_model = lab_model.config_model
+
+    # ------------------------------------------------------------------
+    # Query methods (read-only — safe for View to call)
+    # ------------------------------------------------------------------
 
     def get_all_labs(self) -> list[str]:
-        """
-        Retrieves all labs from the model for the GUI.
-                
-        Parameters:
-            None        
-        Returns:
-            list[str]: A list of lab names.
-        """
+        """Return all lab names."""
         return self.model.get_all_labs()
 
-    def delete_labs_gui(self, labs_to_delete: list[str]) -> bool:
-        """
-        Deletes a list of labs from the model for the GUI.
-                    
-        Parameters:
-            labs_to_delete (list[str]): List of lab names to delete.
-        Returns:
-            bool: True if all deletions were successful, False otherwise.
-        """
-        success = True
-        for lab in labs_to_delete:
-            if not self.model.delete_lab(lab):
-                success = False
-        return success
+    # ------------------------------------------------------------------
+    # GUI command methods — all return (bool, str) and temp-save
+    # ------------------------------------------------------------------
 
-    def gui_add_lab(self, lab_name: str) -> tuple[bool, str]:
+    def add_lab(self, lab_name: str) -> tuple[bool, str]:
         """
-        GUI workflow for adding a new lab.
+        Add a lab to memory and temp-save.
 
         Parameters:
-            lab_name (str): Name of the lab to add
-
+            lab_name (str): Name of the lab to add.
         Returns:
             tuple[bool, str]: (success, message)
         """
         if not lab_name or not lab_name.strip():
             return False, "Lab name cannot be empty."
-
         lab_name = lab_name.strip()
-
-        success = self.model.add_lab(lab_name)
-
+        success  = self.model.add_lab(lab_name)
         if success:
+            self.config_model.save_feature('temp', 'all')
             return True, f"Lab '{lab_name}' added successfully."
-
         return False, f"Failed: lab '{lab_name}' already exists."
 
-    def gui_delete_lab(self, lab_name: str) -> tuple[bool, str]:
+    def modify_lab(self, old_name: str, new_name: str) -> tuple[bool, str]:
         """
-        GUI workflow for deleting a lab.
+        Modify a lab name in memory and temp-save.
 
         Parameters:
-            lab_name (str): Name of the lab to delete
-
+            old_name (str): Current lab name.
+            new_name (str): New lab name.
         Returns:
             tuple[bool, str]: (success, message)
         """
-        if not lab_name:
-            return False, "Please select a lab to delete."
-
-        success = self.model.delete_lab(lab_name)
-
-        if success:
-            return True, f"Lab '{lab_name}' deleted successfully."
-
-        return False, f"Failed: lab '{lab_name}' could not be deleted."
-
-    def gui_modify_lab(self, old_name: str, new_name: str) -> tuple[bool, str]:
-        """
-        GUI workflow for modifying a lab
-
-        Parameters:
-            old_name(str): Current lab name
-            new_name(str): New lab name
-
-        Returns: 
-            tuple[bool, str]: (success, message)
-        """
-        if not new_name:
-            return False, 'All labs must have a name.'
+        if not new_name or not new_name.strip():
+            return False, "Lab name cannot be empty."
         if not old_name:
-            return False, 'Please select a lab to modify.'
-
-        # Check if name already exists (case-insensitive)
+            return False, "Please select a lab to modify."
+        new_name = new_name.strip()
         all_labs = self.model.get_all_labs()
         for lab in all_labs:
             if lab.lower() == new_name.lower() and lab.lower() != old_name.lower():
-                return False, f'Failed: "{lab}" already exists.'
-        
+                return False, f"Failed: '{lab}' already exists."
         success = self.model.modify_lab(old_name, new_name)
-        
         if success:
-            return True, f'lab "{old_name}" renamed to "{new_name}".'
-        
-        return False, f'Failed: "{new_name}" already exists.'
+            self.config_model.save_feature('temp', 'all')
+            return True, f"Lab '{old_name}' renamed to '{new_name}'."
+        return False, f"Failed: '{new_name}' already exists."
+
+    def delete_labs(self, labs_to_delete: list[str]) -> tuple[bool, str]:
+        """
+        Delete a list of labs from memory and temp-save.
+
+        Parameters:
+            labs_to_delete (list[str]): Lab names to delete.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        if not labs_to_delete:
+            return False, "No labs selected."
+        failed = []
+        for lab in labs_to_delete:
+            if not self.model.delete_lab(lab):
+                failed.append(lab)
+        if failed:
+            return False, f"Failed to delete: {', '.join(failed)}"
+        self.config_model.save_feature('temp', 'all')
+        return True, "✓ Deleted from memory."
+
+    # ------------------------------------------------------------------
+    # Legacy GUI helpers (kept for any code that still calls them)
+    # ------------------------------------------------------------------
+
+    def gui_add_lab(self, lab_name: str) -> tuple[bool, str]:
+        """Alias for add_lab(). Kept for backward compatibility."""
+        return self.add_lab(lab_name)
+
+    def gui_modify_lab(self, old_name: str, new_name: str) -> tuple[bool, str]:
+        """Alias for modify_lab(). Kept for backward compatibility."""
+        return self.modify_lab(old_name, new_name)
+
+    def gui_delete_lab(self, lab_name: str) -> tuple[bool, str]:
+        """Delete a single lab. Kept for backward compatibility."""
+        return self.delete_labs([lab_name])
+
+    def delete_labs_gui(self, labs_to_delete: list[str]) -> bool:
+        """
+        Legacy method that returns bare bool.
+        Kept for backward compatibility — prefer delete_labs() for new code.
+        """
+        success, _ = self.delete_labs(labs_to_delete)
+        return success

@@ -357,8 +357,8 @@
         "unique_course_limit": 2,
         "maximum_days": 4,
         "mandatory_days": [
-          "FRI",
           "WED",
+          "FRI",
           "MON"
         ],
         "times": {
@@ -720,6 +720,17 @@
           "Mac": 5,
           "Linux": 1
         }
+      },
+      {
+        "name": "mike",
+        "maximum_credits": 12,
+        "maximum_days": 5,
+        "minimum_credits": 0,
+        "unique_course_limit": 2,
+        "times": {},
+        "course_preferences": {},
+        "room_preferences": {},
+        "lab_preferences": {}
       }
     ]
   },

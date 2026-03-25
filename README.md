@@ -238,7 +238,7 @@ and time slots.
 
 The main GUI presents a menu with buttons for each feature:
 ┌─────────────────────────┐
-│      Scheduler          │
+│      Scheduler        @ │
 ├─────────────────────────┤
 │  Faculty   │    Room    │
 │  Course    │  Conflict  │
@@ -250,6 +250,7 @@ The main GUI presents a menu with buttons for each feature:
 └─────────────────────────┘
 Click any button to access that feature's interface. Each feature page includes 
 forms for input and displays results in a user-friendly format.
+@ represents the sun, if you click the sun the appearance will change.
 
 ---
 

@@ -24,15 +24,18 @@ from views.gui_utils import require_config
 
 
 class CourseGUIView:
-    #  No class-level model or controller attributes.
-    #  Each page reads what it needs through GUIView.controller at render time.
-    pass
+    #  Course GUI View
 
     @ui.page('/course')
     @staticmethod
     def course():
         """
         Displays the Course hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
         """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
@@ -52,6 +55,11 @@ class CourseGUIView:
     def course_add():
         """
         Displays the GUI for adding a course.
+
+        Parameters:
+            None
+        Returns:
+            None
         """
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):
@@ -158,6 +166,11 @@ class CourseGUIView:
     def course_modify():
         """
         Displays the GUI for modifying an existing course.
+
+        Parameters:
+            None
+        Returns:
+            None
         """
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):
@@ -308,6 +321,11 @@ class CourseGUIView:
     def course_delete():
         """
         Displays the GUI for deleting a course.
+
+        Parameters:
+            None
+        Returns:
+            None
         """
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):
@@ -404,6 +422,11 @@ class CourseGUIView:
     def course_view():
         """
         Displays the GUI for viewing all courses.
+
+        Parameters:
+            None
+        Returns:
+            None
         """
         GUITheme.applyTheming()
         if not require_config(back_url='/course'):

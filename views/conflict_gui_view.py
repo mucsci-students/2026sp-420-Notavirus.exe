@@ -15,7 +15,8 @@ from views.gui_utils import require_config
 
 
 class ConflictGUIView:
-
+    # Conflict GUI View
+    
     @ui.page('/conflict')
     @staticmethod
     def conflict():

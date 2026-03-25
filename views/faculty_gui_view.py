@@ -15,13 +15,19 @@ from views.gui_utils import require_config
 
 
 class FacultyGUIView:
-    #  No class-level model or controller attributes.
-    #    Each page reads what it needs through GUIView.controller at render time.
-    pass
+    # Faculty GUI View
 
     @ui.page('/faculty')
     @staticmethod
     def faculty():
+        """
+        Displays the Faculty hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
             return
@@ -37,6 +43,14 @@ class FacultyGUIView:
     @ui.page('/faculty/add')
     @staticmethod
     def faculty_add():
+        """
+        Displays the GUI for adding a faculty member.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/faculty'):
             return
@@ -224,6 +238,19 @@ class FacultyGUIView:
     @ui.page('/faculty/modify')
     @staticmethod
     def faculty_modify():
+        """
+        Displays the GUI for modifying faculty.
+
+        User first selects a faculty member from a dropdown, then sees
+        all of their current information with structured button-based
+        controls for making changes. Changes are in-memory until Save
+        Configuration is clicked.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/faculty'):
             return
@@ -560,6 +587,19 @@ class FacultyGUIView:
     @ui.page('/faculty/delete')
     @staticmethod
     def faculty_delete():
+        """
+        Displays the GUI for deleting a faculty member.
+
+        Loads all faculty from FacultyModel and displays them as cards.
+        Each card has a Delete button that opens a confirmation dialog
+        before calling controllers delete_faculty. The list refreshes after
+        each deletion.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/faculty'):
             return
@@ -630,6 +670,17 @@ class FacultyGUIView:
     @ui.page('/faculty/view')
     @staticmethod
     def faculty_view():
+        """
+        Displays the GUI for viewing all faculty members.
+
+        Loads all faculty from faculty_controller and displays each as an
+        expandable card showing position, credits, course limit, and preferences.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/faculty'):
             return

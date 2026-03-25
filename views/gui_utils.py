@@ -22,7 +22,8 @@ def require_config(back_url: str = '/') -> bool:
     from views.gui_view import GUIView
     if GUIView.controller is not None and GUIView.controller.config_model is not None:
         return True
-
+    
+    # Styling for load a configuration button when a configuration is not already loaded
     ui.add_css('''
         .load-dialog, .load-dialog *,
         .load-dialog .q-field__label,

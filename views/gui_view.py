@@ -27,6 +27,8 @@ class GUIView:
     @staticmethod
     def home():
         GUITheme.applyTheming()
+        
+        # Styling for loading a configuration button 
         ui.add_css('''
             .load-dialog, .load-dialog *,
             .load-dialog .q-field__label,

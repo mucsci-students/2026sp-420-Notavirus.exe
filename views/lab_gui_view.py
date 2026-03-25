@@ -14,12 +14,19 @@ from views.gui_utils import require_config
 
 
 class LabGUIView:
-    # No class-level model or controller attributes.
-    pass
-
+    # Class for Lab GUI View
+    
     @ui.page('/lab')
     @staticmethod
     def lab():
+        """
+        Displays the GUI for Lab.
+                
+        Parameters:
+            None        
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
             return
@@ -100,6 +107,16 @@ class LabGUIView:
     @ui.page('/lab/modify')
     @staticmethod
     def lab_modify():
+        """
+        Displays the GUI for modifying a lab.
+
+        Changes are in-memory until Save Configuration is clicked.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/lab'):
             return
@@ -144,6 +161,17 @@ class LabGUIView:
     @ui.page('/lab/delete')
     @staticmethod
     def lab_delete():
+        """
+        Displays the GUI for deleting a lab.
+
+        Delete commits to memory immediately. Save to Config writes
+        current memory state to disk.
+
+        Parameters:
+            None        
+        Returns:        
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/lab'):
             return
@@ -217,6 +245,14 @@ class LabGUIView:
     @ui.page('/lab/view')
     @staticmethod
     def lab_view():
+        """
+        Displays the GUI for viewing a lab.
+                
+        Parameters:
+            None        
+        Returns:        
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/lab'):
             return

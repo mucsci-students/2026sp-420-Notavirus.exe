@@ -15,11 +15,19 @@ from views.gui_utils import require_config
 
 
 class RoomGUIView:
-    pass
+    # Class for Room GUI View
 
     @ui.page('/room')
     @staticmethod
     def room():
+        """
+        Displays the GUI for the Room hub page with navigation buttons.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/'):
             return
@@ -35,6 +43,18 @@ class RoomGUIView:
     @ui.page('/room/add')
     @staticmethod
     def room_add():
+        """
+        Displays the GUI for adding a room.
+
+        Allows the user to enter a room name and number. Save stores the
+        room in memory only as a preview. Save to Config adds to memory
+        if not already added, then writes to the configuration file.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/room'):
             return
@@ -92,6 +112,20 @@ class RoomGUIView:
     @ui.page('/room/modify')
     @staticmethod
     def room_modify():
+        """
+        Displays the GUI for modifying a room.
+
+        Allows the user to select an existing room and enter a new name.
+        Save stores the change in memory only as a preview. Save to Config
+        modifies in memory if not already modified, then writes to the
+        configuration file.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
+
         GUITheme.applyTheming()
         if not require_config(back_url='/room'):
             return
@@ -153,6 +187,17 @@ class RoomGUIView:
     @ui.page('/room/delete')
     @staticmethod
     def room_delete():
+        """
+        Displays the GUI for deleting a room.
+
+        Allows the user to select a room and delete it from memory.
+        Save to Config writes the deletion permanently to the configuration file.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/room'):
             return
@@ -203,11 +248,22 @@ class RoomGUIView:
     @ui.page('/room/view')
     @staticmethod
     def room_view():
+        """
+        Displays the GUI for viewing all rooms.
+
+        Loads all rooms from the controller and displays each as a card.
+
+        Parameters:
+            None
+        Returns:
+            None
+        """
         GUITheme.applyTheming()
         if not require_config(back_url='/room'):
             return
         from views.gui_view import GUIView
-
+        
+        # Was previously accessing model, now accesses controller
         controller = GUIView.controller.room_controller
         rooms      = controller.get_all_rooms()
 

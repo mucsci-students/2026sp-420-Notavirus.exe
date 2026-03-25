@@ -1,7 +1,7 @@
 name: Run tests and upload coverage
 description: Run Codecov testing on a push and/or on a manual trigger.
 
-on: [push, pull_request, workflow_dispatch]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -21,14 +21,16 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install Project
+        run: uv sync
+
       - name: Run tests
-        run: |
-          uv run --with pytest-cov --with nicegui --with course-constraint-scheduler \
-          pytest --cov=. --cov-branch --cov-report=xml
+        run: uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          handle_no_reports_found: true
           

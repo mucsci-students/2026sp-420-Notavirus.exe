@@ -9,7 +9,6 @@ This controller class manages all conflict workflows including:
 - Validating conflict data
 """
 
-from scheduler.config import CourseConfig
 
 
 class ConflictController:
@@ -26,8 +25,8 @@ class ConflictController:
     """
 
     def __init__(self, conflict_model, view):
-        self.model        = conflict_model
-        self.view         = view
+        self.model = conflict_model
+        self.view = view
         self.config_model = conflict_model.config_model
 
     def get_all_courses(self) -> list:
@@ -50,9 +49,9 @@ class ConflictController:
         Returns:
             list: Tuples of (section_label, global_index, course_object).
         """
-        courses       = self.config_model.get_all_courses()
+        courses = self.config_model.get_all_courses()
         course_counts: dict[str, int] = {}
-        result        = []
+        result = []
         for idx, course in enumerate(courses):
             cid = course.course_id
             course_counts[cid] = course_counts.get(cid, 0) + 1
@@ -106,10 +105,13 @@ class ConflictController:
         Returns:
             tuple[bool, str]: (is_valid, error_message)
         """
-        key   = (min(index_1, index_2), max(index_1, index_2))
+        key = (min(index_1, index_2), max(index_1, index_2))
         match = next(
-            ((c1, c2, i1, i2) for c1, c2, i1, i2 in existing_conflicts
-             if (min(i1, i2), max(i1, i2)) == key),
+            (
+                (c1, c2, i1, i2)
+                for c1, c2, i1, i2 in existing_conflicts
+                if (min(i1, i2), max(i1, i2)) == key
+            ),
             None,
         )
         if not match:
@@ -142,7 +144,7 @@ class ConflictController:
             course_id_a, course_id_b, section_index_a, section_index_b
         )
         if ok:
-            self.config_model.save_feature('temp', 'courses')
+            self.config_model.save_feature("temp", "courses")
             return True, f"Conflict added between '{course_id_a}' and '{course_id_b}'."
         return False, "Failed to add conflict."
 
@@ -164,12 +166,15 @@ class ConflictController:
         Returns:
             tuple[bool, str]: (success, message)
         """
-        base1   = self._strip_section(section_id_1)
-        base2   = self._strip_section(section_id_2)
+        base1 = self._strip_section(section_id_1)
+        base2 = self._strip_section(section_id_2)
         success = self.model.delete_conflict(base1, base2, index_1, index_2)
         if success:
-            self.config_model.save_feature('temp', 'courses')
-            return True, f"Conflict between '{section_id_1}' and '{section_id_2}' deleted."
+            self.config_model.save_feature("temp", "courses")
+            return (
+                True,
+                f"Conflict between '{section_id_1}' and '{section_id_2}' deleted.",
+            )
         return False, "Failed to delete conflict."
 
     def gui_modify_conflict(
@@ -227,15 +232,19 @@ class ConflictController:
         course_new2 = all_new2[0]
 
         if old_base1 != new_base1 and old_base2 == new_base2:
-            success = self.model.modify_conflict(course_old1, course_old2, course_new1, 1)
+            success = self.model.modify_conflict(
+                course_old1, course_old2, course_new1, 1
+            )
         elif old_base2 != new_base2 and old_base1 == new_base1:
-            success = self.model.modify_conflict(course_old1, course_old2, course_new2, 2)
+            success = self.model.modify_conflict(
+                course_old1, course_old2, course_new2, 2
+            )
         else:
             self.model.delete_conflict(old_base1, old_base2, i1, i2)
             success = self.model.add_conflict(new_base1, new_base2)
 
         if success:
-            self.config_model.save_feature('temp', 'courses')
+            self.config_model.save_feature("temp", "courses")
             return True, "Conflict modified successfully."
         return False, "Failed to modify conflict."
 
@@ -246,6 +255,6 @@ class ConflictController:
         e.g. 'CMSC 140.01' -> 'CMSC 140', 'CMSC 140' -> 'CMSC 140'
         """
         parts = section_id.strip().split()
-        if parts and '.' in parts[-1]:
-            parts[-1] = parts[-1].rsplit('.', 1)[0]
-        return ' '.join(parts)
+        if parts and "." in parts[-1]:
+            parts[-1] = parts[-1].rsplit(".", 1)[0]
+        return " ".join(parts)

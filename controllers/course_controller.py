@@ -25,7 +25,7 @@ class CourseController:
     """
 
     def __init__(self, course_model, config_model):
-        self.model        = course_model
+        self.model = course_model
         self.config_model = config_model
 
     # ------------------------------------------------------------------
@@ -48,8 +48,8 @@ class CourseController:
             dict: {'rooms': [...], 'labs': [...], 'faculty': [...]}
         """
         return {
-            "rooms":   self.config_model.get_all_rooms(),
-            "labs":    self.config_model.get_all_labs(),
+            "rooms": self.config_model.get_all_rooms(),
+            "labs": self.config_model.get_all_labs(),
             "faculty": [f.name for f in self.config_model.get_all_faculty()],
         }
 
@@ -68,12 +68,12 @@ class CourseController:
             tuple[bool, str]: (success, message)
         """
         # --- Validation ---
-        course_id = (data.get('course_id') or '').strip()
+        course_id = (data.get("course_id") or "").strip()
         if not course_id:
             return False, "Course ID is required."
 
         try:
-            credits = int(data.get('credits', 0))
+            credits = int(data.get("credits", 0))
         except (ValueError, TypeError):
             return False, "Credits must be a valid number."
 
@@ -82,12 +82,12 @@ class CourseController:
 
         # --- Build and add ---
         try:
-            data['course_id'] = course_id
-            data['credits']   = credits
-            course_config     = self._build_course_config(data)
-            success           = self.model.add_course(course_config)
+            data["course_id"] = course_id
+            data["credits"] = credits
+            course_config = self._build_course_config(data)
+            success = self.model.add_course(course_config)
             if success:
-                self.config_model.save_feature('temp', 'courses')
+                self.config_model.save_feature("temp", "courses")
                 return True, f"Course '{course_id}' added successfully."
             return False, f"Course '{course_id}' already exists."
         except Exception as e:
@@ -118,9 +118,11 @@ class CourseController:
             if updates is None:
                 return False, error_msg
 
-            success = self.model.modify_course(course_id, section_index=section_index, **updates)
+            success = self.model.modify_course(
+                course_id, section_index=section_index, **updates
+            )
             if success:
-                self.config_model.save_feature('temp', 'all')
+                self.config_model.save_feature("temp", "all")
                 return True, f"Course '{course_id}' updated successfully."
             return False, f"Failed to update course '{course_id}'."
         except Exception as e:
@@ -139,7 +141,7 @@ class CourseController:
         try:
             success = self.model.delete_course(course_id, section_index)
             if success:
-                self.config_model.save_feature('temp', 'all')
+                self.config_model.save_feature("temp", "all")
                 return True, "Course section deleted successfully."
             return False, "Failed to delete course section."
         except Exception as e:
@@ -151,12 +153,12 @@ class CourseController:
 
     def _build_course_config(self, data: dict) -> CourseConfig:
         return CourseConfig(
-            course_id=data['course_id'],
-            credits=data['credits'],
-            room=data['room'],
-            lab=data['lab'],
-            faculty=data['faculty'],
-            conflicts=data['conflicts'],
+            course_id=data["course_id"],
+            credits=data["credits"],
+            room=data["room"],
+            lab=data["lab"],
+            faculty=data["faculty"],
+            conflicts=data["conflicts"],
         )
 
     def _parse_modifications(
@@ -171,12 +173,12 @@ class CourseController:
         """
         updates = {}
 
-        if 'credits' in modifications and modifications['credits'] is not None:
+        if "credits" in modifications and modifications["credits"] is not None:
             try:
-                credits_int = int(modifications['credits'])
+                credits_int = int(modifications["credits"])
                 if credits_int < 0:
                     return None, "Credits must be a positive integer."
-                updates['credits'] = credits_int
+                updates["credits"] = credits_int
             except (ValueError, TypeError):
                 return None, "Credits must be a valid number."
 
@@ -187,28 +189,34 @@ class CourseController:
                 return [x.strip() for x in val.split(",") if x.strip()]
             return []
 
-        if 'room' in modifications and modifications['room'] is not None:
-            rooms       = _to_list(modifications['room'])
+        if "room" in modifications and modifications["room"] is not None:
+            rooms = _to_list(modifications["room"])
             valid_rooms = self.config_model.get_all_rooms()
             for r in rooms:
                 if r not in valid_rooms:
-                    return None, f"Invalid room '{r}'. Room does not exist in configuration."
-            updates['room'] = rooms
+                    return (
+                        None,
+                        f"Invalid room '{r}'. Room does not exist in configuration.",
+                    )
+            updates["room"] = rooms
 
-        if 'lab' in modifications and modifications['lab'] is not None:
-            labs       = _to_list(modifications['lab'])
+        if "lab" in modifications and modifications["lab"] is not None:
+            labs = _to_list(modifications["lab"])
             valid_labs = self.config_model.get_all_labs()
             for lab in labs:
                 if lab not in valid_labs:
-                    return None, f"Invalid lab '{lab}'. Lab does not exist in configuration."
-            updates['lab'] = labs
+                    return (
+                        None,
+                        f"Invalid lab '{lab}'. Lab does not exist in configuration.",
+                    )
+            updates["lab"] = labs
 
-        if 'faculty' in modifications and modifications['faculty'] is not None:
-            faculties      = _to_list(modifications['faculty'])
-            valid_faculty  = [f.name for f in self.config_model.get_all_faculty()]
+        if "faculty" in modifications and modifications["faculty"] is not None:
+            faculties = _to_list(modifications["faculty"])
+            valid_faculty = [f.name for f in self.config_model.get_all_faculty()]
             for f in faculties:
                 if f not in valid_faculty:
                     return None, f"Invalid faculty '{f}'. Faculty does not exist."
-            updates['faculty'] = faculties
+            updates["faculty"] = faculties
 
         return updates, ""

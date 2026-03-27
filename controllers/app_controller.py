@@ -67,19 +67,19 @@ class SchedulerController:
         GUIView.controller = self
 
         if config_path is None:
-            self.config_path         = None
-            self.config_model        = None
-            self.faculty_model       = None
-            self.course_model        = None
-            self.conflict_model      = None
-            self.lab_model           = None
-            self.room_model          = None
-            self.scheduler_model     = None
-            self.faculty_controller  = None
-            self.course_controller   = None
+            self.config_path = None
+            self.config_model = None
+            self.faculty_model = None
+            self.course_model = None
+            self.conflict_model = None
+            self.lab_model = None
+            self.room_model = None
+            self.scheduler_model = None
+            self.faculty_controller = None
+            self.course_controller = None
             self.conflict_controller = None
-            self.lab_controller      = None
-            self.room_controller     = None
+            self.lab_controller = None
+            self.room_controller = None
             self.schedule_controller = None
             return
 
@@ -104,22 +104,21 @@ class SchedulerController:
         self.config_path = config_path
 
         # Models
-        self.config_model    = ConfigModel(config_path)
-        self.faculty_model   = FacultyModel(self.config_model)
-        self.course_model    = CourseModel(self.config_model)
-        self.conflict_model  = ConflictModel(self.config_model)
-        self.lab_model       = LabModel(self.config_model)
-        self.room_model      = RoomModel(self.config_model)
+        self.config_model = ConfigModel(config_path)
+        self.faculty_model = FacultyModel(self.config_model)
+        self.course_model = CourseModel(self.config_model)
+        self.conflict_model = ConflictModel(self.config_model)
+        self.lab_model = LabModel(self.config_model)
+        self.room_model = RoomModel(self.config_model)
         self.scheduler_model = SchedulerModel(self.config_model)
 
         # Sub-controllers
-        self.faculty_controller  = FacultyController(self.faculty_model, self.view)
-        self.course_controller   = CourseController(self.course_model, self.config_model)
+        self.faculty_controller = FacultyController(self.faculty_model, self.view)
+        self.course_controller = CourseController(self.course_model, self.config_model)
         self.conflict_controller = ConflictController(self.conflict_model, self.view)
-        self.lab_controller      = LabController(self.lab_model, self.view)
-        self.room_controller     = RoomController(self.room_model, self.view)
+        self.lab_controller = LabController(self.lab_model, self.view)
+        self.room_controller = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
-
 
     # ------------------------------------------------------------------
     # Public API used by Views
@@ -141,9 +140,9 @@ class SchedulerController:
         """
         try:
             self._initialize_from_path(file_path)
-            return True, f'Loaded: {file_path}'
+            return True, f"Loaded: {file_path}"
         except Exception as e:
-            return False, f'Error loading configuration: {e}'
+            return False, f"Error loading configuration: {e}"
 
     def save_configuration(self) -> bool:
         """
@@ -158,7 +157,7 @@ class SchedulerController:
             return False
         return self.config_model.safe_save()
 
-    def temp_save(self, feature: str = 'all') -> bool:
+    def temp_save(self, feature: str = "all") -> bool:
         """
         Writes the current in-memory state to the temp store.
 
@@ -174,9 +173,9 @@ class SchedulerController:
         """
         if self.config_model is None:
             return False
-        return self.config_model.save_feature('temp', feature)
+        return self.config_model.save_feature("temp", feature)
 
-    def save_to_config(self, feature: str = 'all') -> bool:
+    def save_to_config(self, feature: str = "all") -> bool:
         """
         Persists the current in-memory state to the real configuration file.
 
@@ -190,7 +189,7 @@ class SchedulerController:
         """
         if self.config_model is None:
             return False
-        return self.config_model.save_feature('config', feature)
+        return self.config_model.save_feature("config", feature)
 
     def has_config(self) -> bool:
         """
@@ -220,11 +219,12 @@ class SchedulerController:
             return 100
         try:
             import json
-            with open(self.config_model.config_path, 'r') as f:
+
+            with open(self.config_model.config_path, "r") as f:
                 raw = json.load(f)
-            return raw.get('limit', getattr(self.config_model.config, 'limit', 100))
+            return raw.get("limit", getattr(self.config_model.config, "limit", 100))
         except Exception:
-            return getattr(self.config_model.config, 'limit', 100)
+            return getattr(self.config_model.config, "limit", 100)
 
     def validate_schedule_config(self) -> str:
         """
@@ -266,10 +266,10 @@ class SchedulerController:
         Returns:
             None
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("  🚀 GUI SERVER STARTING")
-        print("="*60)
+        print("=" * 60)
         print("  🌐 Open your browser to: http://localhost:8080")
         print("  🛑 Stop server: Press Ctrl+C in this terminal")
-        print("="*60 + "\n")
-        ui.run(title='Scheduler', reload=False, storage_secret='scheduler_secret_key')
+        print("=" * 60 + "\n")
+        ui.run(title="Scheduler", reload=False, storage_secret="scheduler_secret_key")

@@ -23,8 +23,8 @@ class LabController:
     """
 
     def __init__(self, lab_model, view):
-        self.model        = lab_model
-        self.view         = view
+        self.model = lab_model
+        self.view = view
         self.config_model = lab_model.config_model
 
     # ------------------------------------------------------------------
@@ -51,9 +51,9 @@ class LabController:
         if not lab_name or not lab_name.strip():
             return False, "Lab name cannot be empty."
         lab_name = lab_name.strip()
-        success  = self.model.add_lab(lab_name)
+        success = self.model.add_lab(lab_name)
         if success:
-            self.config_model.save_feature('temp', 'all')
+            self.config_model.save_feature("temp", "all")
             return True, f"Lab '{lab_name}' added successfully."
         return False, f"Failed: lab '{lab_name}' already exists."
 
@@ -78,7 +78,7 @@ class LabController:
                 return False, f"Failed: '{lab}' already exists."
         success = self.model.modify_lab(old_name, new_name)
         if success:
-            self.config_model.save_feature('temp', 'all')
+            self.config_model.save_feature("temp", "all")
             return True, f"Lab '{old_name}' renamed to '{new_name}'."
         return False, f"Failed: '{new_name}' already exists."
 
@@ -99,7 +99,7 @@ class LabController:
                 failed.append(lab)
         if failed:
             return False, f"Failed to delete: {', '.join(failed)}"
-        self.config_model.save_feature('temp', 'all')
+        self.config_model.save_feature("temp", "all")
         return True, "✓ Deleted from memory."
 
     # ------------------------------------------------------------------

@@ -31,22 +31,22 @@ TEST_COPY_CONFIG = "test_copy.json"
 def test_config():
     """
     Create a fresh copy of example.json for each test.
-    
+
     This fixture ensures each test gets a clean copy of the configuration
     file, preventing tests from interfering with each other.
-    
+
     Yields:
         str: Path to test configuration file
-    
+
     Cleanup:
         Deletes the test copy after the test completes
     """
     # Setup: Copy example.json to test_copy.json
     shutil.copy(TESTING_CONFIG, TEST_COPY_CONFIG)
-    
+
     # Provide path to test
     yield TEST_COPY_CONFIG
-    
+
     # Cleanup: Delete test copy
     Path(TEST_COPY_CONFIG).unlink(missing_ok=True)
 
@@ -55,10 +55,10 @@ def test_config():
 def config_model(test_config):
     """
     Create a ConfigModel with test configuration.
-    
+
     Parameters:
         test_config (str): Path to test config (from test_config fixture)
-    
+
     Returns:
         ConfigModel: Initialized config model with test data
     """
@@ -69,14 +69,15 @@ def config_model(test_config):
 # MODEL FIXTURES
 # ================================================================
 
+
 @pytest.fixture
 def faculty_model(config_model):
     """
     Create a FacultyModel with test configuration.
-    
+
     Parameters:
         config_model (ConfigModel): Shared config model fixture
-    
+
     Returns:
         FacultyModel: Initialized faculty model
     """
@@ -87,10 +88,10 @@ def faculty_model(config_model):
 def course_model(config_model):
     """
     Create a CourseModel with test configuration.
-    
+
     Parameters:
         config_model (ConfigModel): Shared config model fixture
-    
+
     Returns:
         CourseModel: Initialized course model
     """
@@ -101,10 +102,10 @@ def course_model(config_model):
 def conflict_model(config_model):
     """
     Create a ConflictModel with test configuration.
-    
+
     Parameters:
         config_model (ConfigModel): Shared config model fixture
-    
+
     Returns:
         ConflictModel: Initialized conflict model
     """
@@ -115,10 +116,10 @@ def conflict_model(config_model):
 def lab_model(config_model):
     """
     Create a LabModel with test configuration.
-    
+
     Parameters:
         config_model (ConfigModel): Shared config model fixture
-    
+
     Returns:
         LabModel: Initialized lab model
     """
@@ -129,10 +130,10 @@ def lab_model(config_model):
 def room_model(config_model):
     """
     Create a RoomModel with test configuration.
-    
+
     Parameters:
         config_model (ConfigModel): Shared config model fixture
-    
+
     Returns:
         RoomModel: Initialized room model
     """
@@ -143,18 +144,17 @@ def room_model(config_model):
 # PYTEST CONFIGURATION
 # ================================================================
 
+
 def pytest_configure(config):
     """
     Pytest configuration hook.
-    
+
     Add custom markers here if needed.
     """
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
 
 
 # ================================================================
@@ -165,7 +165,7 @@ def pytest_configure(config):
 # def sample_faculty_data():
 #     """
 #     Provide sample faculty data for testing.
-#     
+#
 #     Returns:
 #         dict: Sample faculty configuration data
 #     """
@@ -181,7 +181,7 @@ def pytest_configure(config):
 # def sample_course_data():
 #     """
 #     Provide sample course data for testing.
-#     
+#
 #     Returns:
 #         dict: Sample course configuration data
 #     """

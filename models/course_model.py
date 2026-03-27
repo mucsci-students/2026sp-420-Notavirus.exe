@@ -8,13 +8,17 @@ This model class manages all course-related data operations including:
 - Checking for duplicate courses
 - Managing course conflicts
 """
+
 from scheduler import CourseConfig
+
+
 class CourseModel:
     """
     Model class for course data operations.
     Attributes:
         config_model: Reference to ConfigModel for file operations
     """
+
     def __init__(self, config_model):
         """
         Initialize CourseModel.
@@ -74,7 +78,9 @@ class CourseModel:
 
         return True
 
-    def modify_course(self, course_id: str, section_index: int = None, **updates) -> bool:
+    def modify_course(
+        self, course_id: str, section_index: int = None, **updates
+    ) -> bool:
         """
         Modify a course's attributes (in-memory only).
         Call config_model.safe_save() to persist changes to disk.
@@ -92,16 +98,16 @@ class CourseModel:
             if course.course_id == course_id:
                 if section_index is not None and i != section_index:
                     continue
-                if 'credits' in updates:
-                    if updates['credits'] < 0:
+                if "credits" in updates:
+                    if updates["credits"] < 0:
                         return False
-                    course.credits = updates['credits']
-                if 'room' in updates:
-                    course.room = updates['room']
-                if 'lab' in updates:
-                    course.lab = updates['lab']
-                if 'faculty' in updates:
-                    course.faculty = updates['faculty']
+                    course.credits = updates["credits"]
+                if "room" in updates:
+                    course.room = updates["room"]
+                if "lab" in updates:
+                    course.lab = updates["lab"]
+                if "faculty" in updates:
+                    course.faculty = updates["faculty"]
 
         return True
 
@@ -114,8 +120,7 @@ class CourseModel:
             bool: True if course exists, False otherwise
         """
         return any(
-            c.course_id == course_id
-            for c in self.config_model.config.config.courses
+            c.course_id == course_id for c in self.config_model.config.config.courses
         )
 
     def get_course_by_id(self, course_id: str) -> CourseConfig | None:

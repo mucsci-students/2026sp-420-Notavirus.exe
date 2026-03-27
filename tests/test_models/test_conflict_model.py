@@ -548,8 +548,8 @@ def test_conflict_exists_true(conflict_model, course_model):
 
     # Test
     assert conflict_model.conflict_exists("EXISTS A", "EXISTS B")
-    assert (
-        conflict_model.conflict_exists("EXISTS B", "EXISTS A")
+    assert conflict_model.conflict_exists(
+        "EXISTS B", "EXISTS A"
     )  # Order shouldn't matter
 
 

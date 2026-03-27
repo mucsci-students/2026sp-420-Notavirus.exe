@@ -10,7 +10,6 @@ This controller class manages all conflict workflows including:
 """
 
 
-
 class ConflictController:
     """
     Controller for conflict operations.

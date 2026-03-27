@@ -210,7 +210,9 @@ def modifyCourse(config_path: str):
                     editable_course.room = room_list
 
                 if lab:
-                    editable_course.lab = [lab_item.strip() for lab_item in lab.split(",")]
+                    editable_course.lab = [
+                        lab_item.strip() for lab_item in lab.split(",")
+                    ]
 
                 if faculty:
                     # Parse faculty input: supports adding (Name) and removing (-Name)

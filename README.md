@@ -343,8 +343,10 @@ Hypothetical Course Preferences
 Faculty course preferences can reference courses that don't exist yet. However, the configuration file on disk must always be valid. If the app fails to start with a validation error referencing a course preference, manually remove the invalid entry from the JSON file before restarting.
 
 Starting Without a Config File
-If you launch without a config path, you MUST load a config path to use the scheduler or editor.
+If you launch without a config path, you MUST load a configuration path to use the scheduler or editor.
 
+Apple Touch Icon Warnings
+When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs 404 warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
 ---
 
 # Acknowledgements

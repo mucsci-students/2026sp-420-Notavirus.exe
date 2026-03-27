@@ -276,7 +276,7 @@ class GUIView:
         Returns:        
             None
         """
-        ui.run(title='Scheduler', storage_secret='scheduler_secret_key')
+        ui.run(title='Scheduler', host='localhost', storage_secret='scheduler_secret_key')
 
 if __name__ in {"__main__", "__mp_main__"}:
     GUIView.runGUI()

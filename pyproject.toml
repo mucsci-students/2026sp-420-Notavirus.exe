@@ -24,3 +24,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.ty.src]
+exclude = ["oldcode"]

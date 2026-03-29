@@ -121,6 +121,8 @@ class GUIView:
                         with open(file_path, "wb") as f:
                             f.write(await e.file.read())
 
+                        if GUIView.controller is None:
+                            return
                         success, message = GUIView.controller.load_config(file_path)
 
                         if success:
@@ -157,10 +159,14 @@ class GUIView:
         Asks the Controller to save current in-memory state to disk, then downloads.
         """
         try:
+            if GUIView.controller is None:
+                return
             success = GUIView.controller.save_configuration()
             if success:
                 import os
 
+                if GUIView.controller is None:
+                    return
                 config_path = GUIView.controller.config_path
                 real_name = os.path.basename(config_path)
                 ui.download(config_path, real_name)

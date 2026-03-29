@@ -2,7 +2,6 @@
 """
 ScheduleGUIView - Graphical-user interface for schedule interactions
 
-✅ MVC rules followed in this file:
     - _ScheduleState holds only generated schedule data (UI state), not a Model reference.
     - No Model methods are called directly.
     - Config values (limit, config_path) are fetched through the Controller.
@@ -22,7 +21,6 @@ class _ScheduleState:
     """
     Holds only transient UI state: generated schedules and current page index.
 
-    ✅ No Model reference stored here. Config and model data come from the
        Controller when needed.
     """
 
@@ -215,7 +213,6 @@ FACULTY_COLUMNS = [
 
 
 class ScheduleGUIView:
-    # ✅ No class-level model or controller attributes.
     pass
 
     @ui.page("/run_scheduler")
@@ -230,7 +227,8 @@ class ScheduleGUIView:
 
         from views.gui_view import GUIView
 
-        # ✅ Ask Controller for config limit — no model access here.
+        if GUIView.controller is None:
+            return
         config_limit = GUIView.controller.get_schedule_limit()
 
         with ui.column().classes("gap-6 items-center w-full max-w-lg mx-auto pt-10"):
@@ -301,9 +299,10 @@ class ScheduleGUIView:
                 )
 
         async def on_generate():
-            # ✅ Ask Controller to generate — no model access here.
-            if not GUIView.controller.has_config():
+            if GUIView.controller is None or not GUIView.controller.has_config():
                 status_label.set_text("Error: No configuration loaded.")
+                return
+            if GUIView.controller is None:
                 return
             errors = GUIView.controller.validate_schedule_config()
             if errors:
@@ -315,6 +314,8 @@ class ScheduleGUIView:
             try:
 
                 def _run():
+                    if GUIView.controller is None:
+                        return []
                     return GUIView.controller.generate_schedules(limit=limit)
 
                 loop = asyncio.get_event_loop()
@@ -348,7 +349,8 @@ class ScheduleGUIView:
         from views.gui_view import GUIView
 
         async def handle_upload(e):
-            # ✅ Delegate import parsing to Controller.
+            if GUIView.controller is None:
+                return
             controller = GUIView.controller.schedule_controller
             if controller is None:
                 ui.notify("Controller not initialized", type="negative")
@@ -396,7 +398,6 @@ class ScheduleGUIView:
                 ).classes("w-full")
                 import os
 
-                # ✅ Ask Controller for config path — no model access here.
                 config_path = (
                     GUIView.controller.config_path if GUIView.controller else None
                 )
@@ -422,6 +423,8 @@ class ScheduleGUIView:
                     ]
                     schedules_to_export = [_state.schedules[i] for i in indices]
                     filename = filename_input.value.strip() or "schedules"
+                    if GUIView.controller is None:
+                        return
                     data = GUIView.controller.schedule_controller.export_schedules(
                         format_select.value, schedules_to_export
                     )
@@ -640,8 +643,9 @@ class ScheduleGUIView:
                     return
                 from views.gui_view import GUIView
 
-                # ✅ Ask the Controller to generate — no Model construction here.
                 #    Load config first if not already loaded.
+                if GUIView.controller is None:
+                    return
                 if GUIView.controller.config_path != sys.argv[1]:
                     ok, msg = GUIView.controller.load_config(sys.argv[1])
                     if not ok:
@@ -649,6 +653,8 @@ class ScheduleGUIView:
                         return
 
                 def _generate():
+                    if GUIView.controller is None:
+                        return []
                     return GUIView.controller.generate_schedules(limit=2)
 
                 loop = asyncio.get_event_loop()

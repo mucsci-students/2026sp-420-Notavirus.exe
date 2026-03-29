@@ -262,7 +262,7 @@ def runScheduler(config: scheduler.CombinedConfig):
     generateSchedule(config, outputFile if saveToFile else None)
 
 
-def generateSchedule(config: scheduler.CombinedConfig, outputFile: str = None):
+def generateSchedule(config: scheduler.CombinedConfig, outputFile: str | None = None):
     """
     Generate schedules and output to file and/or console
 

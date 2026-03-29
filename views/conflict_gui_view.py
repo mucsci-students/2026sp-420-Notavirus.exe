@@ -86,6 +86,8 @@ class ConflictGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.conflict_controller
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
@@ -211,6 +213,8 @@ class ConflictGUIView:
                     status.set_text(f"⚠ {message}")
 
             def do_save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("courses")
                 if success:
                     pending["dirty"] = False
@@ -254,6 +258,8 @@ class ConflictGUIView:
             return
         from views.gui_view import GUIView
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.conflict_controller
 
         courses_with_sections = controller.get_courses_with_sections()
@@ -317,7 +323,7 @@ class ConflictGUIView:
 
             def check_discard_and_navigate(target_url):
                 if selected.get("dirty"):
-                    confirm_dialog.target_url = target_url
+                    setattr(confirm_dialog, "target_url", target_url)
                     confirm_dialog.open()
                 else:
                     ui.navigate.to(target_url)
@@ -430,7 +436,10 @@ class ConflictGUIView:
                     feedback.set_text("Please select a conflict to modify.")
                     feedback.classes(replace="text-lg text-red-600")
                     return
-                c1, c2, i1, i2 = selected["value"]
+                val = selected["value"]
+                if not isinstance(val, tuple):
+                    return
+                c1, c2, i1, i2 = val
                 old_c1 = section_label_map.get(i1, c1) if i1 is not None else c1
                 old_c2 = section_label_map.get(i2, c2) if i2 is not None else c2
                 new_c1 = new_course_a.value
@@ -469,6 +478,8 @@ class ConflictGUIView:
                     new_course_b.value = None
 
             def handle_save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("courses")
                 if success:
                     selected["dirty"] = False
@@ -513,6 +524,8 @@ class ConflictGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.conflict_controller
 
         courses_with_sections = controller.get_courses_with_sections()
@@ -568,7 +581,7 @@ class ConflictGUIView:
 
             def check_discard_and_navigate_del(target_url):
                 if selected.get("dirty"):
-                    confirm_dialog_del.target_url = target_url
+                    setattr(confirm_dialog_del, "target_url", target_url)
                     confirm_dialog_del.open()
                 else:
                     ui.navigate.to(target_url)
@@ -635,7 +648,10 @@ class ConflictGUIView:
                     def on_confirm():
                         if not selected["value"]:
                             return
-                        c1, c2, i1, i2 = selected["value"]
+                        val = selected["value"]
+                        if not isinstance(val, tuple):
+                            return
+                        c1, c2, i1, i2 = val
                         s1 = section_label_map.get(i1, c1) if i1 is not None else c1
                         s2 = section_label_map.get(i2, c2) if i2 is not None else c2
                         success, message = controller.gui_delete_conflict(
@@ -688,7 +704,10 @@ class ConflictGUIView:
                     feedback.classes(replace="text-lg text-red-600")
                     confirm_card.set_visibility(False)
                     return
-                c1, c2, i1, i2 = selected["value"]
+                val = selected["value"]
+                if not isinstance(val, tuple):
+                    return
+                c1, c2, i1, i2 = val
                 valid, error = (
                     controller.gui_validate_delete(i1, i2, existing_conflicts)
                     if i1 is not None
@@ -704,6 +723,8 @@ class ConflictGUIView:
                 confirm_card.set_visibility(True)
 
             def handle_save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("courses")
                 if success:
                     selected["dirty"] = False
@@ -753,6 +774,8 @@ class ConflictGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.conflict_controller
         all_courses = controller.get_all_courses()
 

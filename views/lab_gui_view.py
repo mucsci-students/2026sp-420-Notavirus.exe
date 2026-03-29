@@ -75,6 +75,8 @@ class LabGUIView:
         """)
 
         # Read controller at render time.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.lab_controller
 
         with ui.column().classes("gap-6 items-center w-full"):
@@ -128,6 +130,8 @@ class LabGUIView:
 
             def save_to_config():
                 """Write labs to config file via main Controller."""
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     save_label.set_text("Configuration saved to file.")
@@ -174,6 +178,8 @@ class LabGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.lab_controller
         labs = controller.get_all_labs()
 
@@ -213,6 +219,8 @@ class LabGUIView:
                     save_label.classes(replace="text-base text-orange-500")
 
             def handle_save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     save_label.set_text("Configuration saved to file.")
@@ -260,6 +268,8 @@ class LabGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.lab_controller
         selected_labs = []
 
@@ -325,6 +335,8 @@ class LabGUIView:
 
             def on_save_to_config():
                 """Write current memory state to config via main Controller."""
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     result_label.set_text("")
@@ -370,6 +382,8 @@ class LabGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.lab_controller
         labs = controller.get_all_labs()
 

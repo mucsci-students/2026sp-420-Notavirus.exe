@@ -35,8 +35,8 @@ class ConflictModel:
         self,
         course_id_1: str,
         course_id_2: str,
-        section_index_1: int = None,
-        section_index_2: int = None,
+        section_index_1: int | None = None,
+        section_index_2: int | None = None,
     ) -> bool:
         """
         Add a mutual conflict between two courses (in-memory only).
@@ -92,8 +92,8 @@ class ConflictModel:
         self,
         course_id_1: str,
         course_id_2: str,
-        section_index_1: int = None,
-        section_index_2: int = None,
+        section_index_1: int | None = None,
+        section_index_2: int | None = None,
     ) -> bool:
         """
         Delete a mutual conflict between two courses (in-memory only).

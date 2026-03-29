@@ -96,6 +96,8 @@ def require_config(back_url: str = "/") -> bool:
 
                         from views.gui_view import GUIView
 
+                        if GUIView.controller is None:
+                            return
                         success, message = GUIView.controller.load_config(file_path)
 
                         if success:

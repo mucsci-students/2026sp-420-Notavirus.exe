@@ -41,7 +41,7 @@ class CourseModel:
         self.config_model.config.config.courses.append(course)
         return True
 
-    def delete_course(self, course_id: str, section_index: int = None) -> bool:
+    def delete_course(self, course_id: str, section_index: int | None = None) -> bool:
         """
         Delete course by ID and optional section index (in-memory only).
         Also removes all references to this course from conflicts and faculty preferences.
@@ -79,7 +79,7 @@ class CourseModel:
         return True
 
     def modify_course(
-        self, course_id: str, section_index: int = None, **updates
+        self, course_id: str, section_index: int | None = None, **updates
     ) -> bool:
         """
         Modify a course's attributes (in-memory only).

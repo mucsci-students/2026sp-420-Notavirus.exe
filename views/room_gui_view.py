@@ -81,6 +81,8 @@ class RoomGUIView:
             return
         from views.gui_view import GUIView
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.room_controller
 
         with ui.column().classes("gap-6 items-center w-full"):
@@ -125,6 +127,8 @@ class RoomGUIView:
                     if not success:
                         result_label.set_text(message)
                         return
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     result_label.set_text("Room saved to config file.")
@@ -166,6 +170,8 @@ class RoomGUIView:
             return
         from views.gui_view import GUIView
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.room_controller
 
         with ui.column().classes("gap-6 items-center w-full"):
@@ -218,6 +224,8 @@ class RoomGUIView:
                     if not success:
                         result_label.set_text(message)
                         return
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     result_label.set_text("Room saved to config file.")
@@ -263,6 +271,8 @@ class RoomGUIView:
             .body--dark .q-item__label { color: white !important; }
         """)
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.room_controller
         rooms = controller.get_all_rooms()
 
@@ -303,6 +313,8 @@ class RoomGUIView:
                     selected_room.set_value(None)
 
             def save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     save_label.set_text("Configuration saved to file.")
@@ -346,6 +358,8 @@ class RoomGUIView:
         from views.gui_view import GUIView
 
         # Was previously accessing model, now accesses controller
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.room_controller
         rooms = controller.get_all_rooms()
 

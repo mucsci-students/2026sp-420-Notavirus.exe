@@ -91,6 +91,8 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         # Read controller reference at render time — never stored as class attr.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.course_controller
         resources = controller.get_available_resources()
 
@@ -180,6 +182,8 @@ class CourseGUIView:
                 Delegates persistence entirely to the Controller.
                 The View never calls model methods directly.
                 """
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("courses")
                 if success:
                     selected["dirty"] = False
@@ -261,6 +265,8 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         # Read controller reference at render time — never stored as class attr.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.course_controller
         resources = controller.get_available_resources()
 
@@ -414,6 +420,8 @@ class CourseGUIView:
                     Delegates persistence entirely to the Controller.
                     The View never calls model methods directly.
                     """
+                    if GUIView.controller is None:
+                        return
                     success = GUIView.controller.save_to_config("all")
                     if success:
                         save_label.set_text("Configuration saved to file.")
@@ -462,6 +470,8 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         # Read controller reference at render time — never stored as class attr.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.course_controller
         existing_courses = controller.get_courses_with_sections()
 
@@ -498,16 +508,17 @@ class CourseGUIView:
                 label: (course.course_id, index)
                 for label, index, course in existing_courses
             }
-            selected = {"value": None, "dirty": False}
+            selected: dict = {"value": None, "dirty": False}
 
             select = (
                 ui.select(
                     options=list(section_options.keys()),
                     label="Select Course Section",
-                    on_change=lambda e: selected.update(
-                        {"value": section_options[e.value]}
+                    on_change=lambda e: selected.__setitem__(
+                        "value",
+                        section_options[e.value]
                         if e.value in section_options
-                        else {"value": None}
+                        else None,
                     ),
                 )
                 .props("label-color=grey-7")
@@ -519,7 +530,10 @@ class CourseGUIView:
                     status_label.set_text("Please select a course section to delete.")
                     return
 
-                course_id, section_index = selected["value"]
+                val = selected["value"]
+                if not isinstance(val, tuple):
+                    return
+                course_id, section_index = val
 
                 with ui.dialog() as dialog, ui.card():
                     ui.label(
@@ -566,6 +580,8 @@ class CourseGUIView:
                 """
                 Delegates persistence entirely to the Controller.
                 """
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     selected["dirty"] = False
@@ -610,6 +626,8 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         # Read controller reference at render time — never stored as class attr.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.course_controller
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):

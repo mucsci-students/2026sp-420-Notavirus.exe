@@ -78,6 +78,8 @@ class FacultyGUIView:
         from views.gui_view import GUIView
 
         # Read controller reference at render time.
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.faculty_controller
 
         with ui.column().classes("w-full items-center font-sans p-8 gap-0"):
@@ -415,6 +417,8 @@ class FacultyGUIView:
                     if not success:
                         ui.notify(message, type="negative")
                         return
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("faculty")
                 if success:
                     ui.notify("Faculty saved to config file.", type="positive")
@@ -465,6 +469,8 @@ class FacultyGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.faculty_controller
         all_faculty = controller.get_all_faculty()
 
@@ -503,7 +509,10 @@ class FacultyGUIView:
             )
 
             def reload_form():
-                updated = controller.get_faculty_by_name(selected_faculty["value"].name)
+                val = selected_faculty["value"]
+                if not val:
+                    return
+                updated = controller.get_faculty_by_name(val.name)
                 selected_faculty["value"] = updated
                 faculty_options[updated.name] = updated
                 form_card.clear()
@@ -512,6 +521,8 @@ class FacultyGUIView:
             def apply(field, value, feedback_label):
                 """Apply a single field update via the Controller."""
                 f = selected_faculty["value"]
+                if not f:
+                    return
                 success, message = controller.modify_faculty_field(f.name, field, value)
                 if success:
                     feedback_label.set_text("Updated in memory.")
@@ -538,8 +549,11 @@ class FacultyGUIView:
                             )
 
                             def set_position(is_full):
+                                val = selected_faculty["value"]
+                                if not val:
+                                    return
                                 success, message = controller.set_position(
-                                    selected_faculty["value"].name, is_full
+                                    val.name, is_full
                                 )
                                 label = "Full-time" if is_full else "Adjunct"
                                 if success:
@@ -583,8 +597,11 @@ class FacultyGUIView:
                                 ).classes("w-32")
 
                                 def save_max_credits():
+                                    val = selected_faculty["value"]
+                                    if not val:
+                                        return
                                     success, message = controller.set_maximum_credits(
-                                        selected_faculty["value"].name,
+                                        val.name,
                                         int(max_credits_input.value),
                                     )
                                     if success:
@@ -711,9 +728,10 @@ class FacultyGUIView:
                                         )
                                         return
                                     try:
-                                        new_times = dict(
-                                            selected_faculty["value"].times
-                                        )
+                                        val = selected_faculty["value"]
+                                        if not val:
+                                            return
+                                        new_times = dict(val.times)
                                         new_times[day_select.value] = [
                                             TR(start=start_val, end=end_val)
                                         ]
@@ -737,7 +755,10 @@ class FacultyGUIView:
                                         replace="text-md text-red-600"
                                     )
                                     return
-                                new_times = dict(selected_faculty["value"].times)
+                                val = selected_faculty["value"]
+                                if not val:
+                                    return
+                                new_times = dict(val.times)
                                 new_times[day_select.value] = []
                                 apply("times", new_times, times_feedback)
 
@@ -786,9 +807,10 @@ class FacultyGUIView:
                                             replace="text-md text-red-600"
                                         )
                                         return
-                                    new_prefs = dict(
-                                        selected_faculty["value"].course_preferences
-                                    )
+                                    val = selected_faculty["value"]
+                                    if not val:
+                                        return
+                                    new_prefs = dict(val.course_preferences)
                                     new_prefs[course] = int(weight_input.value)
                                     apply(
                                         "course_preferences",
@@ -813,9 +835,10 @@ class FacultyGUIView:
                                     def remove_course_pref():
                                         if not remove_course_select.value:
                                             return
-                                        new_prefs = dict(
-                                            selected_faculty["value"].course_preferences
-                                        )
+                                        val = selected_faculty["value"]
+                                        if not val:
+                                            return
+                                        new_prefs = dict(val.course_preferences)
                                         new_prefs.pop(remove_course_select.value, None)
                                         apply(
                                             "course_preferences",
@@ -870,9 +893,10 @@ class FacultyGUIView:
                                                 replace="text-md text-red-600"
                                             )
                                             return
-                                        new_prefs = dict(
-                                            selected_faculty["value"].room_preferences
-                                        )
+                                        val = selected_faculty["value"]
+                                        if not val:
+                                            return
+                                        new_prefs = dict(val.room_preferences)
                                         new_prefs[room_select.value] = int(
                                             room_weight_input.value
                                         )
@@ -899,11 +923,10 @@ class FacultyGUIView:
                                         def remove_room_pref():
                                             if not remove_room_select.value:
                                                 return
-                                            new_prefs = dict(
-                                                selected_faculty[
-                                                    "value"
-                                                ].room_preferences
-                                            )
+                                            val = selected_faculty["value"]
+                                            if not val:
+                                                return
+                                            new_prefs = dict(val.room_preferences)
                                             new_prefs.pop(
                                                 remove_room_select.value, None
                                             )
@@ -964,9 +987,10 @@ class FacultyGUIView:
                                                 replace="text-md text-red-600"
                                             )
                                             return
-                                        new_prefs = dict(
-                                            selected_faculty["value"].lab_preferences
-                                        )
+                                        val = selected_faculty["value"]
+                                        if not val:
+                                            return
+                                        new_prefs = dict(val.lab_preferences)
                                         new_prefs[lab_select.value] = int(
                                             lab_weight_input.value
                                         )
@@ -993,11 +1017,10 @@ class FacultyGUIView:
                                         def remove_lab_pref():
                                             if not remove_lab_select.value:
                                                 return
-                                            new_prefs = dict(
-                                                selected_faculty[
-                                                    "value"
-                                                ].lab_preferences
-                                            )
+                                            val = selected_faculty["value"]
+                                            if not val:
+                                                return
+                                            new_prefs = dict(val.lab_preferences)
                                             new_prefs.pop(remove_lab_select.value, None)
                                             apply(
                                                 "lab_preferences",
@@ -1024,6 +1047,8 @@ class FacultyGUIView:
                 build_form(f)
 
             def handle_save():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.temp_save("all")
                 if success:
                     save_config_label.set_text("Changes saved to memory.")
@@ -1033,6 +1058,8 @@ class FacultyGUIView:
                     save_config_label.classes(replace="text-lg text-red-600")
 
             def handle_save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     save_config_label.set_text("Configuration saved to file.")
@@ -1090,6 +1117,8 @@ class FacultyGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.faculty_controller
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
@@ -1174,6 +1203,8 @@ class FacultyGUIView:
             build(container)
 
             def save_to_config():
+                if GUIView.controller is None:
+                    return
                 success = GUIView.controller.save_to_config("all")
                 if success:
                     save_label.set_text("Deletions saved to config file.")
@@ -1218,6 +1249,8 @@ class FacultyGUIView:
             "dark:!bg-black"
         )
 
+        if GUIView.controller is None:
+            return
         controller = GUIView.controller.faculty_controller
         faculty_list = controller.get_all_faculty()
 

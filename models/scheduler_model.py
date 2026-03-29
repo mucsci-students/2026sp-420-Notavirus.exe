@@ -40,7 +40,7 @@ class SchedulerModel:
         """
         self.config_model = config_model
 
-    def generate_schedules(self, limit: int = None):
+    def generate_schedules(self, limit: int | None = None):
         """
         Generate schedules using the Scheduler.
 

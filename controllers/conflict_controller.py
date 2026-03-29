@@ -121,8 +121,8 @@ class ConflictController:
         self,
         course_id_a: str,
         course_id_b: str,
-        section_index_a: int = None,
-        section_index_b: int = None,
+        section_index_a: int | None = None,
+        section_index_b: int | None = None,
     ) -> tuple[bool, str]:
         """
         Add a conflict between two courses and temp-save.
@@ -182,8 +182,8 @@ class ConflictController:
         old_c2: str,
         new_c1: str,
         new_c2: str,
-        i1: int = None,
-        i2: int = None,
+        i1: int | None = None,
+        i2: int | None = None,
     ) -> tuple[bool, str]:
         """
         Modify an existing conflict and temp-save.

@@ -71,11 +71,12 @@ class FacultyModel:
             return False
 
         faculty_to_delete = self.get_faculty_by_name(name)
-        for course in self.config_model.config.config.courses:
-            if faculty_to_delete.name in course.faculty:
-                course.faculty = [
-                    f for f in course.faculty if f != faculty_to_delete.name
-                ]
+        if faculty_to_delete:
+            for course in self.config_model.config.config.courses:
+                if faculty_to_delete.name in course.faculty:
+                    course.faculty = [
+                        f for f in course.faculty if f != faculty_to_delete.name
+                    ]
         self.config_model.config.config.faculty = [
             f
             for f in self.config_model.config.config.faculty

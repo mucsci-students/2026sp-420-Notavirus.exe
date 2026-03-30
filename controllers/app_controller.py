@@ -20,10 +20,12 @@ from controllers.conflict_controller import ConflictController
 from controllers.lab_controller import LabController
 from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
+from controllers.chatbot_controller import ChatbotController
 
 from views.gui_view import GUIView
 from views.lab_gui_view import LabGUIView
 from views.room_gui_view import RoomGUIView
+from views.chatbot_gui_view import ChatbotGUIView
 from nicegui import ui
 
 
@@ -81,6 +83,7 @@ class SchedulerController:
             self.lab_controller      = None
             self.room_controller     = None
             self.schedule_controller = None
+            self.chatbot_controller  = None
             return
 
         # Initialize config model
@@ -101,6 +104,9 @@ class SchedulerController:
         self.lab_controller      = LabController(self.lab_model, self.view)
         self.room_controller     = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
+        self.chatbot_controller  = ChatbotController(
+            self.lab_model, self.room_model, self.course_model, self.faculty_model, self.conflict_model
+        )
 
         LabGUIView._lab_controller = self.lab_controller
 
@@ -129,6 +135,8 @@ class SchedulerController:
 
         _schedule_state._scheduler_model    = self.scheduler_model
         ScheduleGUIView.schedule_controller = self.schedule_controller
+
+        ChatbotGUIView._chatbot_controller  = self.chatbot_controller
 
         GUIView.controller = self
 

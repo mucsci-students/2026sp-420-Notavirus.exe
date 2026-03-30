@@ -118,8 +118,8 @@ def test_add_existing_room_from_config(room_model):
     Parameters:
         room_model (RoomModel): Room model fixture
     """
-    # Roddy 140 exists in example.json
-    result = room_model.add_room("Roddy 140")
+    # Roddy 136 exists in example.json
+    result = room_model.add_room("Roddy 136")
     
     assert result == False
 

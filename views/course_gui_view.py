@@ -63,7 +63,6 @@ class CourseGUIView:
         from views.gui_view import GUIView
 
         controller = GUIView.controller.course_controller
-        config_model = GUIView.controller.config_model
         resources = controller.get_available_resources()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
@@ -71,8 +70,6 @@ class CourseGUIView:
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
             ui.label('Add Course').classes('text-4xl mb-4 !text-black dark:!text-white')
             ui.label('To add a course enter at least a course ID and credits. When adding duplicate courses, multiple sections will be created.').classes('text-base !text-black dark:!text-white text-center max-w-xl mb-2')
-
-            selected = {'dirty': False}
 
             @ui.refreshable
             def course_table():
@@ -120,10 +117,6 @@ class CourseGUIView:
                     result_label.set_text(message)
 
                     if success:
-                        selected['dirty'] = True
-                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                        save_label.classes(replace='text-lg text-orange-500')
-                        config_model.save_feature('temp', 'courses')
                         course_id_input.set_value('')
                         credits_input.set_value(4)
                         room_select.set_value([])
@@ -134,16 +127,6 @@ class CourseGUIView:
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
-            def handle_save():
-                success = config_model.save_feature('config', 'courses')
-                if success:
-                    selected['dirty'] = False
-                    save_label.set_text('Configuration saved successfully.')
-                    save_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-lg text-red-600')
-
             with ui.row().classes('justify-center items-start w-full gap-[150px]'):
                 with ui.column().classes('items-center gap-4 pt-10'):
                     course_id_input = ui.input(label='Course ID (e.g. CMSC 161)').props('rounded outlined label-color=grey-7').classes('w-80')
@@ -152,9 +135,7 @@ class CourseGUIView:
                     lab_select = ui.select(resources['labs'], label='Labs', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
                     faculty_select = ui.select(resources['faculty'], label='Faculty', multiple=True).props('rounded outlined label-color=grey-7').classes('w-80')
                     result_label = ui.label('').classes('text-base')
-                    save_label = ui.label('').classes('text-lg')
                     ui.button('Add Course').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_add)
-                    ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
                     ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
                 with ui.column().classes('items-center gap-2'):
@@ -196,7 +177,6 @@ class CourseGUIView:
             section_map = {label: (idx, course) for label, idx, course in sections}
             section_labels = [label for label, _, _ in sections]
             status = ui.label('').classes('text-sm !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-lg')
 
             with ui.card().classes('w-full max-w-lg p-6 gap-4'):
                 selected_label = ui.select(section_labels, label='Section to Modify',
@@ -270,11 +250,7 @@ class CourseGUIView:
 
                     ok, message = controller.modify_course(cid, section_idx, updates)
                     if ok:
-                        from views.gui_view import GUIView
-                        GUIView.controller.config_model.save_feature('temp', 'all')
-                        status.set_text(f"'{selected_label.value}' updated in memory.")
-                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                        save_label.classes(replace='text-lg text-orange-500')
+                        status.set_text(f"'{selected_label.value}' updated.")
                         credits_input.set_value(None)
                         new_sections = model.get_courses_with_sections()
                         section_map.clear()
@@ -283,21 +259,9 @@ class CourseGUIView:
                     else:
                         status.set_text(f"⚠ {message}")
 
-                def do_save_to_config():
-                    from views.gui_view import GUIView
-                    success = GUIView.controller.config_model.save_feature('config', 'all')
-                    if success:
-                        save_label.set_text('Configuration saved to file.')
-                        save_label.classes(replace='text-lg text-green-600')
-                    else:
-                        save_label.set_text('Save failed. Check terminal for details.')
-                        save_label.classes(replace='text-lg text-red-600')
-
                 ui.button('Apply Changes').props('rounded color=black text-color=white no-caps').classes('w-full h-12 mt-2 dark:!bg-white dark:!text-black').on('click', do_modify)
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-full h-12 dark:!bg-white dark:!text-black').on('click', do_save_to_config)
 
             status
-            save_label
             ui.button('Back').props('rounded color=black text-color=white no-caps') \
                 .classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
@@ -319,7 +283,6 @@ class CourseGUIView:
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
         controller = GUIView.controller.course_controller
-        config_model = GUIView.controller.config_model
         existing_courses = controller.get_courses_with_sections()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
@@ -335,10 +298,9 @@ class CourseGUIView:
                 return
 
             status_label = ui.label('').classes('text-lg !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-lg !text-black dark:!text-white')
 
             section_options = {label: (course.course_id, index) for label, index, course in existing_courses}
-            selected = {'value': None, 'dirty': False}
+            selected = {'value': None}
 
             select = ui.select(
                 options=list(section_options.keys()),
@@ -362,10 +324,6 @@ class CourseGUIView:
                             success, message = controller.delete_course(course_id, section_index)
                             status_label.set_text(message)
                             if success:
-                                selected['dirty'] = True
-                                save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                                save_label.classes(replace='text-lg text-orange-500')
-                                config_model.save_feature('temp', 'all')
                                 updated = controller.get_courses_with_sections()
                                 new_options = {label: (course.course_id, index) for label, index, course in updated}
                                 section_options.clear()
@@ -377,18 +335,7 @@ class CourseGUIView:
 
                 dialog.open()
 
-            def handle_save():
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    selected['dirty'] = False
-                    save_label.set_text('Configuration saved to file.')
-                    save_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-lg text-red-600')
-
             ui.button('Delete Course').props('rounded color=red text-color=white no-caps').classes('w-80 h-16 text-xl').on('click', handle_delete)
-            ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/course'))
 
     @ui.page('/course/view')

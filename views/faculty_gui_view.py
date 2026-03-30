@@ -242,7 +242,7 @@ class FacultyGUIView:
                 }
 
             def save_faculty():
-                """Save to in-memory model only."""
+                """Save to memory and persist to config immediately."""
                 faculty_data = _collect_faculty_data()
                 if faculty_data is None:
                     return
@@ -252,8 +252,9 @@ class FacultyGUIView:
                         ui.notify('System not initialized properly.', type='negative')
                         return
                     controller = GUIView.controller.faculty_controller
+                    config_model = GUIView.controller.config_model
                     if controller.add_faculty(faculty_data):
-                        ui.notify(f"Faculty '{faculty_data['name']}' saved to memory.", type='positive')
+                        ui.notify(f"Faculty '{faculty_data['name']}' added.", type='positive')
                         name_input.value = ''
                         refresh_faculty_list()
                     else:
@@ -261,44 +262,9 @@ class FacultyGUIView:
                 except Exception as e:
                     ui.notify(f"Error saving: {e}", type='negative')
 
-            def save_faculty_to_config():
-                """
-                Save to in-memory model if not already there, then write to config file.
-                If name field is empty, skips add and just dumps memory to disk.
-                """
-                try:
-                    from views.gui_view import GUIView
-                    if not GUIView.controller:
-                        ui.notify('System not initialized properly.', type='negative')
-                        return
-                    controller = GUIView.controller.faculty_controller
-                    config_model = GUIView.controller.config_model
-
-                    # Only try to add from form if a name is entered
-                    if name_input.value:
-                        faculty_data = _collect_faculty_data()
-                        if faculty_data is None:
-                            return
-                        existing = [f.name for f in controller.model.get_all_faculty()]
-                        if faculty_data['name'] not in existing:
-                            if not controller.add_faculty(faculty_data):
-                                ui.notify(f"Failed to add faculty.", type='negative')
-                                return
-
-                    # Always dump memory to disk
-                    if config_model.save_feature('config', 'faculty'):
-                        ui.notify("Faculty saved to config file.", type='positive')
-                    else:
-                        ui.notify("Config save failed.", type='warning')
-                    name_input.value = ''
-                    refresh_faculty_list()
-                except Exception as e:
-                    ui.notify(f"Error saving: {e}", type='negative')
-
             with ui.row().classes('w-full max-w-6xl justify-between items-end mt-16'):
                 ui.button('Cancel').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
                 ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', save_faculty)
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black').on('click', save_faculty_to_config)
 
     @ui.page('/faculty/modify')
     @staticmethod
@@ -323,7 +289,6 @@ class FacultyGUIView:
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
 
         controller = GUIView.controller.faculty_controller
-        config_model = GUIView.controller.config_model
         all_faculty = controller.model.get_all_faculty()
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans gap-6'):
@@ -331,7 +296,7 @@ class FacultyGUIView:
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
 
             ui.label('Modify Faculty').classes('text-4xl mb-4 !text-black dark:!text-white')
-            ui.label('Select a Faculty member to modify their information. Press "Save" to keep changes in memory, or "Save to Config" to permanently write to the config file.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
+            ui.label('Select a Faculty member to modify their information.').classes('text-lg !text-black dark:!text-white text-center max-w-xl')
 
             if not all_faculty:
                 ui.label('There are no faculty in the configuration.').classes('text-xl !text-black dark:!text-white')
@@ -342,7 +307,6 @@ class FacultyGUIView:
             selected_faculty = {'value': None}
             form_card = ui.card().classes('w-full max-w-2xl')
             form_card.set_visibility(False)
-            save_config_label = ui.label('').classes('text-lg !text-black dark:!text-white')
 
             def reload_form():
                 try:
@@ -358,8 +322,7 @@ class FacultyGUIView:
                 f = selected_faculty['value']
                 success = controller.model.modify_faculty(f.name, field, value)
                 if success:
-                    config_model.save_feature('temp', 'all')
-                    feedback_label.set_text('Updated in memory.')
+                    feedback_label.set_text('Updated.')
                     feedback_label.classes(replace='text-md text-green-600')
                     reload_form()
                 else:
@@ -380,7 +343,6 @@ class FacultyGUIView:
                                 ui.button('Set Full-time').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, True),
-                                        config_model.save_feature('temp', 'all'),
                                         position_feedback.set_text('Position set to Full-time.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -389,7 +351,6 @@ class FacultyGUIView:
                                 ui.button('Set Adjunct').props('rounded color=black text-color=white no-caps').on(
                                     'click', lambda: [
                                         controller.gui_set_position(selected_faculty['value'].name, False),
-                                        config_model.save_feature('temp', 'all'),
                                         position_feedback.set_text('Position set to Adjunct.'),
                                         position_feedback.classes(replace='text-md text-green-600'),
                                         reload_form()
@@ -411,8 +372,7 @@ class FacultyGUIView:
                                         selected_faculty['value'].name, int(max_credits_input.value)
                                     )
                                     if success:
-                                        config_model.save_feature('temp', 'all')
-                                        max_credits_feedback.set_text('Updated in memory.')
+                                        max_credits_feedback.set_text('Updated.')
                                         max_credits_feedback.classes(replace='text-md text-green-600')
                                     reload_form()
 
@@ -652,27 +612,6 @@ class FacultyGUIView:
                 form_card.set_visibility(True)
                 build_form(f)
 
-            def handle_save():
-                """Save changes to in-memory model only."""
-                success = config_model.save_feature('temp', 'all')
-                if success:
-                    save_config_label.set_text('Changes saved to memory.')
-                    save_config_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_config_label.set_text('Save failed. Check terminal for details.')
-                    save_config_label.classes(replace='text-lg text-red-600')
-
-            def handle_save_to_config():
-                """Flush any temp changes then write permanently to config file."""
-                config_model.save_feature('temp', 'all')
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    save_config_label.set_text('Configuration saved to file.')
-                    save_config_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_config_label.set_text('Save failed. Check terminal for details.')
-                    save_config_label.classes(replace='text-lg text-red-600')
-
             ui.select(
                 options=list(faculty_options.keys()),
                 label='Select Faculty Member',
@@ -680,10 +619,6 @@ class FacultyGUIView:
             ).props('label-color=grey-7').classes('w-full max-w-2xl text-xl')
 
             form_card
-            save_config_label
-            with ui.row().classes('gap-4 mt-4'):
-                ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save)
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/delete')
@@ -715,7 +650,6 @@ class FacultyGUIView:
 
             container  = ui.column().classes('w-full max-w-lg gap-3 items-center')
             status     = ui.label('').classes('text-sm !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-sm !text-black dark:!text-white')
 
             def build(c):
                 c.clear()
@@ -744,14 +678,13 @@ class FacultyGUIView:
                                     def _delete():
                                         with ui.dialog() as dlg, ui.card().classes('p-8 gap-4 items-center text-center'):
                                             ui.label(f"Delete '{name}'?").classes('text-xl font-bold')
-                                            ui.label('This will remove them from memory. Use "Save to Config" to persist.').classes('text-sm text-gray-500')
                                             with ui.row().classes('gap-4 mt-4'):
                                                 ui.button('Cancel', on_click=dlg.close).props('rounded color=black text-color=white no-caps')
 
                                                 def confirm(d=dlg, n=name, mod=m, s=sl):
                                                     ok = mod.delete_faculty(n)
                                                     d.close()
-                                                    s.set_text(f"✓ '{n}' deleted from memory." if ok else f"⚠ Could not delete '{n}'.")
+                                                    s.set_text(f"✓ '{n}' deleted." if ok else f"⚠ Could not delete '{n}'.")
                                                     build(container)
 
                                                 ui.button('Delete', on_click=confirm).props('rounded color=red text-color=white no-caps')
@@ -762,20 +695,6 @@ class FacultyGUIView:
 
             build(container)
 
-            def save_to_config():
-                from views.gui_view import GUIView
-                config_model = GUIView.controller.config_model
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    save_label.set_text('Deletions saved to config file.')
-                    save_label.classes(replace='text-sm text-green-600')
-                else:
-                    save_label.set_text('Config save failed.')
-                    save_label.classes(replace='text-sm text-red-600')
-
-            save_label
-            with ui.row().classes('gap-4 mt-4'):
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/faculty'))
 
     @ui.page('/faculty/view')

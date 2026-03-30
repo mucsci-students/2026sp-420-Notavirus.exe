@@ -143,6 +143,51 @@ class CourseModel:
         """
         return self.config_model.config.config.courses
 
+    def build_course_config(self, data: dict) -> CourseConfig:
+        """
+        Build a CourseConfig object from raw input data.
+
+        Parameters:
+            data (dict): Dictionary with keys: course_id, credits, room, lab, faculty, conflicts
+
+        Returns:
+            CourseConfig: Configured course object
+        """
+        return CourseConfig(
+            course_id=data['course_id'],
+            credits=data['credits'],
+            room=data['room'],
+            lab=data['lab'],
+            faculty=data['faculty'],
+            conflicts=data['conflicts'],
+        )
+
+    def validate_resources(self, rooms: list, labs: list, faculty_names: list) -> tuple[bool, str]:
+        """
+        Validate that rooms, labs, and faculty names exist in the configuration.
+
+        Parameters:
+            rooms (list): Room names to validate
+            labs (list): Lab names to validate
+            faculty_names (list): Faculty names to validate
+
+        Returns:
+            tuple[bool, str]: (is_valid, error_message)
+        """
+        valid_rooms = self.config_model.get_all_rooms()
+        for r in rooms:
+            if r not in valid_rooms:
+                return False, f"Invalid room '{r}'. Room does not exist in configuration."
+        valid_labs = self.config_model.get_all_labs()
+        for l in labs:
+            if l not in valid_labs:
+                return False, f"Invalid lab '{l}'. Lab does not exist in configuration."
+        valid_faculty = [f.name for f in self.config_model.get_all_faculty()]
+        for f in faculty_names:
+            if f not in valid_faculty:
+                return False, f"Invalid faculty '{f}'. Faculty does not exist."
+        return True, ""
+
     def get_courses_with_sections(self) -> list[tuple[str, int, CourseConfig]]:
         """
         Get all courses with section labels.

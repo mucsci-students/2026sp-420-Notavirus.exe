@@ -13,3 +13,9 @@ test_copy.json
 .DS_Store
 .nicegui/
 
+
+.claude/
+
+
+.env
+

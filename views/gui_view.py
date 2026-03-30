@@ -98,6 +98,8 @@ class GUIView:
                     from controllers.lab_controller import LabController
                     from controllers.room_controller import RoomController
                     from controllers.schedule_controller import ScheduleController
+                    from controllers.chatbot_controller import ChatbotController
+                    from views.chatbot_gui_view import ChatbotGUIView
 
                     try:
                         real_name = e.file.name
@@ -125,6 +127,7 @@ class GUIView:
                         new_lab_ctrl       = LabController(new_lab_model, view)
                         new_room_ctrl      = RoomController(new_room_model, view)
                         new_schedule_ctrl  = ScheduleController(new_scheduler_model, view)
+                        new_chatbot_ctrl   = ChatbotController(new_lab_model, new_room_model, new_course_model, new_faculty_model, new_conflict_model)
 
                         ctrl.config_model        = new_config
                         ctrl.faculty_model       = new_faculty_model
@@ -139,6 +142,7 @@ class GUIView:
                         ctrl.lab_controller      = new_lab_ctrl
                         ctrl.room_controller     = new_room_ctrl
                         ctrl.schedule_controller = new_schedule_ctrl
+                        ctrl.chatbot_controller  = new_chatbot_ctrl
                         ctrl.view                = view
                         ctrl.config_path         = file_path
 
@@ -160,6 +164,8 @@ class GUIView:
 
                         _schedule_state._scheduler_model    = new_scheduler_model
                         ScheduleGUIView.schedule_controller = new_schedule_ctrl
+
+                        ChatbotGUIView._chatbot_controller  = new_chatbot_ctrl
 
                         GUIView.config_path = file_path
                         GUIView.controller.config_path = file_path
@@ -276,7 +282,7 @@ class GUIView:
         Returns:        
             None
         """
-        ui.run(title='Scheduler', storage_secret='scheduler_secret_key')
+        ui.run(title='Scheduler', host='localhost', storage_secret='scheduler_secret_key')
 
 if __name__ in {"__main__", "__mp_main__"}:
     GUIView.runGUI()

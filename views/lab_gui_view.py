@@ -63,9 +63,6 @@ class LabGUIView:
             }
         ''')
 
-        config_model = GUIView.controller.config_model
-        pending = {'dirty': False}
-
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
                 ui.button('Home').props('rounded color=black text-color=white no-caps').classes('h-10 dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/'))
@@ -73,7 +70,6 @@ class LabGUIView:
 
             new_lab = ui.input(label='Lab Name').props('rounded outlined color=black').classes('w-80')
             result_label = ui.label('').classes('text-base !text-black dark:!text-white')
-            save_label = ui.label('').classes('text-lg')
 
             ui.label('Current Labs:').classes('text-lg font-semibold mt-4 !text-black dark:!text-white')
             labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
@@ -98,33 +94,17 @@ class LabGUIView:
                                 ui.label(lab).classes('text-base')
 
             def add():
-                """Add lab to memory only."""
+                """Add lab and save to config immediately."""
                 try:
                     success, message = LabGUIView._lab_controller.gui_add_lab(new_lab.value)
                     result_label.set_text(message)
                     if success:
-                        config_model.save_feature('temp', 'all')
-                        pending['dirty'] = True
-                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                        save_label.classes(replace='text-lg text-orange-500')
                         new_lab.set_value('')
                         refresh_list()
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
-            def save_to_config():
-                """Write labs to config file."""
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    pending['dirty'] = False
-                    save_label.set_text('Configuration saved to file.')
-                    save_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-lg text-red-600')
-
             ui.button('Add').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', add)
-            ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/modify')
@@ -148,7 +128,6 @@ class LabGUIView:
         ui.query('body').style('background-color: var(--q-modify)').classes('dark:!bg-black')
 
         labs = LabGUIView._lab_controller.model.get_all_labs() if LabGUIView._lab_controller else []
-        config_model = GUIView.controller.config_model
 
         with ui.column().classes('gap-6 items-center w-full'):
             with ui.row().classes('w-full max-w-2xl justify-start'):
@@ -159,7 +138,6 @@ class LabGUIView:
             modified_lab = ui.input(label='Modified Lab').props('rounded outlined').classes('w-80')
 
             result_label = ui.label('').classes('text-base')
-            save_label = ui.label('').classes('text-base')
 
             def save():
                 try:
@@ -168,25 +146,12 @@ class LabGUIView:
                     )
                     result_label.set_text(message)
                     if success:
-                        config_model.save_feature('temp', 'all')
                         existing_lab.set_options(LabGUIView._lab_controller.model.get_all_labs())
                         modified_lab.set_value('')
-                        save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                        save_label.classes(replace='text-base text-orange-500')
                 except Exception as e:
                     result_label.set_text(f'Error: {e}')
 
-            def handle_save_to_config():
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    save_label.set_text('Configuration saved to file.')
-                    save_label.classes(replace='text-base text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-base text-red-600')
-
             ui.button('Save').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', save)
-            ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', handle_save_to_config)
             ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-80 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/delete')
@@ -195,8 +160,7 @@ class LabGUIView:
         """
         Displays the GUI for deleting a lab.
 
-        Delete commits to memory immediately. Save to Config writes
-        current memory state to disk.
+        Delete commits to memory and immediately persists to disk.
 
         Parameters:
             None        
@@ -210,8 +174,6 @@ class LabGUIView:
         from views.gui_view import GUIView
         ui.query('body').style('background-color: var(--q-delete)').classes('dark:!bg-black')
 
-        config_model = GUIView.controller.config_model
-
         selected_labs = []
 
         with ui.column().classes('w-full items-center pt-12 pb-12 font-sans'):
@@ -224,7 +186,6 @@ class LabGUIView:
                     list_container = ui.column().classes('w-full')
 
             result_label = ui.label('').classes('text-base !text-black dark:!text-white mt-2')
-            save_label = ui.label('').classes('text-lg mt-2')
 
             def update_lab_list():
                 list_container.clear()
@@ -247,35 +208,20 @@ class LabGUIView:
             update_lab_list()
 
             def on_delete():
-                """Delete selected labs from memory immediately."""
+                """Delete selected labs and save to config immediately."""
                 if not selected_labs:
                     result_label.set_text('No labs selected.')
                     return
                 if LabGUIView._lab_controller and LabGUIView._lab_controller.delete_labs_gui(list(selected_labs)):
-                    result_label.set_text(f"✓ Deleted from memory.")
-                    save_label.set_text('You have unsaved changes. Click Save to Config to persist.')
-                    save_label.classes(replace='text-lg text-orange-500')
+                    result_label.set_text(f"✓ Deleted.")
                     update_lab_list()
                 else:
                     result_label.set_text('Error deleting labs.')
 
-            def on_save_to_config():
-                """Dump current memory state to config file."""
-                success = config_model.save_feature('config', 'all')
-                if success:
-                    result_label.set_text('')  
-                    save_label.set_text('Configuration saved to file.')
-                    save_label.classes(replace='text-lg text-green-600')
-                else:
-                    save_label.set_text('Save failed. Check terminal for details.')
-                    save_label.classes(replace='text-lg text-red-600')
-
             ui.button('Delete').props('rounded color=red text-color=white no-caps').classes('w-40 h-10 text-lg mt-6 shadow-none').on('click', on_delete)
             ui.space().classes('h-10')
 
-            with ui.row().classes('gap-4 mt-4'):
-                ui.button('Save to Config').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', on_save_to_config)
-                ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
+            ui.button('Back').props('rounded color=black text-color=white no-caps').classes('w-48 h-16 text-xl dark:!bg-white dark:!text-black').on('click', lambda: ui.navigate.to('/lab'))
 
     @ui.page('/lab/view')
     @staticmethod

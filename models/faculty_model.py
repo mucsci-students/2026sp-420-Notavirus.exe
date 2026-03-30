@@ -9,8 +9,7 @@ This model class manages all faculty-related data operations including:
 - Validating faculty references in courses
 """
 
-import scheduler
-from scheduler import FacultyConfig, load_config_from_file, CombinedConfig
+from scheduler import FacultyConfig
 
 # Constants
 FULL_TIME_MAX_CREDITS = 12
@@ -23,31 +22,31 @@ ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 class FacultyModel:
     """
     Model class for faculty data operations.
-    
+
     Attributes:
         config_model: Reference to ConfigModel for file operations
     """
-    
+
     def __init__(self, config_model):
         """
         Initialize FacultyModel.
-        
+
         Parameters:
             config_model (ConfigModel): Central configuration model
-        
+
         Returns:
             None
         """
         self.config_model = config_model
-    
+
     def add_faculty(self, faculty: FacultyConfig) -> bool:
         """
         Add faculty to configuration (in-memory only).
         Call config_model.safe_save() to persist changes to disk.
-        
+
         Parameters:
             faculty (FacultyConfig): Faculty object to add
-        
+
         Returns:
             bool: True if successful, False if faculty already exists
         """
@@ -61,10 +60,10 @@ class FacultyModel:
         Delete faculty by name (in-memory only).
         Also removes all references to this faculty from courses.
         Call config_model.safe_save() to persist changes to disk.
-        
+
         Parameters:
             name (str): Name of faculty to delete
-        
+
         Returns:
             bool: True if successful, False if faculty not found
         """
@@ -72,15 +71,19 @@ class FacultyModel:
             return False
 
         faculty_to_delete = self.get_faculty_by_name(name)
-        for course in self.config_model.config.config.courses:
-            if faculty_to_delete.name in course.faculty:
-                course.faculty = [f for f in course.faculty if f != faculty_to_delete.name]
+        if faculty_to_delete:
+            for course in self.config_model.config.config.courses:
+                if faculty_to_delete.name in course.faculty:
+                    course.faculty = [
+                        f for f in course.faculty if f != faculty_to_delete.name
+                    ]
         self.config_model.config.config.faculty = [
-            f for f in self.config_model.config.config.faculty
+            f
+            for f in self.config_model.config.config.faculty
             if f.name.lower() != name.lower()
         ]
         return True
-    
+
     def modify_faculty(self, faculty_name: str, field: str, new_value) -> bool:
         """
         Modify a specific field of a faculty member (in-memory only).
@@ -89,12 +92,12 @@ class FacultyModel:
         Does not reload after saving to avoid cross-reference validation
         errors when faculty course preferences reference hypothetical courses
         that do not yet exist in the configuration.
-        
+
         Parameters:
             faculty_name (str): Name of faculty to modify
             field (str): Field name to modify (e.g., 'maximum_credits', 'course_preferences')
             new_value: New value for the field
-        
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -106,14 +109,14 @@ class FacultyModel:
             return False
         setattr(faculty, field, new_value)
         return True
-    
+
     def faculty_exists(self, name: str) -> bool:
         """
         Check if faculty with given name exists (case-insensitive).
-        
+
         Parameters:
             name (str): Faculty name to check
-        
+
         Returns:
             bool: True if faculty exists, False otherwise
         """
@@ -121,14 +124,14 @@ class FacultyModel:
             f.name.lower() == name.lower()
             for f in self.config_model.config.config.faculty
         )
-    
+
     def get_faculty_by_name(self, name: str) -> FacultyConfig | None:
         """
         Get faculty by name (case-insensitive).
-        
+
         Parameters:
             name (str): Faculty name to find
-        
+
         Returns:
             FacultyConfig | None: Faculty object if found, None otherwise
         """
@@ -136,27 +139,27 @@ class FacultyModel:
             if faculty.name.lower() == name.lower():
                 return faculty
         return None
-    
+
     def get_all_faculty(self) -> list[FacultyConfig]:
         """
         Get all faculty from configuration.
-        
+
         Parameters:
             None
-        
+
         Returns:
             list[FacultyConfig]: List of all faculty
         """
         return self.config_model.config.config.faculty
-    
+
     def validate_faculty_references(self) -> int:
         """
         Validate that all faculty references in courses exist.
         Removes any invalid faculty references from courses.
-        
+
         Parameters:
             None
-        
+
         Returns:
             int: Number of invalid references removed
         """

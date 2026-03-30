@@ -72,6 +72,7 @@ def scheduler_model(config_model):
 # TESTS: Initialization
 # ================================================================
 
+
 def test_scheduler_model_initialization(scheduler_model, config_model):
     """
     Test that SchedulerModel initializes with the correct config_model reference.
@@ -91,13 +92,14 @@ def test_scheduler_model_config_has_limit(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    assert hasattr(scheduler_model.config_model.config, 'limit')
+    assert hasattr(scheduler_model.config_model.config, "limit")
     assert scheduler_model.config_model.config.limit == 100
 
 
 # ================================================================
 # TESTS: generate_schedules — no limit argument
 # ================================================================
+
 
 def test_generate_schedules_no_limit_leaves_config_unchanged(scheduler_model):
     """
@@ -108,7 +110,7 @@ def test_generate_schedules_no_limit_leaves_config_unchanged(scheduler_model):
     """
     original_limit = scheduler_model.config_model.config.limit
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules())
 
@@ -122,7 +124,7 @@ def test_generate_schedules_no_limit_calls_scheduler_with_config(scheduler_model
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules())
 
@@ -133,6 +135,7 @@ def test_generate_schedules_no_limit_calls_scheduler_with_config(scheduler_model
 # TESTS: generate_schedules — with limit override
 # ================================================================
 
+
 def test_generate_schedules_limit_override_updates_config(scheduler_model):
     """
     Test that passing a limit to generate_schedules overrides config.limit in memory.
@@ -140,7 +143,7 @@ def test_generate_schedules_limit_override_updates_config(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=42))
 
@@ -154,7 +157,7 @@ def test_generate_schedules_limit_one_accepted(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=1))
 
@@ -168,7 +171,7 @@ def test_generate_schedules_limit_large_value(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=9999))
 
@@ -182,20 +185,22 @@ def test_generate_schedules_multiple_overrides_uses_latest(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=10))
 
     assert scheduler_model.config_model.config.limit == 10
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=50))
 
     assert scheduler_model.config_model.config.limit == 50
 
 
-def test_generate_schedules_override_does_not_write_to_file(scheduler_model, test_config):
+def test_generate_schedules_override_does_not_write_to_file(
+    scheduler_model, test_config
+):
     """
     Test that overriding the limit in memory does not save back to the JSON file.
 
@@ -205,7 +210,7 @@ def test_generate_schedules_override_does_not_write_to_file(scheduler_model, tes
     """
     original_limit = scheduler_model.config_model.config.limit
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=999))
 
@@ -221,7 +226,7 @@ def test_generate_schedules_passes_config_to_scheduler(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         list(scheduler_model.generate_schedules(limit=5))
 
@@ -235,9 +240,9 @@ def test_generate_schedules_returns_scheduler_results(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    fake_schedules = [MagicMock(name='s1'), MagicMock(name='s2'), MagicMock(name='s3')]
+    fake_schedules = [MagicMock(name="s1"), MagicMock(name="s2"), MagicMock(name="s3")]
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter(fake_schedules)
         result = list(scheduler_model.generate_schedules(limit=3))
 
@@ -248,6 +253,7 @@ def test_generate_schedules_returns_scheduler_results(scheduler_model):
 # TESTS: count_possible_schedules
 # ================================================================
 
+
 def test_count_possible_schedules_returns_zero_when_empty(scheduler_model):
     """
     Test count_possible_schedules returns 0 when no schedules are produced.
@@ -255,7 +261,7 @@ def test_count_possible_schedules_returns_zero_when_empty(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter([])
         count = scheduler_model.count_possible_schedules()
 
@@ -271,7 +277,7 @@ def test_count_possible_schedules_counts_correctly(scheduler_model):
     """
     fake_schedules = [MagicMock() for _ in range(7)]
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = iter(fake_schedules)
         count = scheduler_model.count_possible_schedules(max_check=10)
 
@@ -288,7 +294,7 @@ def test_count_possible_schedules_respects_max_check(scheduler_model):
     """
     max_check = 3
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         # Real Scheduler would stop at max_check; mock reflects that
         MockScheduler.return_value.get_models.return_value = iter(
             [MagicMock() for _ in range(max_check)]
@@ -306,12 +312,13 @@ def test_count_possible_schedules_handles_exception_gracefully(scheduler_model):
     Parameters:
         scheduler_model (SchedulerModel): Scheduler model fixture
     """
+
     def _failing_gen():
         yield MagicMock()
         yield MagicMock()
         raise RuntimeError("scheduler error")
 
-    with patch('models.scheduler_model.Scheduler') as MockScheduler:
+    with patch("models.scheduler_model.Scheduler") as MockScheduler:
         MockScheduler.return_value.get_models.return_value = _failing_gen()
         count = scheduler_model.count_possible_schedules()
 

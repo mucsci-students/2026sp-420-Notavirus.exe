@@ -35,8 +35,8 @@ class ConflictModel:
         self,
         course_id_1: str,
         course_id_2: str,
-        section_index_1: int = None,
-        section_index_2: int = None,
+        section_index_1: int | None = None,
+        section_index_2: int | None = None,
     ) -> bool:
         """
         Add a mutual conflict between two courses (in-memory only).
@@ -92,8 +92,8 @@ class ConflictModel:
         self,
         course_id_1: str,
         course_id_2: str,
-        section_index_1: int = None,
-        section_index_2: int = None,
+        section_index_1: int | None = None,
+        section_index_2: int | None = None,
     ) -> bool:
         """
         Delete a mutual conflict between two courses (in-memory only).
@@ -134,7 +134,9 @@ class ConflictModel:
                 if course.course_id == course_id_1 and course_id_2 in course.conflicts:
                     course.conflicts = [x for x in course.conflicts if x != course_id_2]
                     found = True
-                elif course.course_id == course_id_2 and course_id_1 in course.conflicts:
+                elif (
+                    course.course_id == course_id_2 and course_id_1 in course.conflicts
+                ):
                     course.conflicts = [x for x in course.conflicts if x != course_id_1]
                     found = True
             if not found:
@@ -165,16 +167,16 @@ class ConflictModel:
             bool: True if successful, False if validation fails.
         """
         old_course_id = selected_course.course_id
-        conflict_id   = target_conflict_course.course_id
+        conflict_id = target_conflict_course.course_id
         new_course_id = target_new_course.course_id
 
         if modify_mode not in (1, 2):
             return False
 
-        courses       = self.config_model.config.config.courses
+        courses = self.config_model.config.config.courses
         selected_list = [c for c in courses if c.course_id == old_course_id]
         conflict_list = [c for c in courses if c.course_id == conflict_id]
-        new_list      = [c for c in courses if c.course_id == new_course_id]
+        new_list = [c for c in courses if c.course_id == new_course_id]
 
         if not selected_list or not conflict_list or not new_list:
             return False
@@ -188,11 +190,15 @@ class ConflictModel:
                 if conflict_id not in course.conflicts:
                     course.conflicts.append(conflict_id)
             for course in conflict_list:
-                updated = [new_course_id if c == old_course_id else c for c in course.conflicts]
+                updated = [
+                    new_course_id if c == old_course_id else c for c in course.conflicts
+                ]
                 course.conflicts = list(dict.fromkeys(updated))
         elif modify_mode == 2:
             for course in selected_list:
-                updated = [new_course_id if c == conflict_id else c for c in course.conflicts]
+                updated = [
+                    new_course_id if c == conflict_id else c for c in course.conflicts
+                ]
                 course.conflicts = list(dict.fromkeys(updated))
             for course in conflict_list:
                 course.conflicts = [c for c in course.conflicts if c != old_course_id]
@@ -216,8 +222,8 @@ class ConflictModel:
             list[tuple[str, str, int, int]]: (course_id_1, course_id_2, index_1, index_2)
         """
         conflicts = []
-        seen      = set()
-        courses   = self.config_model.config.config.courses
+        seen = set()
+        courses = self.config_model.config.config.courses
         for i, course in enumerate(courses):
             for conflict_id in course.conflicts:
                 for j, other in enumerate(courses):
@@ -239,8 +245,8 @@ class ConflictModel:
             bool: True if conflict exists, False otherwise.
         """
         return any(
-            (c1 == course_id_1 and c2 == course_id_2) or
-            (c1 == course_id_2 and c2 == course_id_1)
+            (c1 == course_id_1 and c2 == course_id_2)
+            or (c1 == course_id_2 and c2 == course_id_1)
             for c1, c2, i1, i2 in self.get_all_conflicts()
         )
 
@@ -254,6 +260,7 @@ class ConflictModel:
             list[CourseConfig]: All matching course objects.
         """
         return [
-            c for c in self.config_model.config.config.courses
+            c
+            for c in self.config_model.config.config.courses
             if c.course_id == course_id
         ]

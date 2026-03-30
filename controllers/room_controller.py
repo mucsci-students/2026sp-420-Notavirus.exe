@@ -23,8 +23,8 @@ class RoomController:
     """
 
     def __init__(self, room_model, view):
-        self.model        = room_model
-        self.view         = view
+        self.model = room_model
+        self.view = view
         # config_model is reachable via the model — store a shortcut for clarity.
         self.config_model = room_model.config_model
 
@@ -53,7 +53,7 @@ class RoomController:
             return False, "Room name cannot be empty."
         success = self.model.add_room(name.strip())
         if success:
-            self.config_model.save_feature('temp', 'all')
+            self.config_model.save_feature("temp", "all")
             return True, "Room added to memory."
         return False, f"Room '{name}' already exists or is invalid."
 
@@ -71,7 +71,7 @@ class RoomController:
             return False, "New room name cannot be empty."
         success = self.model.modify_room(old_name, new_name.strip())
         if success:
-            self.config_model.save_feature('temp', 'all')
+            self.config_model.save_feature("temp", "all")
             return True, "Room modified in memory."
         return False, "Modification failed."
 
@@ -88,11 +88,10 @@ class RoomController:
             return False, "Please select a room to delete."
         success = self.model.delete_room(name)
         if success:
-            self.config_model.save_feature('temp', 'all')
+            self.config_model.save_feature("temp", "all")
             return True, f"Room '{name}' deleted successfully."
         return False, f"Failed: room '{name}' could not be deleted."
 
-   
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

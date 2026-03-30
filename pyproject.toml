@@ -8,6 +8,8 @@ dependencies = [
     "course-constraint-scheduler>=2.6.1",
     "nicegui>=3.2.0",
     "pytest-cov>=7.1.0",
+    "ruff>=0.15.8",
+    "ty>=0.0.26",
 ]
 
 [dependency-groups]
@@ -22,3 +24,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.ty.src]
+exclude = ["oldcode"]

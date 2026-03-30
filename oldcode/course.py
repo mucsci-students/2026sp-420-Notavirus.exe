@@ -53,7 +53,9 @@ def addCourse(available_rooms, available_labs, available_faculty):
     print(f"Available labs: {', '.join(available_labs)}")
     labs = []
     while True:
-        lab = input("Enter a lab for this course (or press Enter to skip/finish): ").strip()
+        lab = input(
+            "Enter a lab for this course (or press Enter to skip/finish): "
+        ).strip()
         if lab == "":
             break
         if lab not in available_labs:
@@ -66,7 +68,9 @@ def addCourse(available_rooms, available_labs, available_faculty):
     print(f"Available faculty: {', '.join(available_faculty)}")
     faculty = []
     while True:
-        f = input("Enter a faculty member for this course (or press Enter to finish): ").strip()
+        f = input(
+            "Enter a faculty member for this course (or press Enter to finish): "
+        ).strip()
         if f == "":
             if len(faculty) == 0:
                 print("Please enter at least one faculty member.")
@@ -81,7 +85,11 @@ def addCourse(available_rooms, available_labs, available_faculty):
     # Conflicts
     conflicts = []
     while True:
-        conflict = input("Enter a conflicting course ID (or press Enter to finish): ").strip().upper()
+        conflict = (
+            input("Enter a conflicting course ID (or press Enter to finish): ")
+            .strip()
+            .upper()
+        )
         if conflict == "":
             break
         if conflict == course_id:
@@ -102,29 +110,28 @@ def addCourse(available_rooms, available_labs, available_faculty):
     # Confirm
     while True:
         confirm = input("\nIs this information correct? [y/n]: ")
-        if confirm.lower() in ('y', 'n'):
+        if confirm.lower() in ("y", "n"):
             break
 
-    if confirm.lower() == 'y':
+    if confirm.lower() == "y":
         return CourseConfig(
             course_id=course_id,
             credits=credits,
             room=rooms,
             lab=labs,
             faculty=faculty,
-            conflicts=conflicts
+            conflicts=conflicts,
         )
     else:
         while True:
             confirm = input("\nWould you like to restart adding a new course? [y/n]: ")
-            if confirm.lower() in ('y', 'n'):
+            if confirm.lower() in ("y", "n"):
                 break
-        if confirm.lower() == 'y':
+        if confirm.lower() == "y":
             return addCourse(available_rooms, available_labs, available_faculty)
         else:
             return None
 
-          
 
 # Modify an existing course.
 # Preconditions: User knows the course ID.
@@ -174,11 +181,11 @@ def modifyCourse(config_path: str):
     # Apply or do not apply changes
     while True:
         confirm = input("Apply these changes? [y/n]: ").lower()
-        if confirm in ('y', 'n'):
+        if confirm in ("y", "n"):
             break
         print("Please enter 'y' or 'n'")
 
-    if confirm == 'n':
+    if confirm == "n":
         print("Course modification canceled.")
         return
 
@@ -192,7 +199,7 @@ def modifyCourse(config_path: str):
                     try:
                         credits_int = int(credits)
                         if credits_int < 0:
-                            print(f"Error: Credits cannot be negative.")
+                            print("Error: Credits cannot be negative.")
                             return
                         editable_course.credits = credits_int
                     except ValueError:
@@ -203,15 +210,19 @@ def modifyCourse(config_path: str):
                     editable_course.room = room_list
 
                 if lab:
-                    editable_course.lab = [l.strip() for l in lab.split(",")]
+                    editable_course.lab = [
+                        lab_item.strip() for lab_item in lab.split(",")
+                    ]
 
                 if faculty:
                     # Parse faculty input: supports adding (Name) and removing (-Name)
                     # Split by comma
                     changes = [f.strip() for f in faculty.split(",") if f.strip()]
-                    
-                    current_faculty = editable_course.faculty if editable_course.faculty else []
-                    
+
+                    current_faculty = (
+                        editable_course.faculty if editable_course.faculty else []
+                    )
+
                     for change in changes:
                         if change.startswith("-"):
                             # Removal
@@ -222,7 +233,7 @@ def modifyCourse(config_path: str):
                             # Addition
                             if change not in current_faculty:
                                 current_faculty.append(change)
-                    
+
                     editable_course.faculty = current_faculty
     except Exception as e:
         print(f"Error modifying course: {e}")
@@ -234,6 +245,7 @@ def modifyCourse(config_path: str):
         return
 
     print(f"Course '{course_id}' updated successfully.")
+
 
 # Testing function
 def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None):
@@ -254,24 +266,23 @@ def modifyCourse_config(course, credits=None, room=None, lab=None, faculty=None)
         course.faculty = [faculty]
 
     return course
-  
 
 
 # deleteCourse takes an existing course and removes it from the config_path
-#  file through a command line interface. 
+#  file through a command line interface.
 #
-# Parameters: 
+# Parameters:
 #   config - calls load_config_from_file on config_path to load the config file
 #   config_path str - the file to load that is input by the user
-# Preconditions: 
-#   - The config must contain at least one course.  
+# Preconditions:
+#   - The config must contain at least one course.
 #   - The course intended to delete must already exist in the config_path file.
-# Postconditions: 
-#   - The course will no longer exist in the config_path file. 
-#   - If no faculty exists, a message would be in the Command-Line and no 
-#      changes to the config will occur 
-#   - If the faculty entered does not exist, a message will exist in the 
-#      Command-Line letting the user know and no changes will be made to the 
+# Postconditions:
+#   - The course will no longer exist in the config_path file.
+#   - If no faculty exists, a message would be in the Command-Line and no
+#      changes to the config will occur
+#   - If the faculty entered does not exist, a message will exist in the
+#      Command-Line letting the user know and no changes will be made to the
 #      config file
 # Return: none
 def deleteCourse(config, config_path: str):
@@ -298,10 +309,14 @@ def deleteCourse(config, config_path: str):
     # Prompt for section label (e.g. CMSC 340.01)
     valid_labels = {label: i for i, label in enumerate(course_section_labels)}
     while True:
-        course_input = input("\nEnter the course section to delete (e.g. CMSC 340.01): ").strip().upper()
+        course_input = (
+            input("\nEnter the course section to delete (e.g. CMSC 340.01): ")
+            .strip()
+            .upper()
+        )
         if course_input in valid_labels:
             break
-        print(f"Invalid section. Please enter a section exactly as shown above.")
+        print("Invalid section. Please enter a section exactly as shown above.")
 
     target_index = valid_labels[course_input]
     target_course = scheduler_config.courses[target_index]
@@ -312,10 +327,10 @@ def deleteCourse(config, config_path: str):
 
     while True:
         confirm = input("Delete this course section? [y/n]: ").lower().strip()
-        if confirm in ('y', 'n'):
+        if confirm in ("y", "n"):
             break
 
-    if confirm == 'n':
+    if confirm == "n":
         print("Course deletion canceled.")
         return
 
@@ -333,7 +348,9 @@ def deleteCourse(config, config_path: str):
                     del faculty.course_preferences[course_id]
 
             # Remove only the specific section by index
-            editable.courses = [c for i, c in enumerate(editable.courses) if i != target_index]
+            editable.courses = [
+                c for i, c in enumerate(editable.courses) if i != target_index
+            ]
 
     except Exception as e:
         print(f"\nError: Failed to delete course due to validation error: {e}")

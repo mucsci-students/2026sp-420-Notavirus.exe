@@ -3,7 +3,9 @@
 GUITheme - Graphical-user interface theme
 This view class handles all files for the GUI that are related to themes.
 """
+
 from nicegui import ui, app
+
 
 class GUITheme:
     @staticmethod
@@ -12,25 +14,23 @@ class GUITheme:
         Sets up standard colors.
         Parameters:
             None
+            None
         Returns:
             None
         """
-        # Enable dark/light mode toggle, saved per user in browser storage
-        # Enable dark/light mode toggle, saved per user in browser storage
-        dark = ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
+        dark = ui.dark_mode().bind_value(app.storage.user, "dark_mode")
+        ui.button(icon="brightness_4", on_click=dark.toggle).props(
+            "flat round"
+        ).classes("absolute top-4 right-4 z-50 !text-black dark:!text-white")
 
         # Dark mode toggle button — pinned to the top-right corner of every page
-        ui.button(icon='brightness_4', on_click=dark.toggle).props('flat round').classes(
-            'absolute top-4 right-4 z-50 !text-black dark:!text-white'
-        )
-
-        # Dark mode toggle button — pinned to the top-right corner of every page
-        ui.button(icon='brightness_4', on_click=dark.toggle).props('flat round').classes(
-            'absolute top-4 right-4 z-50 !text-black dark:!text-white'
-        )
+        ui.button(icon="brightness_4", on_click=dark.toggle).props(
+            "flat round"
+        ).classes("absolute top-4 right-4 z-50 !text-black dark:!text-white")
 
         # Build the chat drawer and get a reference to toggle it
         from views.chatbot_gui_view import ChatbotGUIView
+
         drawer = ChatbotGUIView.add_floating_chat()
 
         # AI robot button — pinned to the bottom-left corner of every page
@@ -38,17 +38,21 @@ class GUITheme:
         # z-50 ensures it appears on top of other page elements
         def _open_chat():
             drawer.show()
-            app.storage.user['chat_open'] = True
+            app.storage.user["chat_open"] = True
 
-        with ui.element('div').classes('fixed bottom-6 left-6 z-50'):
+        with ui.element("div").classes("fixed bottom-6 left-6 z-50"):
             # Round button styled black in light mode, white in dark mode
-            with ui.button(on_click=_open_chat).props('round').classes(
-                'w-14 h-14 !bg-black dark:!bg-white'
-            ) as robot_btn:
+            with (
+                ui.button(on_click=_open_chat)
+                .props("round")
+                .classes("w-14 h-14 !bg-black dark:!bg-white")
+            ):
                 # Tabler Icons "robot-2" SVG drawn inline
                 # stroke="currentColor" means the icon inherits the button's text color
                 # so it is white on black in light mode and black on white in dark mode
-                ui.html(sanitize=False, content='''
+                ui.html(
+                    sanitize=False,
+                    content="""
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
                          viewBox="0 0 24 24" fill="none" stroke="currentColor"
                          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -60,11 +64,12 @@ class GUITheme:
                         <path d="M12 8V5M10 5h4"/>
                         <path d="M2 14h2M20 14h2"/>
                     </svg>
-                ''')
+                """,
+                )
 
         # Inject global CSS styles that apply to every page
         # These fix Quasar component colors in both light and dark mode
-        ui.add_head_html('''
+        ui.add_head_html("""
         <style>
             /* Text color inside dropdown/select fields */
             .q-field--dark .q-field__native span {
@@ -110,22 +115,22 @@ class GUITheme:
                 background: #ffffff !important;
             }
         </style>
-        ''')
+        """)
 
         # Define the app's color palette used by Quasar components throughout the UI
         # Define the app's color palette used by Quasar components throughout the UI
         ui.colors(
-            primary='#FFFFFF',
-            backbtn='#a0a0a0',        # Grey — used for Back buttons
-            backHover='#808080',      # Darker grey — Back button hover state
-            facultyBegin='#8095e4',   # Light purple — Faculty button gradient start
-            facultyEnd='#a855f7',     # Dark purple — Faculty button gradient end
-            courseBegin='#EDC54E',    # Yellow/orange — Course button gradient start
-            courseEnd='#ED764E',      # Orange — Course button gradient end
-            roomBegin='#4EEDA0',      # Cyan/green — Room button gradient start
-            roomEnd='#4EEAED',        # Cyan — Room button gradient end
-            conflictBegin='#f94680',  # Pink/red — Conflict button gradient start
-            conflictEnd='#eb0e19',    # Red — Conflict button gradient end
-            labBegin='#1bc0ba',       # Teal — Lab button gradient start
-            labEnd='#19fa11',         # Bright green — Lab button gradient end
+            primary="#FFFFFF",
+            backbtn="#a0a0a0",  # Grey — used for Back buttons
+            backHover="#808080",  # Darker grey — Back button hover state
+            facultyBegin="#8095e4",  # Light purple — Faculty button gradient start
+            facultyEnd="#a855f7",  # Dark purple — Faculty button gradient end
+            courseBegin="#EDC54E",  # Yellow/orange — Course button gradient start
+            courseEnd="#ED764E",  # Orange — Course button gradient end
+            roomBegin="#4EEDA0",  # Cyan/green — Room button gradient start
+            roomEnd="#4EEAED",  # Cyan — Room button gradient end
+            conflictBegin="#f94680",  # Pink/red — Conflict button gradient start
+            conflictEnd="#eb0e19",  # Red — Conflict button gradient end
+            labBegin="#1bc0ba",  # Teal — Lab button gradient start
+            labEnd="#19fa11",  # Bright green — Lab button gradient end
         )

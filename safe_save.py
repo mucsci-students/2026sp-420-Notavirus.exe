@@ -18,10 +18,12 @@ def safe_save(config, config_path: str) -> bool:
 
     Returns True if saved successfully, False otherwise.
     """
-    return save_configuration(config, config_path, save_type='config', feature='all')
+    return save_configuration(config, config_path, save_type="config", feature="all")
 
 
-def save_configuration(config, config_path: str, save_type: str, feature: str = 'all') -> bool:
+def save_configuration(
+    config, config_path: str, save_type: str, feature: str = "all"
+) -> bool:
     """
     Saves configuration data safely, supporting progressive temporary saves.
 
@@ -43,12 +45,12 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
 
         # Determine the target file to read as our baseline
         target_read_path = config_path
-        if save_type == 'temp' and os.path.exists(temp_path):
+        if save_type == "temp" and os.path.exists(temp_path):
             target_read_path = temp_path
 
         # Load baseline data
         if os.path.exists(target_read_path):
-            with open(target_read_path, 'r') as f:
+            with open(target_read_path, "r") as f:
                 target_data = json.load(f)
         else:
             # If no file exists yet (imported config), use in-memory config
@@ -56,13 +58,13 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
 
         # Helper to apply a specific feature update to the dictionary
         def update_feature(feat_name):
-            if feat_name in ['rooms', 'labs', 'courses']:
-                target_data['config'][feat_name] = updated['config'][feat_name]
-            elif feat_name == 'faculty':
-                existing_raw_list = target_data['config'].get('faculty', [])
-                existing_raw_by_name = {fac['name']: fac for fac in existing_raw_list}
-                in_memory_faculty = updated['config']['faculty']
-                in_memory_by_name = {fac['name']: fac for fac in in_memory_faculty}
+            if feat_name in ["rooms", "labs", "courses"]:
+                target_data["config"][feat_name] = updated["config"][feat_name]
+            elif feat_name == "faculty":
+                existing_raw_list = target_data["config"].get("faculty", [])
+                existing_raw_by_name = {fac["name"]: fac for fac in existing_raw_list}
+                in_memory_faculty = updated["config"]["faculty"]
+                in_memory_by_name = {fac["name"]: fac for fac in in_memory_faculty}
 
                 result = []
 
@@ -71,35 +73,36 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
                 # (e.g. "11:00-16:00" strings) so saves don't reformat existing entries.
                 # Faculty not in memory anymore were deleted -- they are skipped.
                 for raw_fac in existing_raw_list:
-                    name = raw_fac['name']
+                    name = raw_fac["name"]
                     if name not in in_memory_by_name:
                         continue  # deleted
                     mem_fac = in_memory_by_name[name]
                     merged = raw_fac.copy()
                     for key, val in mem_fac.items():
-                        if key == 'times':
+                        if key == "times":
                             merged[key] = val
-                        elif key == 'course_preferences':
-                            merged[key] = {k: v for k, v in val.items() if k in valid_courses}
+                        elif key == "course_preferences":
+                            merged[key] = {
+                                k: v for k, v in val.items() if k in valid_courses
+                            }
                         else:
                             merged[key] = val
                     result.append(merged)
 
                 # Append new faculty (in memory but not in the original JSON)
                 for fac in in_memory_faculty:
-                    if fac['name'] not in existing_raw_by_name:
-                        prefs = fac.get('course_preferences', {})
-                        fac['course_preferences'] = {
-                            k: v for k, v in prefs.items()
-                            if k in valid_courses
+                    if fac["name"] not in existing_raw_by_name:
+                        prefs = fac.get("course_preferences", {})
+                        fac["course_preferences"] = {
+                            k: v for k, v in prefs.items() if k in valid_courses
                         }
                         result.append(fac)
 
-                target_data['config']['faculty'] = result
+                target_data["config"]["faculty"] = result
 
         # Apply updates based on feature argument
-        if feature == 'all':
-            for feat in ['rooms', 'labs', 'courses', 'faculty']:
+        if feature == "all":
+            for feat in ["rooms", "labs", "courses", "faculty"]:
                 update_feature(feat)
         else:
             update_feature(feature)
@@ -107,17 +110,19 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
         dir_name = os.path.dirname(os.path.abspath(config_path))
 
         # Write to a proper safe temporary file first
-        with tempfile.NamedTemporaryFile(mode='w', dir=dir_name, delete=False, suffix='.tmp') as tmp:
+        with tempfile.NamedTemporaryFile(
+            mode="w", dir=dir_name, delete=False, suffix=".tmp"
+        ) as tmp:
             safe_tmp_path = tmp.name
             json.dump(target_data, tmp, indent=2)
 
-        if save_type == 'temp':
+        if save_type == "temp":
             # Move our safe tmp file to the .temp accumulator file
             shutil.copy(safe_tmp_path, temp_path)
             os.remove(safe_tmp_path)
             print(f"Temporary changes for '{feature}' saved successfully.")
 
-        elif save_type == 'config':
+        elif save_type == "config":
             # This is a master commit save.
             # Move our fully updated accumulator (safe_tmp_path) to the actual config file
             shutil.copy(safe_tmp_path, config_path)
@@ -127,12 +132,12 @@ def save_configuration(config, config_path: str, save_type: str, feature: str = 
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
-            print(f"Configuration committed successfully.")
+            print("Configuration committed successfully.")
 
         return True
 
     except Exception as e:
         print(f"Error during save: {e}")
-        if 'safe_tmp_path' in locals() and os.path.exists(safe_tmp_path):
+        if "safe_tmp_path" in locals() and os.path.exists(safe_tmp_path):
             os.remove(safe_tmp_path)
         return False

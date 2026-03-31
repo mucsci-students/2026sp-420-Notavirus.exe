@@ -291,7 +291,8 @@ pytest tests/test_controllers/ -v
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
 
-# Run with coverage
+# Run with coverage (need to first install pytest-cov if not already installed)
+#   Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
 pytest tests/ --cov=models --cov=controllers
 ```
 Test Coverage:
@@ -321,11 +322,28 @@ def your_function():
         None
     """
     GUITheme.applyTheming()
-    ui.query('body').style('background-color: var(--q-primary)')
+    if not require_config(back_url='/feature_group'):
+        return
+    from views.gui_view import GUIView
+    ui.query('body').style('background-color: var(--q-primary)').classes('dark:!bg-black')
+
+    # Read controller at render time — never store as class attribute
+    controller = GUIView.controller.your_controller
+
     with ui.column().classes('gap-6 items-center w-full'):
         # Your GUI code here
-```
+        pass
 
+    def handle_save():
+        # Delegate to Controller — never call config_model directly
+        success = GUIView.controller.save_to_config('feature')
+        # React to result
+
+    def handle_action():
+        # Collect input, pass to Controller, react to (bool, str) result
+        success, message = controller.do_something(input_value)
+        result_label.set_text(message)
+```
 ---
 
 

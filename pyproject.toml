@@ -7,6 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "course-constraint-scheduler>=2.6.1",
     "nicegui>=3.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.8",
+    "ty>=0.0.26",
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",
     "langgraph>=0.2.0",
@@ -25,6 +28,10 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--cov=models --cov=controllers --cov-report=term-missing"
+
+
+[tool.ty.src]
+exclude = ["oldcode"]
 
 [tool.coverage.run]
 source = ["controllers", "models"]

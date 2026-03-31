@@ -2,15 +2,12 @@
 """
 CourseController - Coordinates course-related workflows
 
-This controller class manages all course workflows including:
-- Adding new courses
-- Modifying existing courses
-- Deleting courses
-- Validating course data
+   MVC rules followed here:
+    - All write operations (add, modify, delete) temp-save after success.
+      Previously the View was responsible for calling config_model.save_feature()
+      after each operation — that now happens here.
+    - Input validation lives here, not in the View.
 """
-
-# controllers/course_controller.py
-
 
 
 class CourseController:
@@ -21,60 +18,32 @@ class CourseController:
     to implement complete course workflows.
 
     Attributes:
-        model: CourseModel instance
-        config_model: ConfigModel instance (for accessing rooms/labs/faculty)
+        model:        CourseModel instance
+        config_model: ConfigModel instance (for rooms/labs/faculty lookups and saves)
     """
 
     def __init__(self, course_model, config_model):
-        """
-        Initialize CourseController.
-
-        Parameters:
-            course_model (CourseModel): Model for course data operations
-            config_model (ConfigModel): Config model for accessing rooms/labs/faculty
-
-        Returns:
-            None
-        """
         self.model = course_model
         self.config_model = config_model
 
-    def get_all_courses(self):
-        """
-        Get all courses in the configuration.
+    # ------------------------------------------------------------------
+    # Query methods (read-only — safe for View to call)
+    # ------------------------------------------------------------------
 
-        Parameters:
-            None
-
-        Returns:
-            list: List of course objects
-        """
+    def get_all_courses(self) -> list:
+        """Return all course objects."""
         return self.model.get_all_courses()
 
-    def get_courses_with_sections(self):
-        """
-        Get courses including generated section labels.
-
-        Parameters:
-            None
-
-        Returns:
-            list: List of tuples (section_label, index, course_object)
-        """
+    def get_courses_with_sections(self) -> list:
+        """Return list of (section_label, index, course_object)."""
         return self.model.get_courses_with_sections()
 
-    def get_available_resources(self):
+    def get_available_resources(self) -> dict:
         """
-        Get available rooms, labs, and faculty for GUI dropdowns.
-
-        Parameters:
-            None
+        Return available rooms, labs, and faculty for GUI dropdowns.
 
         Returns:
-            dict: Dictionary containing:
-                - rooms (list)
-                - labs (list)
-                - faculty (list)
+            dict: {'rooms': [...], 'labs': [...], 'faculty': [...]}
         """
         return {
             "rooms": self.config_model.get_all_rooms(),
@@ -82,84 +51,61 @@ class CourseController:
             "faculty": [f.name for f in self.config_model.get_all_faculty()],
         }
 
+    # ------------------------------------------------------------------
+    # GUI command methods — all return (bool, str) and temp-save
+    # ------------------------------------------------------------------
 
     def add_course(self, data: dict) -> tuple[bool, str]:
         """
-        Complete workflow for adding a new course (GUI version).
-
-        Steps:
-        1. Build CourseConfig object
-        2. Add via Model
-        3. Return success status and message
+        Validate input, add a course, and temp-save.
 
         Parameters:
-            data (dict): Dictionary containing course data from GUI input
-
+            data (dict): Course data from the GUI (course_id, credits, room,
+                         lab, faculty, conflicts).
         Returns:
-            tuple[bool, str]:
-                - success (True if added successfully)
-                - message (Result message for GUI display)
+            tuple[bool, str]: (success, message)
         """
+        # --- Validation ---
+        course_id = (data.get("course_id") or "").strip()
+        if not course_id:
+            return False, "Course ID is required."
+
         try:
+            credits = int(data.get("credits", 0))
+        except (ValueError, TypeError):
+            return False, "Credits must be a valid number."
+
+        if credits < 0:
+            return False, "Credits cannot be negative."
+
+        # --- Build and add ---
+        try:
+            data["course_id"] = course_id
+            data["credits"] = credits
             course_config = self._build_course_config(data)
             success = self.model.add_course(course_config)
-
             if success:
-                return True, f"Course '{data['course_id']}' added successfully."
-            return False, f"Course '{data['course_id']}' already exists."
-
+                self.config_model.save_feature("temp", "courses")
+                return True, f"Course '{course_id}' added successfully."
+            return False, f"Course '{course_id}' already exists."
         except Exception as e:
             return False, f"Failed to add course: {e}"
 
-
-    def delete_course(self, course_id: str, section_index: int) -> tuple[bool, str]:
+    def modify_course(
+        self,
+        course_id: str,
+        section_index: int,
+        modifications: dict,
+    ) -> tuple[bool, str]:
         """
-        Complete workflow for deleting a course section (GUI version).
-
-        Steps:
-        1. Validate section exists
-        2. Delete via Model
-        3. Return success status and message
+        Validate, apply modifications to a course section, and temp-save.
 
         Parameters:
-            course_id (str): Base course ID
-            section_index (int): Index of the section to delete
-
+            course_id     (str):  Course ID.
+            section_index (int):  Section index to modify.
+            modifications (dict): Fields to update.
         Returns:
-            tuple[bool, str]:
-                - success (True if deleted successfully)
-                - message (Result message for GUI display)
-        """
-        try:
-            success = self.model.delete_course(course_id, section_index)
-
-            if success:
-                return True, "Course section deleted successfully."
-            return False, "Failed to delete course section."
-
-        except Exception as e:
-            return False, f"Failed to delete course: {e}"
-
-
-    def modify_course(self, course_id: str, section_index: int, modifications: dict) -> tuple[bool, str]:
-        """
-        Complete workflow for modifying a course (GUI version).
-
-        Steps:
-        1. Validate course exists
-        2. Parse modification inputs
-        3. Apply updates via Model
-        4. Return success status and message
-
-        Parameters:
-            course_id (str): ID of the course to modify
-            section_index (int): Index of the section to modify
-            modifications (dict): Raw modification inputs from GUI
-
-        Returns:
-            tuple[bool, str]:
-                - success (True if updated successfully)
-                - message (Result message for GUI display)
+            tuple[bool, str]: (success, message)
         """
         try:
             course = self.model.get_course_by_id(course_id)
@@ -170,49 +116,40 @@ class CourseController:
             if updates is None:
                 return False, error_msg
 
-            success = self.model.modify_course(course_id, section_index=section_index, **updates)
-
+            success = self.model.modify_course(
+                course_id, section_index=section_index, **updates
+            )
             if success:
+                self.config_model.save_feature("temp", "all")
                 return True, f"Course '{course_id}' updated successfully."
             return False, f"Failed to update course '{course_id}'."
-
         except Exception as e:
             return False, f"Failed to modify course: {e}"
 
     def _build_course_config(self, data: dict):
         return self.model.build_course_config(data)
 
-    def _parse_modifications(self, modifications: dict, current_course) -> tuple[dict | None, str]:
+    def _parse_modifications(
+        self,
+        modifications: dict,
+        current_course,
+    ) -> tuple[dict | None, str]:
         """
-        Parse modification inputs into update dictionary.
+        Parse and validate modification inputs.
 
-        Handles special cases like:
-        - Converting comma-separated lists
-        - Adding/removing faculty members (prefix with -)
-        - Validating credit values
-        - Validating existence of rooms, labs, and faculty
-
-        Parameters:
-            modifications (dict): Raw modification inputs from GUI
-            current_course: Current course object for reference
-
-        Returns:
-            tuple[dict | None, str]:
-                - Dictionary of updates if valid, error message string
-                - None if validation fails, error message string
+        Returns (updates_dict, '') on success, or (None, error_message) on failure.
         """
         updates = {}
 
-        if 'credits' in modifications and modifications['credits'] is not None:
+        if "credits" in modifications and modifications["credits"] is not None:
             try:
-                credits_int = int(modifications['credits'])
+                credits_int = int(modifications["credits"])
                 if credits_int < 0:
                     return None, "Credits must be a positive integer."
-                updates['credits'] = credits_int
+                updates["credits"] = credits_int
             except (ValueError, TypeError):
                 return None, "Credits must be a valid number."
 
-        # Handle lists and comma-separated strings for backwards compatibility
         def _to_list(val):
             if isinstance(val, list):
                 return val
@@ -220,9 +157,21 @@ class CourseController:
                 return [x.strip() for x in val.split(",") if x.strip()]
             return []
 
-        rooms = _to_list(modifications['room']) if 'room' in modifications and modifications['room'] is not None else None
-        labs = _to_list(modifications['lab']) if 'lab' in modifications and modifications['lab'] is not None else None
-        faculties = _to_list(modifications['faculty']) if 'faculty' in modifications and modifications['faculty'] is not None else None
+        rooms = (
+            _to_list(modifications["room"])
+            if "room" in modifications and modifications["room"] is not None
+            else None
+        )
+        labs = (
+            _to_list(modifications["lab"])
+            if "lab" in modifications and modifications["lab"] is not None
+            else None
+        )
+        faculties = (
+            _to_list(modifications["faculty"])
+            if "faculty" in modifications and modifications["faculty"] is not None
+            else None
+        )
 
         valid, error = self.model.validate_resources(
             rooms or [], labs or [], faculties or []
@@ -231,10 +180,10 @@ class CourseController:
             return None, error
 
         if rooms is not None:
-            updates['room'] = rooms
+            updates["room"] = rooms
         if labs is not None:
-            updates['lab'] = labs
+            updates["lab"] = labs
         if faculties is not None:
-            updates['faculty'] = faculties
+            updates["faculty"] = faculties
 
         return updates, ""

@@ -7,12 +7,15 @@ This application uses MVC architecture:
 - Views: Handle user input/output
 - Controllers: Coordinate models and views
 """
+
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv()
+
 from controllers.app_controller import SchedulerController
 from views.gui_view import GUIView
+
+load_dotenv()
 
 
 def main():
@@ -37,7 +40,9 @@ def main():
                 sys.exit(1)
             print(f"Loading configuration from: {config_path}")
         else:
-            print("No config file provided. Launching GUI — use Load Configuration to load a file.")
+            print(
+                "No config file provided. Launching GUI — use Load Configuration to load a file."
+            )
 
         controller = SchedulerController(config_path)
         GUIView.controller = controller
@@ -49,6 +54,7 @@ def main():
     except Exception as e:
         print(f"\nFatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

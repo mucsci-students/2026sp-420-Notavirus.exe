@@ -10,12 +10,15 @@ This view class handles all GUI pages related to conflict management:
 - /conflict/view   : View all conflicts
 """
 
+from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
 
 
 class ConflictGUIView:
+    conflict_model: Any = None
+    conflict_controller: Any = None
     # Conflict GUI View
 
     @ui.page("/conflict")
@@ -139,8 +142,7 @@ class ConflictGUIView:
                 .classes("w-full max-w-md")
             )
             status = ui.label("").classes("text-sm !text-black dark:!text-white")
-            save_label = ui.label("").classes("text-lg")
-            pending = {"dirty": False}
+            ui.label("").classes("text-lg")
 
             def section_conflict_exists(label_a, label_b):
                 _, obj_a = course_map[label_a]
@@ -187,51 +189,29 @@ class ConflictGUIView:
                         f"⚠ Conflict already exists between {label_a} and {label_b}."
                     )
                     return
-                success, message = controller.add_conflict(
-                    course_id_a, course_id_b, idx_a, idx_b
-                )
-                if success:
-                    # Rebuild course_map with fresh indices after the model update.
-                    fresh_courses = controller.get_all_courses()
-                    course_map.clear()
-                    fresh_counts: dict[str, int] = {}
-                    for i, c in enumerate(fresh_courses):
-                        cid = c.course_id
-                        fresh_counts[cid] = fresh_counts.get(cid, 0) + 1
-                        fresh_label = f"{cid}.{fresh_counts[cid]:02d}"
-                        course_map[fresh_label] = (i, c)
-                    pending["dirty"] = True
-                    save_label.set_text(
-                        "You have unsaved changes. Click Save to Config to persist."
-                    )
-                    save_label.classes(replace="text-lg text-orange-500")
-                    preview()
-                    status.set_text(
-                        f"✓ Conflict added between {label_a} and {label_b}."
-                    )
-                else:
-                    status.set_text(f"⚠ {message}")
-
-            def do_save_to_config():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("courses")
-                if success:
-                    pending["dirty"] = False
-                    save_label.set_text("Configuration saved to file.")
-                    save_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_label.set_text("Save failed. Check terminal for details.")
-                    save_label.classes(replace="text-lg text-red-600")
+                try:
+                    ok = controller.model.add_conflict(course_id_a, course_id_b)
+                    if ok:
+                        fresh_courses = controller.model.config_model.get_all_courses()
+                        fresh_counts: dict[str, int] = {}
+                        for c in fresh_courses:
+                            cid = c.course_id
+                            fresh_counts[cid] = fresh_counts.get(cid, 0) + 1
+                            fresh_label = f"{cid}.{fresh_counts[cid]:02d}"
+                            if fresh_label in course_map:
+                                course_map[fresh_label] = c
+                        preview()
+                        status.set_text(
+                            f"✓ Conflict added between {label_a} and {label_b}."
+                        )
+                    else:
+                        status.set_text("⚠ Failed to add conflict.")
+                except Exception as e:
+                    status.set_text(f"Error: {e}")
 
             ui.button("Add Conflict").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-12 dark:!bg-white dark:!text-black").on("click", do_add)
-            ui.button("Save to Config").props(
-                "rounded color=black text-color=white no-caps"
-            ).classes("w-80 h-12 dark:!bg-white dark:!text-black").on(
-                "click", do_save_to_config
-            )
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(
@@ -297,7 +277,7 @@ class ConflictGUIView:
             with ui.row().classes("w-full max-w-2xl justify-start"):
                 ui.button("Home").props("rounded no-caps").classes(
                     "h-10 !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: check_discard_and_navigate("/"))
+                ).on("click", lambda: ui.navigate.to("/"))
 
             ui.label("Modify Conflict").classes(
                 "text-4xl mb-4 !text-black dark:!text-white"
@@ -318,34 +298,7 @@ class ConflictGUIView:
                 return
 
             feedback = ui.label("").classes("text-lg")
-            save_label = ui.label("").classes("text-lg !text-black dark:!text-white")
-            selected = {"value": None, "dirty": False, "is_base": False}
-
-            def check_discard_and_navigate(target_url):
-                if selected.get("dirty"):
-                    setattr(confirm_dialog, "target_url", target_url)
-                    confirm_dialog.open()
-                else:
-                    ui.navigate.to(target_url)
-
-            with (
-                ui.dialog() as confirm_dialog,
-                ui.card().classes("items-center !bg-white dark:!bg-gray-800"),
-            ):
-                ui.label(
-                    "You have unsaved changes. Are you sure you want to leave?"
-                ).classes("text-lg !text-black dark:!text-white")
-                with ui.row().classes("mt-4 gap-4"):
-                    ui.button(
-                        "Yes",
-                        on_click=lambda: (
-                            confirm_dialog.close(),
-                            ui.navigate.to(getattr(confirm_dialog, "target_url", "/")),
-                        ),
-                    ).props("color=red text-color=white")
-                    ui.button("No", on_click=confirm_dialog.close).props(
-                        "color=black text-color=white"
-                    )
+            selected = {"value": None, "is_base": False}
 
             def update_selection(e):
                 val = conflict_options.get(e.value)
@@ -456,11 +409,6 @@ class ConflictGUIView:
                     replace=f"text-lg {'!text-black dark:!text-white' if success else 'text-red-600'}"
                 )
                 if success:
-                    selected["dirty"] = True
-                    save_label.set_text(
-                        "You have unsaved changes. Click Save to Config to persist."
-                    )
-                    save_label.classes(replace="text-lg text-orange-500")
                     existing_conflicts.clear()
                     existing_conflicts.extend(controller.gui_get_all_conflicts())
                     new_options = (
@@ -477,27 +425,12 @@ class ConflictGUIView:
                     new_course_a.value = None
                     new_course_b.value = None
 
-            def handle_save_to_config():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("courses")
-                if success:
-                    selected["dirty"] = False
-                    save_label.set_text("Configuration saved to file.")
-                    save_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_label.set_text("Save failed. Check terminal for details.")
-                    save_label.classes(replace="text-lg text-red-600")
-
             ui.button("Modify Conflict").props("rounded no-caps").classes(
                 "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
             ).on("click", on_modify)
-            ui.button("Save to Config").props("rounded no-caps").classes(
-                "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-            ).on("click", handle_save_to_config)
             ui.button("Back").props("rounded no-caps").classes(
                 "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-            ).on("click", lambda: check_discard_and_navigate("/conflict"))
+            ).on("click", lambda: ui.navigate.to("/conflict"))
 
     @ui.page("/conflict/delete")
     @staticmethod
@@ -576,36 +509,7 @@ class ConflictGUIView:
                 return
 
             feedback = ui.label("").classes("text-lg")
-            save_label = ui.label("").classes("text-lg !text-black dark:!text-white")
-            selected = {"value": None, "dirty": False}
-
-            def check_discard_and_navigate_del(target_url):
-                if selected.get("dirty"):
-                    setattr(confirm_dialog_del, "target_url", target_url)
-                    confirm_dialog_del.open()
-                else:
-                    ui.navigate.to(target_url)
-
-            with (
-                ui.dialog() as confirm_dialog_del,
-                ui.card().classes("items-center !bg-white dark:!bg-gray-800"),
-            ):
-                ui.label(
-                    "You have unsaved changes. Are you sure you want to leave?"
-                ).classes("text-lg !text-black dark:!text-white")
-                with ui.row().classes("mt-4 gap-4"):
-                    ui.button(
-                        "Yes",
-                        on_click=lambda: (
-                            confirm_dialog_del.close(),
-                            ui.navigate.to(
-                                getattr(confirm_dialog_del, "target_url", "/")
-                            ),
-                        ),
-                    ).props("color=red text-color=white")
-                    ui.button("No", on_click=confirm_dialog_del.close).props(
-                        "color=black text-color=white"
-                    )
+            selected = {"value": None}
 
             select = (
                 ui.select(
@@ -663,11 +567,6 @@ class ConflictGUIView:
                         )
                         confirm_card.set_visibility(False)
                         if success:
-                            selected["dirty"] = True
-                            save_label.set_text(
-                                "You have unsaved changes. Click Save to Config to persist."
-                            )
-                            save_label.classes(replace="text-lg text-orange-500")
                             existing_conflicts.clear()
                             existing_conflicts.extend(
                                 controller.gui_get_all_conflicts()
@@ -722,32 +621,15 @@ class ConflictGUIView:
                 feedback.set_text("")
                 confirm_card.set_visibility(True)
 
-            def handle_save_to_config():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("courses")
-                if success:
-                    selected["dirty"] = False
-                    save_label.set_text("Configuration saved to file.")
-                    save_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_label.set_text("Save failed. Check terminal for details.")
-                    save_label.classes(replace="text-lg text-red-600")
-
             ui.button("Check Conflict").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
                 "click", on_validate
             )
-            ui.button("Save to Config").props(
-                "rounded color=black text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                "click", handle_save_to_config
-            )
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                "click", lambda: check_discard_and_navigate_del("/conflict")
+                "click", lambda: ui.navigate.to("/conflict")
             )
 
     @ui.page("/conflict/view")

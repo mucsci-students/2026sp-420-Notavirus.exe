@@ -10,8 +10,11 @@ dependencies = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.8",
     "ty>=0.0.26",
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langgraph>=0.2.0",
+    "python-dotenv>=1.0.0",
 ]
-
 [dependency-groups]
 dev = [
     "iniconfig>=2.3.0",
@@ -19,11 +22,19 @@ dev = [
     "pluggy>=1.6.0",
     "pygments>=2.19.2",
     "pytest>=9.0.2",
-    "pytest-cov>=6.0.0",
+    "pytest-cov>=7.1.0",
 ]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+addopts = "--cov=models --cov=controllers --cov-report=term-missing"
+
 
 [tool.ty.src]
 exclude = ["oldcode"]
+
+[tool.coverage.run]
+source = ["controllers", "models"]
+
+[tool.coverage.report]
+show_missing = true

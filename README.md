@@ -24,6 +24,9 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 - UV package manager (recommended) or pip
 - NiceGUI for the web interface
 - course-constraint-scheduler library
+- LangChain, LangGraph, and langchain-openai for the AI assistant
+- OpenAI API key with access to GPT-5 mini/nano models
+
 
 ---
 
@@ -33,6 +36,10 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 ```
 .
 ├── main.py                  # Entry point - launches GUI
+├── pyproject.toml           # Project dependencies and configuration
+├── README.md                # Project documentation
+├── example.json             # Example configuration file
+├── .env.example             # Required environment variables template
 ├── controllers/             # Application logic and workflows
 │   ├── app_controller.py    # Main controller
 │   ├── faculty_controller.py
@@ -49,11 +56,10 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 │   └── ...
 ├── scheduler/               # Core scheduling engine
 │   └── config.py            # Configuration data models
-├── tests/                   # Test suite
-│   ├── test_models/         # 99 model tests
-│   ├── test_integration/    # 3 integration tests
-│   └── test_controllers/    # 13 controller tests
-└── example.json             # Example configuration file
+└── tests/                   # Test suite
+    ├── test_models/         # 114 model tests
+    ├── test_controllers/    # 22 controller tests
+    └── test_safe_save.py    # 1 safe_save test
 ```
 
 ---
@@ -82,17 +88,28 @@ UV is a fast Python package manager. Install it with:
 
 3. Install dependencies
   ```bash
-    # Sync environment
+    # Initialize UV environment
+    uv init
+
+    # Sync environment (installs all dependencies from pyproject.toml)
     uv sync
 
     # Activate virtual environment
     source .venv/bin/activate  # macOS/Linux
     # or
     .venv\Scripts\activate     # Windows
-
   ```
 
-4. (Optional) Prepare your configuration file
+4. Set up your OpenAI API key (required for the AI Assistant)
+
+  Create a `.env` file in the project root:
+  ```
+    OPENAI_API_KEY=your-api-key-here
+  ```
+  You can get an API key from https://platform.openai.com/api-keys.
+  Without this key the AI Assistant panel will not function.
+
+5. (Optional) Prepare your configuration file
 Use the included example.json as a template or create your own (see Configuration below). 
 Note: You can also skip this step and load a configuration file through the GUI after launch using the Load Configuration button.
 
@@ -237,20 +254,23 @@ and time slots.
 ## GUI Navigation 
 
 The main GUI presents a menu with buttons for each feature:
-┌─────────────────────────┐
-│      Scheduler        @ │
-├─────────────────────────┤
-│  Faculty   │    Room    │
-│  Course    │  Conflict  │
-│           Lab           │
-├─────────────────────────┤
-│     Print Config        │
-│     Run Scheduler       │
-│    Display Schedules    │
-└─────────────────────────┘
-Click any button to access that feature's interface. Each feature page includes 
-forms for input and displays results in a user-friendly format.
-@ represents the sun, if you click the sun the appearance will change.
+┌─────────────────────────────┐
+│                [Light/Dark] │
+│         Scheduler           │
+├─────────────────────────────┤
+│    Faculty   │    Room      │
+│    Course    │  Conflict    │
+│             Lab             │
+├─────────────────────────────┤
+│         Print Config        │
+│         Run Scheduler       │
+│       Display Schedules     │
+├─────────────────────────────┤
+│ [AI]                        │
+└─────────────────────────────┘
+Click any button to access that feature's interface. Each feature page includes forms for input and displays results in a user-friendly format. There is a light/dark toggle mode
+in the top right corner and an AI tool to use in the bottom
+left corner. 
 
 ---
 
@@ -259,13 +279,13 @@ forms for input and displays results in a user-friendly format.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests
+# Run all tests (187 tests total)
 pytest tests/ -v
 
 # Run only model tests (114 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (61 tests)
+# Run only controller tests (72 tests)
 pytest tests/test_controllers/ -v
 
 # Run only safe_save.py test (1 test)
@@ -278,7 +298,7 @@ pytest tests/ --cov=models --cov=controllers
 Test Coverage:
 
 ✅ 114 model tests - Data operations and business logic
-✅ 61 controller tests - Integration and workflow
+✅ 72 controller tests - Integration and workflow
 ✅ 1 safe_save test - The save feature used by save and save to config 
 
 ---
@@ -355,16 +375,20 @@ Hypothetical Course Preferences
 Faculty course preferences can reference courses that don't exist yet. However, the configuration file on disk must always be valid. If the app fails to start with a validation error referencing a course preference, manually remove the invalid entry from the JSON file before restarting.
 
 Starting Without a Config File
-If you launch without a config path, you MUST load a config path to use the scheduler or editor.
+If you launch without a config path, you MUST load a configuration path to use the scheduler or editor.
 
+Apple Touch Icon Warnings
+When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs 404 warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
 ---
 
 # Acknowledgements
 
-Built using: 
+Built using:
   - NiceGUI - Python web framework
   - course-constraint-scheduler - Scheduling engine
   - Pydantic for data validation
+  - LangChain / LangGraph - AI agent framework
+  - langchain-openai - OpenAI integration for the AI Assistant
 
 --- 
 

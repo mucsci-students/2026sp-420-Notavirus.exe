@@ -10,8 +10,12 @@ This application uses MVC architecture:
 
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+
 from controllers.app_controller import SchedulerController
 from views.gui_view import GUIView
+
+load_dotenv()
 
 
 def main():

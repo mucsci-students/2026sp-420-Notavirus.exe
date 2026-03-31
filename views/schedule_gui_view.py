@@ -8,6 +8,7 @@ ScheduleGUIView - Graphical-user interface for schedule interactions
     - test_schedules() no longer constructs Models directly.
 """
 
+from typing import Any
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -18,6 +19,7 @@ from views.gui_utils import require_config
 
 
 class _ScheduleState:
+    _scheduler_model: Any = None
     """
     Holds only transient UI state: generated schedules and current page index.
 
@@ -213,6 +215,8 @@ FACULTY_COLUMNS = [
 
 
 class ScheduleGUIView:
+    schedule_model: Any = None
+    schedule_controller: Any = None
     pass
 
     @ui.page("/run_scheduler")

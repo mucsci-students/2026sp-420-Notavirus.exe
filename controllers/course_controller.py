@@ -9,8 +9,6 @@ CourseController - Coordinates course-related workflows
     - Input validation lives here, not in the View.
 """
 
-from scheduler import CourseConfig
-
 
 class CourseController:
     """
@@ -128,38 +126,8 @@ class CourseController:
         except Exception as e:
             return False, f"Failed to modify course: {e}"
 
-    def delete_course(self, course_id: str, section_index: int) -> tuple[bool, str]:
-        """
-        Delete a course section and temp-save.
-
-        Parameters:
-            course_id     (str): Course ID.
-            section_index (int): Section index to delete.
-        Returns:
-            tuple[bool, str]: (success, message)
-        """
-        try:
-            success = self.model.delete_course(course_id, section_index)
-            if success:
-                self.config_model.save_feature("temp", "all")
-                return True, "Course section deleted successfully."
-            return False, "Failed to delete course section."
-        except Exception as e:
-            return False, f"Failed to delete course: {e}"
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _build_course_config(self, data: dict) -> CourseConfig:
-        return CourseConfig(
-            course_id=data["course_id"],
-            credits=data["credits"],
-            room=data["room"],
-            lab=data["lab"],
-            faculty=data["faculty"],
-            conflicts=data["conflicts"],
-        )
+    def _build_course_config(self, data: dict):
+        return self.model.build_course_config(data)
 
     def _parse_modifications(
         self,
@@ -189,34 +157,33 @@ class CourseController:
                 return [x.strip() for x in val.split(",") if x.strip()]
             return []
 
-        if "room" in modifications and modifications["room"] is not None:
-            rooms = _to_list(modifications["room"])
-            valid_rooms = self.config_model.get_all_rooms()
-            for r in rooms:
-                if r not in valid_rooms:
-                    return (
-                        None,
-                        f"Invalid room '{r}'. Room does not exist in configuration.",
-                    )
+        rooms = (
+            _to_list(modifications["room"])
+            if "room" in modifications and modifications["room"] is not None
+            else None
+        )
+        labs = (
+            _to_list(modifications["lab"])
+            if "lab" in modifications and modifications["lab"] is not None
+            else None
+        )
+        faculties = (
+            _to_list(modifications["faculty"])
+            if "faculty" in modifications and modifications["faculty"] is not None
+            else None
+        )
+
+        valid, error = self.model.validate_resources(
+            rooms or [], labs or [], faculties or []
+        )
+        if not valid:
+            return None, error
+
+        if rooms is not None:
             updates["room"] = rooms
-
-        if "lab" in modifications and modifications["lab"] is not None:
-            labs = _to_list(modifications["lab"])
-            valid_labs = self.config_model.get_all_labs()
-            for lab in labs:
-                if lab not in valid_labs:
-                    return (
-                        None,
-                        f"Invalid lab '{lab}'. Lab does not exist in configuration.",
-                    )
+        if labs is not None:
             updates["lab"] = labs
-
-        if "faculty" in modifications and modifications["faculty"] is not None:
-            faculties = _to_list(modifications["faculty"])
-            valid_faculty = [f.name for f in self.config_model.get_all_faculty()]
-            for f in faculties:
-                if f not in valid_faculty:
-                    return None, f"Invalid faculty '{f}'. Faculty does not exist."
+        if faculties is not None:
             updates["faculty"] = faculties
 
         return updates, ""

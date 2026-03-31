@@ -20,8 +20,12 @@ from controllers.conflict_controller import ConflictController
 from controllers.lab_controller import LabController
 from controllers.room_controller import RoomController
 from controllers.schedule_controller import ScheduleController
+from controllers.chatbot_controller import ChatbotController
 
 from views.gui_view import GUIView
+from views.lab_gui_view import LabGUIView
+from views.room_gui_view import RoomGUIView
+from views.chatbot_gui_view import ChatbotGUIView
 from nicegui import ui
 
 
@@ -81,6 +85,7 @@ class SchedulerController:
             self.lab_controller = None
             self.room_controller = None
             self.schedule_controller = None
+            self.chatbot_controller = None
             return
 
         self._initialize_from_path(config_path)
@@ -119,30 +124,45 @@ class SchedulerController:
         self.lab_controller = LabController(self.lab_model, self.view)
         self.room_controller = RoomController(self.room_model, self.view)
         self.schedule_controller = ScheduleController(self.scheduler_model, self.view)
+        self.chatbot_controller = ChatbotController(
+            self.lab_model,
+            self.room_model,
+            self.course_model,
+            self.faculty_model,
+            self.conflict_model,
+        )
 
-    # ------------------------------------------------------------------
-    # Public API used by Views
-    # ------------------------------------------------------------------
+        LabGUIView._lab_controller = self.lab_controller
 
-    def load_config(self, file_path: str) -> tuple[bool, str]:
-        """
-        Load (or reload) a configuration from disk.
+        from views.faculty_gui_view import FacultyGUIView
+        from views.course_gui_view import CourseGUIView
+        from views.conflict_gui_view import ConflictGUIView
+        from views.schedule_gui_view import ScheduleGUIView
+        from views.schedule_gui_view import _state as _schedule_state
 
-        This is the single entry-point the View calls when the user uploads
-        a configuration file. The View is responsible only for writing the
-        raw bytes to disk and passing the path here; this method handles all
-        model and sub-controller construction.
+        FacultyGUIView.faculty_model = self.faculty_model
+        FacultyGUIView.faculty_controller = self.faculty_controller
 
-        Parameters:
-            file_path (str): Absolute path to the JSON configuration file.
-        Returns:
-            tuple[bool, str]: (True, success message) or (False, error message)
-        """
-        try:
-            self._initialize_from_path(file_path)
-            return True, f"Loaded: {file_path}"
-        except Exception as e:
-            return False, f"Error loading configuration: {e}"
+        CourseGUIView.course_model = self.course_model
+        CourseGUIView.course_controller = self.course_controller
+
+        ConflictGUIView.conflict_model = self.conflict_model
+        ConflictGUIView.conflict_controller = self.conflict_controller
+
+        LabGUIView.lab_model = self.lab_model
+        LabGUIView.lab_controller = self.lab_controller
+        LabGUIView._lab_controller = self.lab_controller
+
+        RoomGUIView.room_model = self.room_model
+        RoomGUIView.room_controller = self.room_controller
+
+        if _schedule_state is not None:
+            _schedule_state._scheduler_model = self.scheduler_model
+        ScheduleGUIView.schedule_controller = self.schedule_controller
+
+        ChatbotGUIView._chatbot_controller = self.chatbot_controller
+
+        GUIView.controller = self
 
     def save_configuration(self) -> bool:
         """

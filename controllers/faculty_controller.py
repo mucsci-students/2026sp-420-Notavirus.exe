@@ -8,15 +8,7 @@ FacultyController - Coordinates faculty-related workflows
     - CLI methods are preserved unchanged for backward compatibility.
 """
 
-from scheduler import FacultyConfig, TimeRange
-
-# Constants
-FULL_TIME_MAX_CREDITS = 12
-ADJUNCT_MAX_CREDITS = 4
-MIN_CREDITS = 0
-MAX_DAYS = 5
-FULL_TIME_UNIQUE_COURSE_LIMIT = 2
-ADJUNCT_UNIQUE_COURSE_LIMIT = 1
+from scheduler import FacultyConfig
 
 
 class FacultyController:
@@ -192,121 +184,29 @@ class FacultyController:
         Returns:
             bool: True if successful.
         """
-        faculty = self.model.get_faculty_by_name(faculty_name)
-        if not faculty:
-            return False
-        if is_fulltime:
-            self.model.modify_faculty(faculty_name, "unique_course_limit", 2)
-            if faculty.maximum_credits <= 4:
-                self.model.modify_faculty(faculty_name, "maximum_credits", 12)
-        else:
-            self.model.modify_faculty(faculty_name, "unique_course_limit", 1)
-            if faculty.maximum_credits > 4:
-                if faculty.minimum_credits > 4:
-                    self.model.modify_faculty(faculty_name, "minimum_credits", 4)
-                self.model.modify_faculty(faculty_name, "maximum_credits", 4)
-        return True
-
-    def gui_set_maximum_credits(self, faculty_name: str, new_max: int) -> bool:
-        """
-        Set max credits and sync unique_course_limit and minimum_credits.
-
-        Parameters:
-            faculty_name (str): Name of faculty to modify.
-            new_max      (int): New maximum credits value.
-        Returns:
-            bool: True if successful.
-        """
-        faculty = self.model.get_faculty_by_name(faculty_name)
-        if not faculty:
-            return False
-        if faculty.minimum_credits > new_max:
-            self.model.modify_faculty(faculty_name, "minimum_credits", new_max)
-        self.model.modify_faculty(faculty_name, "maximum_credits", new_max)
-        if new_max <= 4:
-            self.model.modify_faculty(faculty_name, "unique_course_limit", 1)
-        else:
-            if faculty.unique_course_limit < 2:
-                self.model.modify_faculty(faculty_name, "unique_course_limit", 2)
-        return True
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
+        return self.model.set_position_type(faculty_name, is_fulltime)
 
     def _build_faculty_config(self, data: dict) -> FacultyConfig:
-        """Build a FacultyConfig from GUI or CLI input data."""
-        if data["is_full_time"]:
-            max_credits = FULL_TIME_MAX_CREDITS
-            unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
-        else:
-            max_credits = ADJUNCT_MAX_CREDITS
-            unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
-
-        day_map = {
-            "M": "MON",
-            "T": "TUE",
-            "W": "WED",
-            "R": "THU",
-            "F": "FRI",
-            "Monday": "MON",
-            "Tuesday": "TUE",
-            "Wednesday": "WED",
-            "Thursday": "THU",
-            "Friday": "FRI",
-        }
-        times = {}
-        if "times" in data:
-            for day, day_times in data["times"].items():
-                key = day_map.get(day, day)
-                times[key] = [
-                    TimeRange(start=t["start"], end=t["end"]) for t in day_times
-                ]
-        else:
-            for day in data.get("days", []):
-                key = day_map.get(day, day)
-                times[key] = [TimeRange(start="09:00", end="17:00")]
-
-        return FacultyConfig(
-            name=data["name"],
-            maximum_credits=max_credits,
-            minimum_credits=MIN_CREDITS,
-            unique_course_limit=unique_course_limit,
-            course_preferences=data.get("course_preferences", {}),
-            maximum_days=MAX_DAYS,
-            times=times,
-            room_preferences={},
-            lab_preferences=data.get("lab_preferences", {}),
-        )
+        return self.model.build_faculty_config(data)
 
     def _handle_modification(self, faculty_name: str, choice: str, faculty) -> bool:
-        """Handle CLI modification menu choice."""
+        """
+        Handle specific modification based on user's menu choice.
+
+        Parameters:
+            faculty_name (str): Name of faculty being modified
+            choice (str): Menu choice ('1' through '9')
+            faculty: Current faculty object for reference
+
+        Returns:
+            bool: True if modification successful, False otherwise
+        """
         if choice == "1":
             is_full_time = self.view.get_position_input()
-            if is_full_time:
-                self.model.modify_faculty(
-                    faculty_name, "maximum_credits", FULL_TIME_MAX_CREDITS
-                )
-                self.model.modify_faculty(
-                    faculty_name, "unique_course_limit", FULL_TIME_UNIQUE_COURSE_LIMIT
-                )
-                if faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
-                    self.model.modify_faculty(
-                        faculty_name, "minimum_credits", FULL_TIME_MAX_CREDITS
-                    )
-            else:
-                self.model.modify_faculty(
-                    faculty_name, "maximum_credits", ADJUNCT_MAX_CREDITS
-                )
-                self.model.modify_faculty(
-                    faculty_name, "unique_course_limit", ADJUNCT_UNIQUE_COURSE_LIMIT
-                )
-                if faculty.minimum_credits > ADJUNCT_MAX_CREDITS:
-                    self.model.modify_faculty(
-                        faculty_name, "minimum_credits", ADJUNCT_MAX_CREDITS
-                    )
-            return True
+            return self.model.set_position_type(faculty_name, is_full_time)
+
         elif choice == "2":
+            # Modify maximum credits
             new_max = self.view.get_integer_input(
                 "Enter new maximum credits: ", min_val=faculty.minimum_credits
             )
@@ -349,3 +249,6 @@ class FacultyController:
             lab_prefs = self.view.get_lab_preferences_input()
             return self.model.modify_faculty(faculty_name, "lab_preferences", lab_prefs)
         return False
+
+    def gui_set_maximum_credits(self, faculty_name: str, new_max: int) -> bool:
+        return self.model.set_maximum_credits(faculty_name, new_max)

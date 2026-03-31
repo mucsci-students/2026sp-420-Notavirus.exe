@@ -99,20 +99,6 @@ def test_save_configuration_returns_false_when_no_config():
 # ================================================================
 
 
-def test_load_config_success(controller, test_config):
-    """load_config() should return (True, message) on a valid path."""
-    success, message = controller.load_config(test_config)
-    assert success is True
-    assert test_config in message
-
-
-def test_load_config_bad_path(controller):
-    """load_config() should return (False, message) on an invalid path."""
-    success, message = controller.load_config("nonexistent_file.json")
-    assert success is False
-    assert len(message) > 0
-
-
 # ================================================================
 # TESTS: temp_save and save_to_config
 # ================================================================

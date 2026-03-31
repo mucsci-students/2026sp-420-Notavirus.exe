@@ -10,12 +10,15 @@ FacultyGUIView - Graphical-user interface for faculty interactions
     - Save orchestration is delegated to Controller methods.
 """
 
+from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
 
 
 class FacultyGUIView:
+    faculty_model: Any = None
+    faculty_controller: Any = None
     # Faculty GUI View
 
     @ui.page("/faculty")
@@ -390,42 +393,30 @@ class FacultyGUIView:
                 }
 
             def save_faculty():
-                """Save to in-memory model only via Controller."""
+                """Save to memory and persist to config immediately."""
                 faculty_data = _collect_faculty_data()
                 if faculty_data is None:
                     return
-                success, message = controller.add_faculty(faculty_data)
-                if success:
-                    ui.notify(message, type="positive")
-                    name_input.value = ""
-                    refresh_faculty_list()
-                else:
-                    ui.notify(message, type="negative")
+                try:
+                    from views.gui_view import GUIView
 
-            def save_faculty_to_config():
-                """Save to memory if needed, then persist via Controller."""
-                from views.gui_view import GUIView
-
-                if name_input.value:
-                    faculty_data = _collect_faculty_data()
-                    if faculty_data is None:
+                    if not GUIView.controller:
+                        ui.notify("System not initialized properly.", type="negative")
                         return
-                    # Only add if not already present — controller handles duplicate check.
-                    success, message = controller.add_faculty_if_not_exists(
-                        faculty_data
-                    )
-                    if not success:
-                        ui.notify(message, type="negative")
-                        return
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("faculty")
-                if success:
-                    ui.notify("Faculty saved to config file.", type="positive")
-                else:
-                    ui.notify("Config save failed.", type="warning")
-                name_input.value = ""
-                refresh_faculty_list()
+                    controller = GUIView.controller.faculty_controller
+                    if controller.add_faculty(faculty_data):
+                        ui.notify(
+                            f"Faculty '{faculty_data['name']}' added.", type="positive"
+                        )
+                        name_input.value = ""
+                        refresh_faculty_list()
+                    else:
+                        ui.notify(
+                            "Failed to add faculty. Maybe they already exist?",
+                            type="negative",
+                        )
+                except Exception as e:
+                    ui.notify(f"Error saving: {e}", type="negative")
 
             with ui.row().classes("w-full max-w-6xl justify-between items-end mt-16"):
                 ui.button("Cancel").props(
@@ -438,11 +429,6 @@ class FacultyGUIView:
                 ).classes(
                     "w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black"
                 ).on("click", save_faculty)
-                ui.button("Save to Config").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes(
-                    "w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black"
-                ).on("click", save_faculty_to_config)
 
     @ui.page("/faculty/modify")
     @staticmethod
@@ -472,7 +458,7 @@ class FacultyGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.faculty_controller
-        all_faculty = controller.get_all_faculty()
+        all_faculty = controller.model.get_all_faculty()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans gap-6"):
             with ui.row().classes("w-full max-w-2xl justify-start"):
@@ -485,9 +471,9 @@ class FacultyGUIView:
             ui.label("Modify Faculty").classes(
                 "text-4xl mb-4 !text-black dark:!text-white"
             )
-            ui.label(
-                'Select a Faculty member to modify. Press "Save" to keep changes in memory, or "Save to Config" to write to disk.'
-            ).classes("text-lg !text-black dark:!text-white text-center max-w-xl")
+            ui.label("Select a Faculty member to modify their information.").classes(
+                "text-lg !text-black dark:!text-white text-center max-w-xl"
+            )
 
             if not all_faculty:
                 ui.label("There are no faculty in the configuration.").classes(
@@ -504,9 +490,6 @@ class FacultyGUIView:
             selected_faculty = {"value": None}
             form_card = ui.card().classes("w-full max-w-2xl")
             form_card.set_visibility(False)
-            save_config_label = ui.label("").classes(
-                "text-lg !text-black dark:!text-white"
-            )
 
             def reload_form():
                 val = selected_faculty["value"]
@@ -525,7 +508,7 @@ class FacultyGUIView:
                     return
                 success, message = controller.modify_faculty_field(f.name, field, value)
                 if success:
-                    feedback_label.set_text("Updated in memory.")
+                    feedback_label.set_text("Updated.")
                     feedback_label.classes(replace="text-md text-green-600")
                     reload_form()
                 else:
@@ -547,36 +530,51 @@ class FacultyGUIView:
                             position_feedback = ui.label(" ").classes(
                                 "text-md !text-black dark:!text-white"
                             )
-
-                            def set_position(is_full):
-                                val = selected_faculty["value"]
-                                if not val:
-                                    return
-                                success, message = controller.set_position(
-                                    val.name, is_full
-                                )
-                                label = "Full-time" if is_full else "Adjunct"
-                                if success:
-                                    position_feedback.set_text(
-                                        f"Position set to {label}."
-                                    )
-                                    position_feedback.classes(
-                                        replace="text-md text-green-600"
-                                    )
-                                    reload_form()
-                                else:
-                                    position_feedback.set_text(f"Failed: {message}")
-                                    position_feedback.classes(
-                                        replace="text-md text-red-600"
-                                    )
-
                             with ui.row().classes("gap-4"):
                                 ui.button("Set Full-time").props(
                                     "rounded color=black text-color=white no-caps"
-                                ).on("click", lambda: set_position(True))
+                                ).on(
+                                    "click",
+                                    lambda: [
+                                        controller.gui_set_position(
+                                            (
+                                                selected_faculty["value"].name
+                                                if selected_faculty["value"]
+                                                else ""
+                                            ),
+                                            True,
+                                        ),
+                                        position_feedback.set_text(
+                                            "Position set to Full-time."
+                                        ),
+                                        position_feedback.classes(
+                                            replace="text-md text-green-600"
+                                        ),
+                                        reload_form(),
+                                    ],
+                                )
                                 ui.button("Set Adjunct").props(
                                     "rounded color=black text-color=white no-caps"
-                                ).on("click", lambda: set_position(False))
+                                ).on(
+                                    "click",
+                                    lambda: [
+                                        controller.gui_set_position(
+                                            (
+                                                selected_faculty["value"].name
+                                                if selected_faculty["value"]
+                                                else ""
+                                            ),
+                                            False,
+                                        ),
+                                        position_feedback.set_text(
+                                            "Position set to Adjunct."
+                                        ),
+                                        position_feedback.classes(
+                                            replace="text-md text-green-600"
+                                        ),
+                                        reload_form(),
+                                    ],
+                                )
 
                         ui.separator()
 
@@ -605,18 +603,9 @@ class FacultyGUIView:
                                         int(max_credits_input.value),
                                     )
                                     if success:
-                                        max_credits_feedback.set_text(
-                                            "Updated in memory."
-                                        )
+                                        max_credits_feedback.set_text("Updated.")
                                         max_credits_feedback.classes(
                                             replace="text-md text-green-600"
-                                        )
-                                    else:
-                                        max_credits_feedback.set_text(
-                                            f"Failed: {message}"
-                                        )
-                                        max_credits_feedback.classes(
-                                            replace="text-md text-red-600"
                                         )
                                     reload_form()
 
@@ -1046,46 +1035,12 @@ class FacultyGUIView:
                 form_card.set_visibility(True)
                 build_form(f)
 
-            def handle_save():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.temp_save("all")
-                if success:
-                    save_config_label.set_text("Changes saved to memory.")
-                    save_config_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_config_label.set_text("Save failed.")
-                    save_config_label.classes(replace="text-lg text-red-600")
-
-            def handle_save_to_config():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("all")
-                if success:
-                    save_config_label.set_text("Configuration saved to file.")
-                    save_config_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_config_label.set_text("Save failed.")
-                    save_config_label.classes(replace="text-lg text-red-600")
-
             ui.select(
                 options=list(faculty_options.keys()),
                 label="Select Faculty Member",
                 on_change=on_select,
             ).props("label-color=grey-7").classes("w-full max-w-2xl text-xl")
             form_card
-            save_config_label
-            with ui.row().classes("gap-4 mt-4"):
-                ui.button("Save").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-48 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                    "click", handle_save
-                )
-                ui.button("Save to Config").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-48 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                    "click", handle_save_to_config
-                )
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -1134,7 +1089,6 @@ class FacultyGUIView:
 
             container = ui.column().classes("w-full max-w-lg gap-3 items-center")
             status = ui.label("").classes("text-sm !text-black dark:!text-white")
-            save_label = ui.label("").classes("text-sm !text-black dark:!text-white")
 
             def build(c):
                 c.clear()
@@ -1169,9 +1123,6 @@ class FacultyGUIView:
                                             ui.label(f"Delete '{name}'?").classes(
                                                 "text-xl font-bold"
                                             )
-                                            ui.label(
-                                                "This removes them from memory. Use Save to Config to persist."
-                                            ).classes("text-sm text-gray-500")
                                             with ui.row().classes("gap-4 mt-4"):
                                                 ui.button(
                                                     "Cancel", on_click=dlg.close
@@ -1184,7 +1135,11 @@ class FacultyGUIView:
                                                         controller.delete_faculty(n)
                                                     )
                                                     d.close()
-                                                    status.set_text(message)
+                                                    status.set_text(
+                                                        f"✓ '{n}' deleted."
+                                                        if ok
+                                                        else f"⚠ Could not delete '{n}'."
+                                                    )
                                                     build(container)
 
                                                 ui.button(
@@ -1202,24 +1157,6 @@ class FacultyGUIView:
 
             build(container)
 
-            def save_to_config():
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("all")
-                if success:
-                    save_label.set_text("Deletions saved to config file.")
-                    save_label.classes(replace="text-sm text-green-600")
-                else:
-                    save_label.set_text("Config save failed.")
-                    save_label.classes(replace="text-sm text-red-600")
-
-            save_label
-            with ui.row().classes("gap-4 mt-4"):
-                ui.button("Save to Config").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-48 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                    "click", save_to_config
-                )
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

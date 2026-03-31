@@ -10,11 +10,13 @@ This model class manages all faculty-related data operations including:
 """
 
 from scheduler import FacultyConfig
+from scheduler.config import TimeRange
 
 # Constants
 FULL_TIME_MAX_CREDITS = 12
 ADJUNCT_MAX_CREDITS = 4
 MIN_CREDITS = 0
+MAX_DAYS = 5
 FULL_TIME_UNIQUE_COURSE_LIMIT = 2
 ADJUNCT_UNIQUE_COURSE_LIMIT = 1
 
@@ -151,6 +153,123 @@ class FacultyModel:
             list[FacultyConfig]: List of all faculty
         """
         return self.config_model.config.config.faculty
+
+    def set_position_type(self, faculty_name: str, is_fulltime: bool) -> bool:
+        """
+        Set faculty position type and enforce corresponding credit/course-limit defaults.
+
+        Parameters:
+            faculty_name (str): Name of faculty to modify
+            is_fulltime (bool): True for full-time, False for adjunct
+
+        Returns:
+            bool: True if successful, False if faculty not found
+        """
+        faculty = self.get_faculty_by_name(faculty_name)
+        if not faculty:
+            return False
+        if is_fulltime:
+            self.modify_faculty(
+                faculty_name, "unique_course_limit", FULL_TIME_UNIQUE_COURSE_LIMIT
+            )
+            self.modify_faculty(faculty_name, "maximum_credits", FULL_TIME_MAX_CREDITS)
+            if faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
+                self.modify_faculty(
+                    faculty_name, "minimum_credits", FULL_TIME_MAX_CREDITS
+                )
+        else:
+            self.modify_faculty(
+                faculty_name, "unique_course_limit", ADJUNCT_UNIQUE_COURSE_LIMIT
+            )
+            if faculty.minimum_credits > ADJUNCT_MAX_CREDITS:
+                self.modify_faculty(
+                    faculty_name, "minimum_credits", ADJUNCT_MAX_CREDITS
+                )
+            self.modify_faculty(faculty_name, "maximum_credits", ADJUNCT_MAX_CREDITS)
+        return True
+
+    def set_maximum_credits(self, faculty_name: str, new_max: int) -> bool:
+        """
+        Set faculty maximum credits and keep minimum_credits and unique_course_limit consistent.
+
+        Parameters:
+            faculty_name (str): Name of faculty to modify
+            new_max (int): New maximum credits value
+
+        Returns:
+            bool: True if successful, False if faculty not found
+        """
+        faculty = self.get_faculty_by_name(faculty_name)
+        if not faculty:
+            return False
+        if faculty.minimum_credits > new_max:
+            self.modify_faculty(faculty_name, "minimum_credits", new_max)
+        self.modify_faculty(faculty_name, "maximum_credits", new_max)
+        if new_max <= ADJUNCT_MAX_CREDITS:
+            self.modify_faculty(
+                faculty_name, "unique_course_limit", ADJUNCT_UNIQUE_COURSE_LIMIT
+            )
+        else:
+            if faculty.unique_course_limit < FULL_TIME_UNIQUE_COURSE_LIMIT:
+                self.modify_faculty(
+                    faculty_name, "unique_course_limit", FULL_TIME_UNIQUE_COURSE_LIMIT
+                )
+        return True
+
+    def build_faculty_config(self, data: dict) -> FacultyConfig:
+        """
+        Build a FacultyConfig object from raw input data.
+
+        Parameters:
+            data (dict): Dictionary containing faculty data with keys:
+                - name, is_full_time, days (CLI) or times (GUI),
+                  course_preferences, lab_preferences
+
+        Returns:
+            FacultyConfig: Configured faculty object
+        """
+        if data["is_full_time"]:
+            max_credits = FULL_TIME_MAX_CREDITS
+            unique_course_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
+        else:
+            max_credits = ADJUNCT_MAX_CREDITS
+            unique_course_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
+
+        day_map = {
+            "M": "MON",
+            "T": "TUE",
+            "W": "WED",
+            "R": "THU",
+            "F": "FRI",
+            "Monday": "MON",
+            "Tuesday": "TUE",
+            "Wednesday": "WED",
+            "Thursday": "THU",
+            "Friday": "FRI",
+        }
+        times = {}
+        if "times" in data:
+            for day, day_times in data["times"].items():
+                if day in day_map:
+                    times[day_map[day]] = [
+                        TimeRange(start=t["start"], end=t["end"]) for t in day_times
+                    ]
+        else:
+            for day in data.get("days", []):
+                day_name = day_map.get(day, day)
+                times[day_name] = [TimeRange(start="09:00", end="17:00")]
+
+        return FacultyConfig(
+            name=data["name"],
+            maximum_credits=max_credits,
+            minimum_credits=MIN_CREDITS,
+            unique_course_limit=unique_course_limit,
+            course_preferences=data.get("course_preferences", {}),
+            maximum_days=MAX_DAYS,
+            times=times,
+            room_preferences={},
+            lab_preferences=data.get("lab_preferences", {}),
+        )
 
     def validate_faculty_references(self) -> int:
         """

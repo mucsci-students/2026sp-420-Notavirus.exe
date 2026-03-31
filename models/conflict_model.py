@@ -208,6 +208,45 @@ class ConflictModel:
 
         return True
 
+    def modify_conflict_by_ids(
+        self, old_c1: str, old_c2: str, new_c1: str, new_c2: str
+    ) -> bool:
+        """
+        Modify a conflict by replacing one or both course IDs (in-memory only).
+        Determines modify mode automatically based on which IDs changed.
+        Call config_model.safe_save() to persist changes to disk.
+
+        Parameters:
+            old_c1 (str): Original first course ID
+            old_c2 (str): Original second course ID
+            new_c1 (str): New first course ID
+            new_c2 (str): New second course ID
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if old_c1 == new_c1 and old_c2 == new_c2:
+            return True
+        if new_c1 == new_c2:
+            return False
+        all_old1 = self.get_course_by_id(old_c1)
+        all_old2 = self.get_course_by_id(old_c2)
+        all_new1 = self.get_course_by_id(new_c1)
+        all_new2 = self.get_course_by_id(new_c2)
+        if not all_old1 or not all_old2 or not all_new1 or not all_new2:
+            return False
+        course_old1 = all_old1[0]
+        course_old2 = all_old2[0]
+        course_new1 = all_new1[0]
+        course_new2 = all_new2[0]
+        if old_c1 != new_c1 and old_c2 == new_c2:
+            return self.modify_conflict(course_old1, course_old2, course_new1, 1)
+        elif old_c2 != new_c2 and old_c1 == new_c1:
+            return self.modify_conflict(course_old1, course_old2, course_new2, 2)
+        else:
+            self.delete_conflict(old_c1, old_c2)
+            return self.add_conflict(new_c1, new_c2)
+
     def get_all_conflicts(self) -> list[tuple[str, str, int, int]]:
         """
         Get all unique conflict pairs with their section indices.

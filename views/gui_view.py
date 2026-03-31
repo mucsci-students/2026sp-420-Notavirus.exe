@@ -7,15 +7,17 @@ their own files (i.e. the landing page, the navigation page, and currently inclu
 print config, run scheduler, and display schedules)
 """
 
+from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
 
 
 class GUIView:
+    config_path: Any = None
     #    The View holds exactly one reference: the Controller.
     #    All data is fetched through the Controller at render time.
     #    No model references, no sub-controller references are stored here.
-    controller = None
+    controller: Any = None
 
     @ui.page("/")
     @staticmethod
@@ -114,28 +116,113 @@ class GUIView:
                     All model construction and sub-controller wiring happens
                     inside Controller.load_config() — never here.
                     """
-                    import os
+                    from models.config_model import ConfigModel
+                    from models.faculty_model import FacultyModel
+                    from models.course_model import CourseModel
+                    from models.conflict_model import ConflictModel
+                    from models.lab_model import LabModel
+                    from models.room_model import RoomModel
+                    from models.scheduler_model import SchedulerModel
+                    from controllers.faculty_controller import FacultyController
+                    from controllers.course_controller import CourseController
+                    from controllers.conflict_controller import ConflictController
+                    from controllers.lab_controller import LabController
+                    from controllers.room_controller import RoomController
+                    from controllers.schedule_controller import ScheduleController
+                    from controllers.chatbot_controller import ChatbotController
+                    from views.chatbot_gui_view import ChatbotGUIView
+                    from views.course_gui_view import CourseGUIView
+                    from views.faculty_gui_view import FacultyGUIView
+                    from views.conflict_gui_view import ConflictGUIView
+                    from views.lab_gui_view import LabGUIView
+                    from views.room_gui_view import RoomGUIView
+                    from views.schedule_gui_view import ScheduleGUIView
+                    from views.schedule_gui_view import _state as _schedule_state
 
                     try:
-                        file_path = os.path.join(os.getcwd(), e.file.name)
+                        real_name = e.file.name
+                        file_path = real_name
+
                         with open(file_path, "wb") as f:
                             f.write(await e.file.read())
 
-                        if GUIView.controller is None:
-                            return
-                        success, message = GUIView.controller.load_config(file_path)
+                        ctrl = GUIView.controller
+                        # Use the GUIView instance as view — works whether or not
+                        # a config was previously loaded
+                        view = ctrl.view if (ctrl and ctrl.view) else GUIView()
 
-                        if success:
-                            status_label.style("color: green !important;")
-                            status_label.set_text(f"✓ Loaded: {e.file.name}")
-                            ui.notify(
-                                "Configuration loaded successfully!", type="positive"
-                            )
-                            load_dialog.close()
-                            ui.navigate.reload()
-                        else:
-                            status_label.style("color: red !important;")
-                            status_label.set_text(message)
+                        new_config = ConfigModel(file_path)
+                        new_faculty_model = FacultyModel(new_config)
+                        new_course_model = CourseModel(new_config)
+                        new_conflict_model = ConflictModel(new_config)
+                        new_lab_model = LabModel(new_config)
+                        new_room_model = RoomModel(new_config)
+                        new_scheduler_model = SchedulerModel(new_config)
+
+                        new_faculty_ctrl = FacultyController(new_faculty_model, view)
+                        new_course_ctrl = CourseController(new_course_model, new_config)
+                        new_conflict_ctrl = ConflictController(new_conflict_model, view)
+                        new_lab_ctrl = LabController(new_lab_model, view)
+                        new_room_ctrl = RoomController(new_room_model, view)
+                        new_schedule_ctrl = ScheduleController(
+                            new_scheduler_model, view
+                        )
+                        new_chatbot_ctrl = ChatbotController(
+                            new_lab_model,
+                            new_room_model,
+                            new_course_model,
+                            new_faculty_model,
+                            new_conflict_model,
+                        )
+
+                        ctrl.config_model = new_config
+                        ctrl.faculty_model = new_faculty_model
+                        ctrl.course_model = new_course_model
+                        ctrl.conflict_model = new_conflict_model
+                        ctrl.lab_model = new_lab_model
+                        ctrl.room_model = new_room_model
+                        ctrl.scheduler_model = new_scheduler_model
+                        ctrl.faculty_controller = new_faculty_ctrl
+                        ctrl.course_controller = new_course_ctrl
+                        ctrl.conflict_controller = new_conflict_ctrl
+                        ctrl.lab_controller = new_lab_ctrl
+                        ctrl.room_controller = new_room_ctrl
+                        ctrl.schedule_controller = new_schedule_ctrl
+                        ctrl.chatbot_controller = new_chatbot_ctrl
+                        ctrl.view = view
+                        ctrl.config_path = file_path
+
+                        FacultyGUIView.faculty_model = new_faculty_model
+                        FacultyGUIView.faculty_controller = new_faculty_ctrl
+
+                        CourseGUIView.course_model = new_course_model
+                        CourseGUIView.course_controller = new_course_ctrl
+
+                        ConflictGUIView.conflict_model = new_conflict_model
+                        ConflictGUIView.conflict_controller = new_conflict_ctrl
+
+                        LabGUIView.lab_model = new_lab_model
+                        LabGUIView.lab_controller = new_lab_ctrl
+                        LabGUIView._lab_controller = new_lab_ctrl
+
+                        RoomGUIView.room_model = new_room_model
+                        RoomGUIView.room_controller = new_room_ctrl
+
+                        _schedule_state._scheduler_model = new_scheduler_model
+                        ScheduleGUIView.schedule_controller = new_schedule_ctrl
+
+                        ChatbotGUIView._chatbot_controller = new_chatbot_ctrl
+
+                        GUIView.config_path = file_path
+                        GUIView.controller.config_path = file_path
+
+                        GUIView.config_path = file_path
+                        GUIView.controller.config_path = file_path
+
+                        status_label.style("color: green !important;")
+                        status_label.set_text(f"✓ Loaded: {e.file.name}")
+                        ui.notify("Configuration loaded successfully!", type="positive")
+                        load_dialog.close()
 
                     except Exception as ex:
                         status_label.style("color: red !important;")
@@ -292,7 +379,9 @@ class GUIView:
         Returns:
             None
         """
-        ui.run(title="Scheduler", storage_secret="scheduler_secret_key")
+        ui.run(
+            title="Scheduler", host="localhost", storage_secret="scheduler_secret_key"
+        )
 
 
 if __name__ in {"__main__", "__mp_main__"}:

@@ -40,8 +40,8 @@ def test_modify_course_valid_rooms_labs(course_controller):
     }
     course_controller.add_course(data)
 
-    # example.json has "Roddy 140" and "Linux"
-    mods = {"room": ["Roddy 140"], "lab": ["Linux"], "faculty": []}
+    # example.json has "Roddy 136" and "Linux"
+    mods = {"room": ["Roddy 136"], "lab": ["Linux"], "faculty": []}
     success, msg = course_controller.modify_course("TEST 101", 0, mods)
 
     assert success is True

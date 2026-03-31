@@ -18,12 +18,15 @@ MVC rules followed in this file:
     - Save orchestration (temp vs. config) is delegated to Controller methods.
 """
 
+from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
 
 
 class CourseGUIView:
+    course_model: Any = None
+    course_controller: Any = None
     #  Course GUI View
 
     @ui.page("/course")
@@ -110,8 +113,6 @@ class CourseGUIView:
                 "text-base !text-black dark:!text-white text-center max-w-xl mb-2"
             )
 
-            selected = {"dirty": False}
-
             @ui.refreshable
             def course_table():
                 sections = controller.get_courses_with_sections()
@@ -161,37 +162,20 @@ class CourseGUIView:
                     "conflicts": [],
                 }
 
-                success, message = controller.add_course(data)
-                result_label.set_text(message)
+                try:
+                    success, message = controller.add_course(data)
+                    result_label.set_text(message)
 
-                if success:
-                    selected["dirty"] = True
-                    save_label.set_text(
-                        "You have unsaved changes. Click Save to Config to persist."
-                    )
-                    save_label.classes(replace="text-lg text-orange-500")
-                    course_id_input.set_value("")
-                    credits_input.set_value(4)
-                    room_select.set_value([])
-                    lab_select.set_value([])
-                    faculty_select.set_value([])
-                    course_table.refresh()
+                    if success:
+                        course_id_input.set_value("")
+                        credits_input.set_value(4)
+                        room_select.set_value([])
+                        lab_select.set_value([])
+                        faculty_select.set_value([])
+                        course_table.refresh()
 
-            def handle_save():
-                """
-                Delegates persistence entirely to the Controller.
-                The View never calls model methods directly.
-                """
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("courses")
-                if success:
-                    selected["dirty"] = False
-                    save_label.set_text("Configuration saved successfully.")
-                    save_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_label.set_text("Save failed. Check terminal for details.")
-                    save_label.classes(replace="text-lg text-red-600")
+                except Exception as e:
+                    result_label.set_text(f"Error: {e}")
 
             with ui.row().classes("justify-center items-start w-full gap-[150px]"):
                 with ui.column().classes("items-center gap-4 pt-10"):
@@ -221,16 +205,10 @@ class CourseGUIView:
                         .classes("w-80")
                     )
                     result_label = ui.label("").classes("text-base")
-                    save_label = ui.label("").classes("text-lg")
                     ui.button("Add Course").props(
                         "rounded color=black text-color=white no-caps"
                     ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
                         "click", handle_add
-                    )
-                    ui.button("Save to Config").props(
-                        "rounded color=black text-color=white no-caps"
-                    ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                        "click", handle_save
                     )
                     ui.button("Back").props(
                         "rounded color=black text-color=white no-caps"
@@ -402,11 +380,7 @@ class CourseGUIView:
                     # Controller handles the modify AND the temp-save.
                     ok, message = controller.modify_course(cid, section_idx, updates)
                     if ok:
-                        status.set_text(f"'{selected_label.value}' updated in memory.")
-                        save_label.set_text(
-                            "You have unsaved changes. Click Save to Config to persist."
-                        )
-                        save_label.classes(replace="text-lg text-orange-500")
+                        status.set_text(f"'{selected_label.value}' updated.")
                         credits_input.set_value(None)
                         new_sections = controller.get_courses_with_sections()
                         section_map.clear()
@@ -415,30 +389,10 @@ class CourseGUIView:
                     else:
                         status.set_text(f"⚠ {message}")
 
-                def do_save_to_config():
-                    """
-                    Delegates persistence entirely to the Controller.
-                    The View never calls model methods directly.
-                    """
-                    if GUIView.controller is None:
-                        return
-                    success = GUIView.controller.save_to_config("all")
-                    if success:
-                        save_label.set_text("Configuration saved to file.")
-                        save_label.classes(replace="text-lg text-green-600")
-                    else:
-                        save_label.set_text("Save failed. Check terminal for details.")
-                        save_label.classes(replace="text-lg text-red-600")
-
                 ui.button("Apply Changes").props(
                     "rounded color=black text-color=white no-caps"
                 ).classes("w-full h-12 mt-2 dark:!bg-white dark:!text-black").on(
                     "click", do_modify
-                )
-                ui.button("Save to Config").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-full h-12 dark:!bg-white dark:!text-black").on(
-                    "click", do_save_to_config
                 )
 
             status
@@ -502,7 +456,7 @@ class CourseGUIView:
                 return
 
             status_label = ui.label("").classes("text-lg !text-black dark:!text-white")
-            save_label = ui.label("").classes("text-lg !text-black dark:!text-white")
+            ui.label("").classes("text-lg !text-black dark:!text-white")
 
             section_options = {
                 label: (course.course_id, index)
@@ -555,11 +509,6 @@ class CourseGUIView:
                             )
                             status_label.set_text(message)
                             if success:
-                                selected["dirty"] = True
-                                save_label.set_text(
-                                    "You have unsaved changes. Click Save to Config to persist."
-                                )
-                                save_label.classes(replace="text-lg text-orange-500")
                                 updated = controller.get_courses_with_sections()
                                 new_options = {
                                     lbl: (c.course_id, i) for lbl, i, c in updated
@@ -576,29 +525,9 @@ class CourseGUIView:
 
                 dialog.open()
 
-            def handle_save():
-                """
-                Delegates persistence entirely to the Controller.
-                """
-                if GUIView.controller is None:
-                    return
-                success = GUIView.controller.save_to_config("all")
-                if success:
-                    selected["dirty"] = False
-                    save_label.set_text("Configuration saved to file.")
-                    save_label.classes(replace="text-lg text-green-600")
-                else:
-                    save_label.set_text("Save failed. Check terminal for details.")
-                    save_label.classes(replace="text-lg text-red-600")
-
             ui.button("Delete Course").props(
                 "rounded color=red text-color=white no-caps"
             ).classes("w-80 h-16 text-xl").on("click", handle_delete)
-            ui.button("Save to Config").props(
-                "rounded color=black text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
-                "click", handle_save
-            )
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(

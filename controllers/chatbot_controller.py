@@ -6,6 +6,7 @@ Design pattern: Implemented the decorator pattern by using wraps and having @req
     be at the top of each function that needs it instead of having the code in every function.
 """
 import asyncio
+import difflib
 import logging
 from functools import wraps
 
@@ -180,8 +181,19 @@ class ChatbotController:
         labs = self.lab_model.get_all_labs()
         return ("Labs: " + ", ".join(labs)) if labs else "No labs configured."
 
+
+
+    
     # ── Room tools ───────────────────────────────────────────────────────────
 
+    @requires_config
+    def _suggest_room(self, name: str) -> str:
+        rooms = self.room_model.get_all_rooms()
+        matches = difflib.get_close_matches(name, rooms, n=1, cutoff=0.6)
+        if matches:
+            return f" Did you mean '{matches[0]}'"
+        return
+    
     @requires_config
     def _add_room(self, name: str) -> str:
         return f"Room '{name}' added." if self.room_model.add_room(name) \
@@ -189,14 +201,15 @@ class ChatbotController:
 
     @requires_config
     def _delete_room(self, name: str) -> str:
-        return f"Room '{name}' deleted." if self.room_model.delete_room(name) \
-            else f"Failed to delete room '{name}'."
-
+        if self.room_model.delete_room(name):
+            return f"Room '{name}' deleted"
+        return f"Failed to delete room '{name}' (not found).{self._suggest_room(name)}"
+    
     @requires_config
     def _rename_room(self, old_name: str, new_name: str) -> str:
         return f"Room renamed from '{old_name}' to '{new_name}'." \
             if self.room_model.modify_room(old_name, new_name) \
-            else f"Failed to rename room '{old_name}'."
+            else f"Failed to rename room '{old_name}' (not found).{self._suggest_room(old_name)}."
 
     @requires_config
     def _get_rooms(self) -> str:
@@ -268,6 +281,17 @@ class ChatbotController:
 
     # ── Faculty tools ─────────────────────────────────────────────────────────
 
+
+    @requires_config
+    def _suggest_faculty(self, name: str) -> str:
+        faculty = self.faculty_model.get_all_faculty()
+        names = [f.name for f in faculty]
+        matches = difflib.get_close_matches(name, names, n=1, cutoff=0.6)
+        if matches: 
+            return f"Did you mean '{matches[0]}'?"
+        return ""
+    
+
     @staticmethod
     def _parse_times(times_str: str) -> dict:
         """Parse 'MON:08:00-17:00,WED:09:00-18:00' into FacultyConfig times dict."""
@@ -306,8 +330,9 @@ class ChatbotController:
 
     @requires_config
     def _delete_faculty(self, name: str) -> str:
-        return f"Faculty '{name}' deleted." if self.faculty_model.delete_faculty(name) \
-            else f"Failed to delete faculty '{name}' (not found)."
+        if self.faculty_model.delete_faculty(name):
+            return f"Faculty '{name}' deleted"
+        return f"Failed to delete faculty '{name}' (not found).{self._suggest_faculty(name)}"
 
     @requires_config
     def _modify_faculty(self, name: str, field: str, value: int) -> str:

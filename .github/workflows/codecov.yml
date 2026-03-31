@@ -5,6 +5,7 @@ on: [push, pull_request]
 
 jobs:
   test:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     name: Run tests and collect coverage
     runs-on: ubuntu-latest
     steps:

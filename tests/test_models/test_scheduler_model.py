@@ -12,6 +12,7 @@ Tests cover:
 
 import pytest
 import shutil
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -323,3 +324,148 @@ def test_count_possible_schedules_handles_exception_gracefully(scheduler_model):
         count = scheduler_model.count_possible_schedules()
 
     assert count == 2
+
+
+# ================================================================
+# TESTS: _build_dummy_course
+# ================================================================
+
+
+def test_build_dummy_course_empty_string(scheduler_model):
+    course = scheduler_model._build_dummy_course("")
+    assert course.course_id == "UNKNOWN"
+    assert course.section == 1
+    assert course.labs == []
+    assert course.faculties == []
+
+
+def test_build_dummy_course_no_section(scheduler_model):
+    course = scheduler_model._build_dummy_course("CS101")
+    assert course.course_id == "CS101"
+    assert course.section == 1
+
+
+def test_build_dummy_course_with_section(scheduler_model):
+    course = scheduler_model._build_dummy_course(
+        "CS101.2", faculty="Dr. Smith", lab="L1"
+    )
+    assert course.course_id == "CS101"
+    assert course.section == 2
+    assert "L1" in course.labs
+    assert "Dr. Smith" in course.faculties
+
+
+def test_build_dummy_course_invalid_section(scheduler_model):
+    course = scheduler_model._build_dummy_course("CS101.A")
+    assert course.course_id == "CS101"
+    assert course.section == 1
+
+
+# ================================================================
+# TESTS: _build_time_instance
+# ================================================================
+
+
+def test_build_time_instance_valid(scheduler_model):
+    t_dict = {"day": 1, "start": 540, "duration": 50}
+    time_instance = scheduler_model._build_time_instance(t_dict)
+    assert time_instance.day.value == 1
+    assert time_instance.start.value == 540
+    assert time_instance.duration.value == 50
+
+
+def test_build_time_instance_invalid_raises_keyerror(scheduler_model):
+    with pytest.raises(KeyError):
+        scheduler_model._build_time_instance({"day": 1, "start": 540})
+
+
+# ================================================================
+# TESTS: import/export CSV
+# ================================================================
+
+
+def test_import_csv_empty(scheduler_model):
+    schedules = scheduler_model.import_from_csv(b"")
+    assert schedules == []
+
+
+def test_export_import_csv(scheduler_model):
+    csv_bytes = b"CS101.1,Dr. Smith,Room A,None,MON 09:00-09:50\n\nCS102.1,Dr. Jones,Room B,L1,TUE 10:00-11:00,WED 10:00-11:00^\n"
+    schedules = scheduler_model.import_from_csv(csv_bytes)
+    assert len(schedules) == 2
+    assert len(schedules[0]) == 1
+    assert schedules[0][0].course.course_id == "CS101"
+    assert schedules[0][0].faculty == "Dr. Smith"
+    assert schedules[0][0].room == "Room A"
+    assert schedules[0][0].lab is None
+
+    assert len(schedules[1]) == 1
+    assert schedules[1][0].course.course_id == "CS102"
+    assert schedules[1][0].lab == "L1"
+    assert schedules[1][0].time.lab_index == 1
+
+    exported = scheduler_model.export_to_csv(schedules)
+
+    exported_str = exported.decode("utf-8")
+    assert "CS101" in exported_str
+    assert "09:00-09:50" in exported_str
+
+
+def test_import_csv_invalid_format_raises(scheduler_model):
+    with pytest.raises(IndexError):
+        scheduler_model.import_from_csv(b"CS101,Dr. Smith")
+
+
+# ================================================================
+# TESTS: import/export JSON
+# ================================================================
+
+
+def test_import_json_empty(scheduler_model):
+    schedules = scheduler_model.import_from_json(b"[]")
+    assert schedules == []
+
+
+def test_import_json_exception(scheduler_model):
+    with pytest.raises(json.JSONDecodeError):
+        scheduler_model.import_from_json(b"invalid json")
+
+
+def test_export_json_uses_as_dict(scheduler_model):
+    mock_course = MagicMock()
+    mock_course.as_dict.return_value = {"mock": "data"}
+
+    exported = scheduler_model.export_to_json([[mock_course]])
+    assert b'"mock": "data"' in exported
+
+
+def test_export_json_uses_model_dump(scheduler_model):
+    mock_course = MagicMock()
+    del mock_course.as_dict
+    mock_course.model_dump.return_value = {"mock": "dump"}
+
+    exported = scheduler_model.export_to_json([[mock_course]])
+    assert b'"mock": "dump"' in exported
+
+
+def test_import_from_json_valid(scheduler_model):
+    json_data = [
+        [
+            {
+                "course_str": "CS101.1",
+                "faculty": "Dr. Smith",
+                "room": "Room A",
+                "lab": None,
+                "lab_index": None,
+                "times": [{"day": 1, "start": 540, "duration": 50}],
+            }
+        ]
+    ]
+    json_bytes = json.dumps(json_data).encode("utf-8")
+
+    schedules = scheduler_model.import_from_json(json_bytes)
+    assert len(schedules) == 1
+    assert len(schedules[0]) == 1
+    assert schedules[0][0].course.course_id == "CS101"
+    assert schedules[0][0].room == "Room A"
+    assert schedules[0][0].faculty == "Dr. Smith"

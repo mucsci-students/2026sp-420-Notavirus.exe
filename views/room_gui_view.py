@@ -282,7 +282,7 @@ class RoomGUIView:
                     None
                 """
                 try:
-                    success, message = RoomGUIView.room_controller.gui_delete_room(
+                    success, message = RoomGUIView.room_controller.delete_room(
                         selected_room.value
                     )
                     result_label.set_text(message)

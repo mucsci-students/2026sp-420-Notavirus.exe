@@ -126,6 +126,32 @@ class CourseController:
         except Exception as e:
             return False, f"Failed to modify course: {e}"
 
+    def delete_course(
+        self, course_id: str, section_index: int | None = None
+    ) -> tuple[bool, str]:
+        """
+        Delete a course section (or all sections) and temp-save.
+
+        Parameters:
+            course_id     (str):      Course ID to delete.
+            section_index (int|None): Section index to delete, or None for all.
+        Returns:
+            tuple[bool, str]: (success, message)
+        """
+        try:
+            success = self.model.delete_course(course_id, section_index)
+            if success:
+                self.config_model.save_feature("temp", "courses")
+                label = (
+                    f"'{course_id}' section {section_index}"
+                    if section_index is not None
+                    else f"'{course_id}'"
+                )
+                return True, f"Course {label} deleted successfully."
+            return False, f"Course '{course_id}' not found."
+        except Exception as e:
+            return False, f"Failed to delete course: {e}"
+
     def _build_course_config(self, data: dict):
         return self.model.build_course_config(data)
 

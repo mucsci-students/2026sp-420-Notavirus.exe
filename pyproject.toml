@@ -15,6 +15,19 @@ dependencies = [
     "langgraph>=0.2.0",
     "python-dotenv>=1.0.0",
 ]
+[tool.uv]
+package = true
+default-groups = ["dev"]
+
+[tool.setuptools]
+py-modules = ["main", "safe_save"]
+
+[tool.setuptools.packages.find]
+include = ["models*", "views*", "controllers*"]
+
+[project.scripts]
+run-app = "main:main"
+
 [dependency-groups]
 dev = [
     "iniconfig>=2.3.0",

@@ -70,6 +70,11 @@ class SchedulerController:
 
         GUIView.controller = self
 
+        from views.faculty_gui_view import FacultyGUIView
+        from views.course_gui_view import CourseGUIView
+        from views.conflict_gui_view import ConflictGUIView
+        from views.schedule_gui_view import ScheduleGUIView
+
         if config_path is None:
             self.config_path = None
             self.config_model = None
@@ -176,6 +181,25 @@ class SchedulerController:
         if self.config_model is None:
             return False
         return self.config_model.safe_save()
+
+    def load_config(self, config_path: str) -> tuple[bool, str]:
+        """
+        Loads a new configuration file and re-initializes all models and
+        sub-controllers.
+
+        Called by the View when the user uploads a config file via the Load
+        Configuration dialog.
+
+        Parameters:
+            config_path (str): Absolute path to the JSON config file.
+        Returns:
+            tuple[bool, str]: (True, '') on success, (False, error message) on failure.
+        """
+        try:
+            self._initialize_from_path(config_path)
+            return True, ""
+        except Exception as e:
+            return False, str(e)
 
     def temp_save(self, feature: str = "all") -> bool:
         """

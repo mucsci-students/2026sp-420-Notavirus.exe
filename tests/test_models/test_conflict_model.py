@@ -168,6 +168,51 @@ def test_add_conflict_mutual(conflict_model, course_model):
     assert "MUTUAL A" in course_b_updated.conflicts
 
 
+def test_add_conflict_with_sections_success(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("SEC A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("SEC B"))
+
+    result = conflict_model.add_conflict(
+        "SEC A", "SEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    assert result
+    c1 = conflict_model.config_model.config.config.courses[idx_a]
+    c2 = conflict_model.config_model.config.config.courses[idx_b]
+    assert "SEC B" in c1.conflicts
+    assert "SEC A" in c2.conflicts
+
+
+def test_add_conflict_with_sections_out_of_bounds(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("OOB A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("OOB B"))
+
+    result = conflict_model.add_conflict(
+        "OOB A", "OOB B", section_index_1=999, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_add_conflict_with_sections_mismatched_course_id(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("MISMATCH A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("MISMATCH B"))
+
+    # Give wrong course IDs for these indices
+    result = conflict_model.add_conflict(
+        "WRONG A", "WRONG B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
+
+
 # ================================================================
 # TESTS: Delete Conflict
 # ================================================================
@@ -240,6 +285,69 @@ def test_delete_conflict_mutual(conflict_model, course_model):
 
     assert "DELMUT B" not in course_a_updated.conflicts
     assert "DELMUT A" not in course_b_updated.conflicts
+
+
+def test_delete_conflict_with_sections_success(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELSEC A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELSEC B"))
+    
+    conflict_model.add_conflict(
+        "DELSEC A", "DELSEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    result = conflict_model.delete_conflict(
+        "DELSEC A", "DELSEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    assert result
+    c1 = conflict_model.config_model.config.config.courses[idx_a]
+    c2 = conflict_model.config_model.config.config.courses[idx_b]
+    assert "DELSEC B" not in c1.conflicts
+    assert "DELSEC A" not in c2.conflicts
+
+
+def test_delete_conflict_with_sections_out_of_bounds(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELOOB A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELOOB B"))
+
+    result = conflict_model.delete_conflict(
+        "DELOOB A", "DELOOB B", section_index_1=99, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_delete_conflict_with_sections_mismatched_course_id(
+    conflict_model, course_model
+):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELMIS A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELMIS B"))
+
+    result = conflict_model.delete_conflict(
+        "WRONG A", "WRONG B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_delete_conflict_with_sections_not_found(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELNOT A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELNOT B"))
+
+    result = conflict_model.delete_conflict(
+        "DELNOT A", "DELNOT B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
 
 
 # ================================================================

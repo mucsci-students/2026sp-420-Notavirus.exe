@@ -70,11 +70,6 @@ class SchedulerController:
 
         GUIView.controller = self
 
-        from views.faculty_gui_view import FacultyGUIView
-        from views.course_gui_view import CourseGUIView
-        from views.conflict_gui_view import ConflictGUIView
-        from views.schedule_gui_view import ScheduleGUIView
-
         if config_path is None:
             self.config_path = None
             self.config_model = None

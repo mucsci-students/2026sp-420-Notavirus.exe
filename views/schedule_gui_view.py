@@ -129,6 +129,240 @@ def _faculty_options(schedule: list) -> list[str]:
     return sorted({ci.faculty for ci in schedule})
 
 
+# ---------------------------------------------------------------------------
+# Calendar-style view helper functions
+# ---------------------------------------------------------------------------
+
+
+def _parse_time_string(time_str: str) -> tuple[int, int] | None:
+    """Parse time string like 'MON 09:00-10:30' to (hours, minutes) tuple."""
+    try:
+        time_str = time_str.strip()
+        parts = time_str.split(maxsplit=1)
+        if len(parts) < 2:
+            return None
+        time_part = parts[1]
+        start_time = time_part.split("-")[0].strip()
+        hours, minutes = map(int, start_time.split(":"))
+        return (hours, minutes)
+    except (ValueError, IndexError, AttributeError):
+        return None
+
+
+def _extract_time_portion(time_str: str) -> str:
+    """Extract just the time portion from 'DAY HH:MM-HH:MM' format."""
+    try:
+        parts = time_str.strip().split(maxsplit=1)
+        return parts[1] if len(parts) > 1 else time_str
+    except Exception:
+        return time_str
+
+
+def _sort_time_slots(time_slots: set[str]) -> list[str]:
+    """Sort time slots chronologically by their start time."""
+
+    def get_sort_key(time_str: str) -> tuple[int, int]:
+        parsed = _parse_time_string(time_str)
+        return parsed if parsed else (23, 59)
+
+    return sorted(time_slots, key=get_sort_key)
+
+
+# Color palette system - expandable and consistent
+COURSE_COLORS = [
+    ("bg-blue-100", "dark:bg-blue-900"),
+    ("bg-purple-100", "dark:bg-purple-900"),
+    ("bg-pink-100", "dark:bg-pink-900"),
+    ("bg-green-100", "dark:bg-green-900"),
+    ("bg-yellow-100", "dark:bg-yellow-900"),
+    ("bg-cyan-100", "dark:bg-cyan-900"),
+    ("bg-indigo-100", "dark:bg-indigo-900"),
+    ("bg-orange-100", "dark:bg-orange-900"),
+    ("bg-red-100", "dark:bg-red-900"),
+    ("bg-teal-100", "dark:bg-teal-900"),
+    ("bg-lime-100", "dark:bg-lime-900"),
+    ("bg-rose-100", "dark:bg-rose-900"),
+]
+
+
+def _build_color_map(items: list[str]) -> dict[str, tuple[str, str]]:
+    """Build a color mapping for items, assigning unique colors sequentially.
+
+    Args:
+        items: List of unique faculty or course names
+
+    Returns:
+        Dictionary mapping each item to a color tuple
+    """
+    color_map: dict[str, tuple[str, str]] = {}
+    sorted_items = sorted(set(items))
+
+    for idx, item in enumerate(sorted_items):
+        color_idx = idx % len(COURSE_COLORS)
+        color_map[item] = COURSE_COLORS[color_idx]
+
+    return color_map
+
+
+def _get_color_classes(base_classes: str | tuple[str, str]) -> str:
+    """Convert color tuple into space-separated tailwind classes."""
+    if isinstance(base_classes, tuple):
+        return f"{base_classes[0]} {base_classes[1]}"
+    return base_classes
+
+
+def _extract_calendar_metadata(schedule: list) -> tuple[list[str], list[str]]:
+    """
+    Extract unique days and time slots from schedule.
+    Returns (sorted_days, sorted_time_slots).
+    """
+    days_set: set[str] = set()
+    time_slots_set: set[str] = set()
+    day_order = {"MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4}
+
+    for ci in schedule:
+        for time_instance in ci.times:
+            time_str = str(time_instance).strip()
+            parts = time_str.split(maxsplit=1)
+            if len(parts) >= 1:
+                day = parts[0].upper()
+                if day in day_order:
+                    days_set.add(day)
+                if len(parts) >= 2:
+                    time_slots_set.add(time_str)
+
+    sorted_days = sorted(days_set, key=lambda d: day_order.get(d, 999))
+    sorted_time_slots = sorted(time_slots_set)
+    return sorted_days, sorted_time_slots
+
+
+def _build_calendar_grid_by_room(
+    schedule: list, location_filter: str | None = None
+) -> dict[str, dict[str, dict[str, list]]]:
+    """
+    Build calendar grid organized by room/lab.
+    Returns: {room: {day: {time_slot: [course_info]}}}
+    """
+    calendar_data: dict[str, dict[str, dict[str, list]]] = {}
+
+    for ci in schedule:
+        # Process room course assignments
+        if ci.room and (location_filter is None or location_filter == ci.room):
+            room = ci.room
+            if room not in calendar_data:
+                calendar_data[room] = {}
+
+            for i, time_instance in enumerate(ci.times):
+                if i == ci.lab_index:
+                    continue  # Skip lab times in room section
+                time_str = str(time_instance).strip()
+                parts = time_str.split(maxsplit=1)
+                if len(parts) >= 1:
+                    day = parts[0].upper()
+                    if day not in calendar_data[room]:
+                        calendar_data[room][day] = {}
+                    if time_str not in calendar_data[room][day]:
+                        calendar_data[room][day][time_str] = []
+
+                    course_code = ci.course_str.rsplit(".", 1)[0]
+                    section = (
+                        ci.course_str.rsplit(".", 1)[1]
+                        if "." in ci.course_str
+                        else "01"
+                    )
+                    calendar_data[room][day][time_str].append(
+                        {
+                            "course": course_code,
+                            "section": section,
+                            "faculty": ci.faculty,
+                            "type": "Lecture",
+                            "full_course_str": ci.course_str,
+                        }
+                    )
+
+        # Process lab course assignments
+        if (
+            ci.lab
+            and ci.lab_index is not None
+            and (location_filter is None or location_filter == ci.lab)
+        ):
+            lab = ci.lab
+            if lab not in calendar_data:
+                calendar_data[lab] = {}
+
+            time_instance = ci.times[ci.lab_index]
+            time_str = str(time_instance).strip()
+            parts = time_str.split(maxsplit=1)
+            if len(parts) >= 1:
+                day = parts[0].upper()
+                if day not in calendar_data[lab]:
+                    calendar_data[lab][day] = {}
+                if time_str not in calendar_data[lab][day]:
+                    calendar_data[lab][day][time_str] = []
+
+                course_code = ci.course_str.rsplit(".", 1)[0]
+                section = (
+                    ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
+                )
+                calendar_data[lab][day][time_str].append(
+                    {
+                        "course": course_code,
+                        "section": section,
+                        "faculty": ci.faculty,
+                        "type": "Lab",
+                        "full_course_str": ci.course_str,
+                    }
+                )
+
+    return calendar_data
+
+
+def _build_calendar_grid_by_faculty(
+    schedule: list, faculty_filter: str | None = None
+) -> dict[str, dict[str, dict[str, list]]]:
+    """
+    Build calendar grid organized by faculty.
+    Returns: {faculty: {day: {time_slot: [course_info]}}}
+    """
+    calendar_data: dict[str, dict[str, dict[str, list]]] = {}
+
+    for ci in schedule:
+        if faculty_filter and ci.faculty != faculty_filter:
+            continue
+
+        faculty = ci.faculty
+        if faculty not in calendar_data:
+            calendar_data[faculty] = {}
+
+        for i, time_instance in enumerate(ci.times):
+            time_str = str(time_instance).strip()
+            parts = time_str.split(maxsplit=1)
+            if len(parts) >= 1:
+                day = parts[0].upper()
+                if day not in calendar_data[faculty]:
+                    calendar_data[faculty][day] = {}
+                if time_str not in calendar_data[faculty][day]:
+                    calendar_data[faculty][day][time_str] = []
+
+                course_code = ci.course_str.rsplit(".", 1)[0]
+                section = (
+                    ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
+                )
+                location = ci.room if i != ci.lab_index else ci.lab
+                location_type = "Room" if i != ci.lab_index else "Lab"
+                calendar_data[faculty][day][time_str].append(
+                    {
+                        "course": course_code,
+                        "section": section,
+                        "location": location or "TBA",
+                        "type": location_type,
+                        "full_course_str": ci.course_str,
+                    }
+                )
+
+    return calendar_data
+
+
 ROOM_COLUMNS = [
     {
         "name": "location",
@@ -497,11 +731,13 @@ class ScheduleGUIView:
                     .style("background-color: transparent;")
                     .classes("!text-black dark:!text-white schedule-tabs") as tabs
                 ):
+                    calendar_room_tab = ui.tab("Calendar - Room")
+                    calendar_faculty_tab = ui.tab("Calendar - Faculty")
                     room_tab = ui.tab("By Room / Lab")
                     faculty_tab = ui.tab("By Faculty")
 
                 with (
-                    ui.tab_panels(tabs, value=room_tab)
+                    ui.tab_panels(tabs, value=calendar_room_tab)
                     .style("background-color: transparent;")
                     .classes("w-full")
                 ):
@@ -549,6 +785,32 @@ class ScheduleGUIView:
                         ).classes("w-full")
                         faculty_table.props("flat dense")
 
+                    with ui.tab_panel(calendar_room_tab):
+                        with ui.row().classes("items-center gap-3 px-2 pt-2 pb-1"):
+                            ui.label("Filter:").classes("text-sm text-gray-500")
+                            calendar_room_select = ui.select(
+                                options=["All"]
+                                + _location_options(
+                                    _state.schedules[_state.current_index]
+                                ),
+                                value="All",
+                                label="Location",
+                            ).classes("min-w-[180px]")
+                        calendar_room_container = ui.column().classes("w-full px-2")
+
+                    with ui.tab_panel(calendar_faculty_tab):
+                        with ui.row().classes("items-center gap-3 px-2 pt-2 pb-1"):
+                            ui.label("Filter:").classes("text-sm text-gray-500")
+                            calendar_faculty_select = ui.select(
+                                options=["All"]
+                                + _faculty_options(
+                                    _state.schedules[_state.current_index]
+                                ),
+                                value="All",
+                                label="Faculty",
+                            ).classes("min-w-[180px]")
+                        calendar_faculty_container = ui.column().classes("w-full px-2")
+
             with ui.row().classes("gap-4 justify-center"):
                 ui.button("Back to Home").props(
                     "rounded color=black text-color=white no-caps"
@@ -571,6 +833,170 @@ class ScheduleGUIView:
                     "click", upload_dialog.open
                 )
 
+        def _render_room_calendar(location_filter: str | None = None):
+            """Render calendar grid organized by room/lab."""
+            calendar_room_container.clear()
+            calendar_data = _build_calendar_grid_by_room(
+                _state.schedules[_state.current_index], location_filter=location_filter
+            )
+
+            if not calendar_data:
+                with calendar_room_container:
+                    ui.label("No schedule data available.").classes("text-gray-500 p-4")
+                return
+
+            days, _ = _extract_calendar_metadata(_state.schedules[_state.current_index])
+
+            # Build color map for all faculty in the schedule
+            all_faculty = [ci.faculty for ci in _state.schedules[_state.current_index]]
+            faculty_color_map = _build_color_map(all_faculty)
+
+            for location in sorted(calendar_data.keys()):
+                # Collect all unique time slots for this location
+                time_slots_set: set[str] = set()
+                for day_data in calendar_data[location].values():
+                    time_slots_set.update(day_data.keys())
+                time_slots = _sort_time_slots(time_slots_set)
+
+                with calendar_room_container:
+                    with ui.card().classes("w-full p-4 mb-4"):
+                        ui.label(location).classes("text-lg font-bold mb-2")
+
+                        # Table headers
+                        with ui.row().classes("w-full gap-1"):
+                            ui.label("Time").classes(
+                                "font-semibold w-40 p-2 bg-gray-100 dark:bg-gray-700"
+                            )
+                            for day in days:
+                                ui.label(day).classes(
+                                    "flex-1 font-semibold p-2 bg-gray-100 dark:bg-gray-700 text-center"
+                                )
+
+                        # Calendar rows
+                        for time_slot in time_slots:
+                            time_display = _extract_time_portion(time_slot)
+                            with ui.row().classes("w-full gap-1"):
+                                ui.label(time_display).classes(
+                                    "font-semibold w-40 p-2 bg-gray-50 dark:bg-gray-800 overflow-auto text-sm"
+                                )
+                                for day in days:
+                                    courses = (
+                                        calendar_data[location]
+                                        .get(day, {})
+                                        .get(time_slot, [])
+                                    )
+                                    with ui.column().classes(
+                                        "flex-1 p-1 min-h-20 border border-gray-200 dark:border-gray-700"
+                                    ):
+                                        for course_info in courses:
+                                            # Color by faculty for room view
+                                            color_tuple = faculty_color_map.get(
+                                                course_info["faculty"], COURSE_COLORS[0]
+                                            )
+                                            bg_color = _get_color_classes(
+                                                f"{color_tuple[0]} {color_tuple[1]}"
+                                            )
+                                            with ui.card().classes(
+                                                f"{bg_color} p-1.5 text-sm w-full"
+                                            ):
+                                                ui.label(course_info["course"]).classes(
+                                                    "font-bold text-sm"
+                                                )
+                                                ui.label(
+                                                    f"Section: {course_info['section']}"
+                                                ).classes("text-xs leading-tight")
+                                                ui.label(
+                                                    f"Instructor: {course_info['faculty']}"
+                                                ).classes("text-xs leading-tight")
+                                                ui.label(
+                                                    f"Type: {course_info['type']}"
+                                                ).classes(
+                                                    "text-xs italic leading-tight"
+                                                )
+
+        def _render_faculty_calendar(faculty_filter: str | None = None):
+            """Render calendar grid organized by faculty."""
+            calendar_faculty_container.clear()
+            calendar_data = _build_calendar_grid_by_faculty(
+                _state.schedules[_state.current_index], faculty_filter=faculty_filter
+            )
+
+            if not calendar_data:
+                with calendar_faculty_container:
+                    ui.label("No schedule data available.").classes("text-gray-500 p-4")
+                return
+
+            days, _ = _extract_calendar_metadata(_state.schedules[_state.current_index])
+
+            # Build color map for all courses in the schedule
+            all_courses = [
+                ci.course_str.rsplit(".", 1)[0]
+                for ci in _state.schedules[_state.current_index]
+            ]
+            course_color_map = _build_color_map(all_courses)
+
+            for faculty in sorted(calendar_data.keys()):
+                # Collect all unique time slots for this faculty
+                time_slots_set: set[str] = set()
+                for day_data in calendar_data[faculty].values():
+                    time_slots_set.update(day_data.keys())
+                time_slots = _sort_time_slots(time_slots_set)
+
+                with calendar_faculty_container:
+                    with ui.card().classes("w-full p-4 mb-4"):
+                        ui.label(faculty).classes("text-lg font-bold mb-2")
+
+                        # Table headers
+                        with ui.row().classes("w-full gap-1"):
+                            ui.label("Time").classes(
+                                "font-semibold w-40 p-2 bg-gray-100 dark:bg-gray-700"
+                            )
+                            for day in days:
+                                ui.label(day).classes(
+                                    "flex-1 font-semibold p-2 bg-gray-100 dark:bg-gray-700 text-center"
+                                )
+                        # Calendar rows
+                        for time_slot in time_slots:
+                            time_display = _extract_time_portion(time_slot)
+                            with ui.row().classes("w-full gap-1"):
+                                ui.label(time_display).classes(
+                                    "font-semibold w-40 p-2 bg-gray-50 dark:bg-gray-800 overflow-auto text-sm"
+                                )
+                                for day in days:
+                                    courses = (
+                                        calendar_data[faculty]
+                                        .get(day, {})
+                                        .get(time_slot, [])
+                                    )
+                                    with ui.column().classes(
+                                        "flex-1 p-1 min-h-20 border border-gray-200 dark:border-gray-700"
+                                    ):
+                                        for course_info in courses:
+                                            # Color by course code for faculty view
+                                            color_tuple = course_color_map.get(
+                                                course_info["course"], COURSE_COLORS[0]
+                                            )
+                                            bg_color = _get_color_classes(
+                                                f"{color_tuple[0]} {color_tuple[1]}"
+                                            )
+                                            with ui.card().classes(
+                                                f"{bg_color} p-1.5 text-sm w-full"
+                                            ):
+                                                ui.label(course_info["course"]).classes(
+                                                    "font-bold text-sm"
+                                                )
+                                                ui.label(
+                                                    f"Section: {course_info['section']}"
+                                                ).classes("text-xs leading-tight")
+                                                ui.label(
+                                                    f"Location: {course_info['location']}"
+                                                ).classes("text-xs leading-tight")
+                                                ui.label(
+                                                    f"Type: {course_info['type']}"
+                                                ).classes(
+                                                    "text-xs italic leading-tight"
+                                                )
+
         def on_room_filter(e):
             val = e.value if e.value != "All" else None
             room_filter[0] = val
@@ -587,8 +1013,18 @@ class ScheduleGUIView:
             )
             faculty_table.update()
 
+        def on_calendar_room_filter(e):
+            val = e.value if e.value != "All" else None
+            _render_room_calendar(location_filter=val)
+
+        def on_calendar_faculty_filter(e):
+            val = e.value if e.value != "All" else None
+            _render_faculty_calendar(faculty_filter=val)
+
         room_select.on_value_change(on_room_filter)
         faculty_select.on_value_change(on_faculty_filter)
+        calendar_room_select.on_value_change(on_calendar_room_filter)
+        calendar_faculty_select.on_value_change(on_calendar_faculty_filter)
 
         def _sync_btn_states():
             if _state.current_index == 0:
@@ -606,10 +1042,16 @@ class ScheduleGUIView:
             faculty_filter[0] = None
             room_select.set_value("All")
             faculty_select.set_value("All")
+            calendar_room_select.set_value("All")
+            calendar_faculty_select.set_value("All")
             room_select.options = ["All"] + _location_options(schedule)
             faculty_select.options = ["All"] + _faculty_options(schedule)
+            calendar_room_select.options = ["All"] + _location_options(schedule)
+            calendar_faculty_select.options = ["All"] + _faculty_options(schedule)
             room_table.rows = _build_room_rows(schedule, location_filter=None)
             faculty_table.rows = _build_faculty_rows(schedule, faculty_filter=None)
+            _render_room_calendar(location_filter=None)
+            _render_faculty_calendar(faculty_filter=None)
             room_table.update()
             faculty_table.update()
             index_label.set_text(f"Schedule {_state.current_index + 1} of {total}")
@@ -627,7 +1069,7 @@ class ScheduleGUIView:
 
         prev_btn.on("click", go_prev)
         next_btn.on("click", go_next)
-        _sync_btn_states()
+        _reload_schedule()
 
     @ui.page("/test_schedules")
     @staticmethod

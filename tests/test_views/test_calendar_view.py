@@ -272,7 +272,9 @@ def test_sort_time_slots():
         "MON 17:00-18:50",
     ]
 
-    assert sorted_slots == expected_order, f"Got {sorted_slots}, expected {expected_order}"
+    assert sorted_slots == expected_order, (
+        f"Got {sorted_slots}, expected {expected_order}"
+    )
 
     print("[PASS] test_sort_time_slots passed")
 
@@ -293,7 +295,9 @@ def test_get_color_for_key():
 
     # Different faculty should have different colors (with only 12 colors, this is likely)
     colors_used = set(color_map.values())
-    assert len(colors_used) >= 3, "Should have at least 3 different colors for 4 faculty"
+    assert len(colors_used) >= 3, (
+        "Should have at least 3 different colors for 4 faculty"
+    )
 
     # Each color should be a tuple
     for color in colors_used:

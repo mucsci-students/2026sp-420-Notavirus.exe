@@ -160,10 +160,11 @@ def _extract_time_portion(time_str: str) -> str:
 
 def _sort_time_slots(time_slots: set[str]) -> list[str]:
     """Sort time slots chronologically by their start time."""
+
     def get_sort_key(time_str: str) -> tuple[int, int]:
         parsed = _parse_time_string(time_str)
         return parsed if parsed else (23, 59)
-    
+
     return sorted(time_slots, key=get_sort_key)
 
 
@@ -186,24 +187,24 @@ COURSE_COLORS = [
 
 def _build_color_map(items: list[str]) -> dict[str, tuple[str, str]]:
     """Build a color mapping for items, assigning unique colors sequentially.
-    
+
     Args:
         items: List of unique faculty or course names
-        
+
     Returns:
         Dictionary mapping each item to a color tuple
     """
     color_map: dict[str, tuple[str, str]] = {}
     sorted_items = sorted(set(items))
-    
+
     for idx, item in enumerate(sorted_items):
         color_idx = idx % len(COURSE_COLORS)
         color_map[item] = COURSE_COLORS[color_idx]
-    
+
     return color_map
 
 
-def _get_color_classes(base_classes: str) -> str:
+def _get_color_classes(base_classes: str | tuple[str, str]) -> str:
     """Convert color tuple into space-separated tailwind classes."""
     if isinstance(base_classes, tuple):
         return f"{base_classes[0]} {base_classes[1]}"
@@ -844,14 +845,10 @@ class ScheduleGUIView:
                     ui.label("No schedule data available.").classes("text-gray-500 p-4")
                 return
 
-            days, _ = _extract_calendar_metadata(
-                _state.schedules[_state.current_index]
-            )
+            days, _ = _extract_calendar_metadata(_state.schedules[_state.current_index])
 
             # Build color map for all faculty in the schedule
-            all_faculty = [
-                ci.faculty for ci in _state.schedules[_state.current_index]
-            ]
+            all_faculty = [ci.faculty for ci in _state.schedules[_state.current_index]]
             faculty_color_map = _build_color_map(all_faculty)
 
             for location in sorted(calendar_data.keys()):
@@ -894,8 +891,7 @@ class ScheduleGUIView:
                                         for course_info in courses:
                                             # Color by faculty for room view
                                             color_tuple = faculty_color_map.get(
-                                                course_info["faculty"],
-                                                COURSE_COLORS[0]
+                                                course_info["faculty"], COURSE_COLORS[0]
                                             )
                                             bg_color = _get_color_classes(
                                                 f"{color_tuple[0]} {color_tuple[1]}"
@@ -914,7 +910,9 @@ class ScheduleGUIView:
                                                 ).classes("text-xs leading-tight")
                                                 ui.label(
                                                     f"Type: {course_info['type']}"
-                                                ).classes("text-xs italic leading-tight")
+                                                ).classes(
+                                                    "text-xs italic leading-tight"
+                                                )
 
         def _render_faculty_calendar(faculty_filter: str | None = None):
             """Render calendar grid organized by faculty."""
@@ -928,9 +926,7 @@ class ScheduleGUIView:
                     ui.label("No schedule data available.").classes("text-gray-500 p-4")
                 return
 
-            days, _ = _extract_calendar_metadata(
-                _state.schedules[_state.current_index]
-            )
+            days, _ = _extract_calendar_metadata(_state.schedules[_state.current_index])
 
             # Build color map for all courses in the schedule
             all_courses = [
@@ -978,8 +974,7 @@ class ScheduleGUIView:
                                         for course_info in courses:
                                             # Color by course code for faculty view
                                             color_tuple = course_color_map.get(
-                                                course_info["course"],
-                                                COURSE_COLORS[0]
+                                                course_info["course"], COURSE_COLORS[0]
                                             )
                                             bg_color = _get_color_classes(
                                                 f"{color_tuple[0]} {color_tuple[1]}"
@@ -998,7 +993,9 @@ class ScheduleGUIView:
                                                 ).classes("text-xs leading-tight")
                                                 ui.label(
                                                     f"Type: {course_info['type']}"
-                                                ).classes("text-xs italic leading-tight")
+                                                ).classes(
+                                                    "text-xs italic leading-tight"
+                                                )
 
         def on_room_filter(e):
             val = e.value if e.value != "All" else None

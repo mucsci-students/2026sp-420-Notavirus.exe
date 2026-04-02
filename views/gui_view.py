@@ -282,6 +282,20 @@ class GUIView:
             "dark:!bg-black"
         )
 
+        # Adds shading/color to whatever item is active in the drop down in print config
+        ui.add_css("""
+            .print-config-expansion.q-expansion-item--expanded
+                > .q-expansion-item__container
+                > .q-item {
+                background-color: #f3f4f6 !important;
+            }
+            body.body--dark .print-config-expansion.q-expansion-item--expanded
+                > .q-expansion-item__container
+                > .q-item {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        """)
+
         # Read data through the Controller, not by holding a model reference.
         ctrl = GUIView.controller
         cm = ctrl.config_model if ctrl else None
@@ -291,6 +305,7 @@ class GUIView:
                 "text-4xl mb-10 !text-black dark:!text-white"
             )
 
+            # Output if you press print config and no config file is currently loaded
             if cm is None:
                 ui.label("No configuration loaded.").classes(
                     "text-xl italic !text-gray-500 dark:!text-gray-400"
@@ -306,21 +321,21 @@ class GUIView:
                 return
 
             with ui.expansion("Rooms", icon="meeting_room").classes(
-                "w-3/4 !text-black dark:!text-white"
+                "w-3/4 !text-black dark:!text-white print-config-expansion"
             ):
                 for room in cm.get_all_rooms():
                     ui.label(room).classes("!text-black dark:!text-white")
 
             with ui.expansion("Labs", icon="computer").classes(
-                "w-3/4 !text-black dark:!text-white"
+                "w-3/4 !text-black dark:!text-white print-config-expansion"
             ):
                 for lab in cm.get_all_labs():
                     ui.label(lab).classes("!text-black dark:!text-white")
 
             with ui.expansion("Courses", icon="book").classes(
-                "w-3/4 !text-black dark:!text-white"
+                "w-3/4 !text-black dark:!text-white print-config-expansion"
             ):
-                with ui.scroll_area().classes("w-full h-64"):
+                with ui.scroll_area().classes("w-full h-96"):
                     for course in cm.get_all_courses():
                         with ui.card().classes(
                             "w-full mb-2 !bg-white dark:!bg-gray-800"
@@ -336,21 +351,21 @@ class GUIView:
                                 )
                             with ui.row().classes("gap-4"):
                                 ui.label(
-                                    f"Rooms: {', '.join(course.room) or 'Any'}"
+                                    f"Rooms: {', '.join(course.room) or 'None listed'}"
                                 ).classes("text-sm !text-black dark:!text-white")
                                 ui.label(
                                     f"Labs: {', '.join(course.lab) or 'None'}"
                                 ).classes("text-sm !text-black dark:!text-white")
                                 ui.label(
-                                    f"Faculty: {', '.join(course.faculty) or 'Any'}"
+                                    f"Faculty: {', '.join(course.faculty) or 'None listed'}"
                                 ).classes("text-sm !text-black dark:!text-white")
 
             with ui.expansion("Faculty", icon="person").classes(
-                "w-3/4 !text-black dark:!text-white"
+                "w-3/4 !text-black dark:!text-white print-config-expansion"
             ):
                 for f in cm.get_all_faculty():
                     with ui.expansion(f.name).classes(
-                        "w-full !text-black dark:!text-white"
+                        "w-full !text-black dark:!text-white print-config-expansion"
                     ):
                         ui.label(f"Max credits: {f.maximum_credits}").classes(
                             "!text-black dark:!text-white"
@@ -358,10 +373,44 @@ class GUIView:
                         ui.label(f"Min credits: {f.minimum_credits}").classes(
                             "!text-black dark:!text-white"
                         )
+                        ui.label(f"Max days: {f.maximum_days}").classes(
+                            "!text-black dark:!text-white"
+                        )
+                        ui.label(
+                            f"Unique course limit: {f.unique_course_limit}"
+                        ).classes("!text-black dark:!text-white")
+                        if f.mandatory_days:
+                            ui.label(
+                                f"Mandatory days: {', '.join(str(d) for d in f.mandatory_days)}"
+                            ).classes("!text-black dark:!text-white")
                         for day, slots in f.times.items():
                             ui.label(
                                 f"{day}: {', '.join(str(s) for s in slots) or 'Unavailable'}"
                             ).classes("!text-black dark:!text-white")
+                        if f.course_preferences:
+                            ui.label("Course preferences:").classes(
+                                "font-semibold !text-black dark:!text-white"
+                            )
+                            for course, pref in f.course_preferences.items():
+                                ui.label(f"  {course}: {pref}").classes(
+                                    "!text-black dark:!text-white"
+                                )
+                        if f.room_preferences:
+                            ui.label("Room preferences:").classes(
+                                "font-semibold !text-black dark:!text-white"
+                            )
+                            for room, pref in f.room_preferences.items():
+                                ui.label(f"  {room}: {pref}").classes(
+                                    "!text-black dark:!text-white"
+                                )
+                        if f.lab_preferences:
+                            ui.label("Lab preferences:").classes(
+                                "font-semibold !text-black dark:!text-white"
+                            )
+                            for lab, pref in f.lab_preferences.items():
+                                ui.label(f"  {lab}: {pref}").classes(
+                                    "!text-black dark:!text-white"
+                                )
 
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"

@@ -560,7 +560,10 @@ class ScheduleGUIView:
                 with ThreadPoolExecutor() as pool:
                     schedules = await loop.run_in_executor(pool, _run)
                 if not schedules:
-                    status_label.set_text("No valid schedules could be generated.")
+                    diagnosis = GUIView.controller.diagnose_schedule_failure()
+                    status_label.set_text(
+                        diagnosis or "No valid schedules could be generated."
+                    )
                     return
                 _state.schedules = schedules
                 _state.current_index = 0

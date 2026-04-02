@@ -279,6 +279,47 @@ class SchedulerController:
         errors = getattr(self.scheduler_model, "validate_config", lambda: "")()
         return errors or ""
 
+    def diagnose_schedule_failure(self) -> str:
+        """
+        Returns a human-readable explanation of why schedule generation
+        produced no results. Checks three common causes in priority order:
+        1. A course has no eligible faculty at all.
+        2. A faculty member assigned to a course has no availability.
+        3. Generic fallback message.
+
+        Parameters:
+            None
+        Returns:
+            str: A diagnostic message, or empty string if no issues found.
+        """
+        if self.config_model is None:
+            return ""
+
+        config = self.config_model.config.config
+        faculty_names_with_times = {f.name for f in config.faculty if f.times}
+
+        for course in config.courses:
+            if not course.faculty:
+                return (
+                    f"Oh no! No schedules can be generated because "
+                    f"{course.course_id} has no faculty assigned. "
+                    f"Faculty must be explicitly listed on a course for it to be taught. "
+                    f"Add faculty to this course under Course > Modify."
+                )
+            for name in course.faculty:
+                if name not in faculty_names_with_times:
+                    return (
+                        f"Oh no! No schedules can be generated because "
+                        f"{name} is assigned to teach {course.course_id} "
+                        f"but has no availability set. "
+                        f"Add availability under Faculty > Modify."
+                    )
+
+        return (
+            "Oh no! No schedules could be generated. "
+            "Check that faculty availability windows cover the required time slots."
+        )
+
     def generate_schedules(self, limit: int) -> list:
         """
         Generates schedules via the scheduler model and returns them.

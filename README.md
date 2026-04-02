@@ -39,7 +39,7 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 ├── pyproject.toml           # Project dependencies and configuration
 ├── README.md                # Project documentation
 ├── example.json             # Example configuration file
-├── .env.example             # Required environment variables template
+├── .env                     # Required environment variables (NEEDS TO BE ADDED)
 ├── controllers/             # Application logic and workflows
 │   ├── app_controller.py    # Main controller
 │   ├── faculty_controller.py
@@ -120,10 +120,19 @@ Note: You can also skip this step and load a configuration file through the GUI 
 
 Run the program with an optional path to a JSON config file. If no path is provided, the application will start with an empty configuration that you can load or build through the GUI.
 
+Using uv run:
+```bash
+uv run run-app [config_path]
+```
+
 ```bash
 python main.py [config_path]
 ```
 
+You may also use uv run python:
+```bash
+uv run python main.py [config_path]
+```
 Once running, you'll see an interactive menu.
 
 What happens:
@@ -138,6 +147,12 @@ To stop the server:
 Press Ctrl+C in the terminal
 
 ** Example:
+# Using uv run with a config file
+uv run run-app example.json OR uv run python main.py example.json
+
+# Using uv run without a config file
+uv run run-app
+
 # With a config file
 python main.py example.json
 
@@ -279,17 +294,26 @@ left corner.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (187 tests total)
+# Run all tests (260 tests total)
+# Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
-# Run only model tests (114 tests)
+# Run only model tests (137 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (72 tests)
+# Run only controller tests (109 tests)
 pytest tests/test_controllers/ -v
+
+# Run only views tests (12 tests)
+pytest tests/test_views/ -v 
 
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
+
+# Run only chatbot/integration tests (1 tests)
+# These tests will NOT pass unless you have an API key entered
+#    Follow the instructions to adding an API key found in the Setup section
+pytest tests/test_integration/ -v 
 
 # Run with coverage (need to first install pytest-cov if not already installed)
 #   Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
@@ -297,9 +321,11 @@ pytest tests/ --cov=models --cov=controllers
 ```
 Test Coverage:
 
-✅ 114 model tests - Data operations and business logic
-✅ 72 controller tests - Integration and workflow
+✅ 137 model tests - Data operations and business logic
+✅ 109 controller tests - Integration and workflow
+✅ 12 view tests - Calendar view of generated schedules
 ✅ 1 safe_save test - The save feature used by save and save to config 
+✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 
 ---
 
@@ -378,7 +404,11 @@ Starting Without a Config File
 If you launch without a config path, you MUST load a configuration path to use the scheduler or editor.
 
 Apple Touch Icon Warnings
-When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs 404 warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
+When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
+
+AI Assistant / Chatbot Tests Not Working
+Both require a valid OpenAI API key. See **Setup step 4** for instructions on adding your key to `.env`. Without it, the AI Assistant panel will be non-functional and `tests/test_integration/` tests will fail.
+
 ---
 
 # Acknowledgements

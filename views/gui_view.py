@@ -282,7 +282,7 @@ class GUIView:
             "dark:!bg-black"
         )
 
-        # Adds shading/color to whatever item is active in the drop down in print config 
+        # Adds shading/color to whatever item is active in the drop down in print config
         ui.add_css("""
             .print-config-expansion.q-expansion-item--expanded
                 > .q-expansion-item__container
@@ -351,13 +351,13 @@ class GUIView:
                                 )
                             with ui.row().classes("gap-4"):
                                 ui.label(
-                                    f"Rooms: {', '.join(course.room) or 'Any'}"
+                                    f"Rooms: {', '.join(course.room) or 'None listed'}"
                                 ).classes("text-sm !text-black dark:!text-white")
                                 ui.label(
                                     f"Labs: {', '.join(course.lab) or 'None'}"
                                 ).classes("text-sm !text-black dark:!text-white")
                                 ui.label(
-                                    f"Faculty: {', '.join(course.faculty) or 'Any'}"
+                                    f"Faculty: {', '.join(course.faculty) or 'None listed'}"
                                 ).classes("text-sm !text-black dark:!text-white")
 
             with ui.expansion("Faculty", icon="person").classes(
@@ -376,13 +376,13 @@ class GUIView:
                         ui.label(f"Max days: {f.maximum_days}").classes(
                             "!text-black dark:!text-white"
                         )
-                        ui.label(f"Unique course limit: {f.unique_course_limit}").classes(
-                            "!text-black dark:!text-white"
-                        )
+                        ui.label(
+                            f"Unique course limit: {f.unique_course_limit}"
+                        ).classes("!text-black dark:!text-white")
                         if f.mandatory_days:
-                            ui.label(f"Mandatory days: {', '.join(str(d) for d in f.mandatory_days)}").classes(
-                                "!text-black dark:!text-white"
-                            )
+                            ui.label(
+                                f"Mandatory days: {', '.join(str(d) for d in f.mandatory_days)}"
+                            ).classes("!text-black dark:!text-white")
                         for day, slots in f.times.items():
                             ui.label(
                                 f"{day}: {', '.join(str(s) for s in slots) or 'Unavailable'}"

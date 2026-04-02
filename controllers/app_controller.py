@@ -138,10 +138,6 @@ class SchedulerController:
 
         LabGUIView._lab_controller = self.lab_controller
 
-        from views.faculty_gui_view import FacultyGUIView
-        from views.course_gui_view import CourseGUIView
-        from views.conflict_gui_view import ConflictGUIView
-        from views.schedule_gui_view import ScheduleGUIView
         from views.schedule_gui_view import _state as _schedule_state
 
         FacultyGUIView.faculty_model = self.faculty_model

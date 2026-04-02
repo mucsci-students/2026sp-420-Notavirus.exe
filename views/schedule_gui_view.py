@@ -632,7 +632,6 @@ class ScheduleGUIView:
                     status_label.set_text(f"Error: {exc}")
                     progress_card.set_visibility(False)
                     generate_btn.props(remove="loading disabled")
-             
             
             generate_btn.props(remove="loading disabled")
 

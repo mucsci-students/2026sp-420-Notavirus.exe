@@ -177,6 +177,25 @@ class SchedulerController:
             return False
         return self.config_model.safe_save()
 
+    def load_config(self, config_path: str) -> tuple[bool, str]:
+        """
+        Loads a new configuration file and re-initializes all models and
+        sub-controllers.
+
+        Called by the View when the user uploads a config file via the Load
+        Configuration dialog.
+
+        Parameters:
+            config_path (str): Absolute path to the JSON config file.
+        Returns:
+            tuple[bool, str]: (True, '') on success, (False, error message) on failure.
+        """
+        try:
+            self._initialize_from_path(config_path)
+            return True, ""
+        except Exception as e:
+            return False, str(e)
+
     def temp_save(self, feature: str = "all") -> bool:
         """
         Writes the current in-memory state to the temp store.

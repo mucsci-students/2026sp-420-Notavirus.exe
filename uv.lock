@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 [[package]]
 name = "2026sp-420-notavirus-exe"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "course-constraint-scheduler" },
     { name = "langchain" },

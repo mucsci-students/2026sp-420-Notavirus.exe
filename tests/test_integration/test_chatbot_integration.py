@@ -13,10 +13,15 @@ def test_chatbot_what_can_you_do():
     Requires OPENAI_API_KEY to be set in the environment.
     """
     mock_lab_model = Mock()
+    mock_lab_model.get_all_labs.return_value = []
     mock_room_model = Mock()
+    mock_room_model.get_all_rooms.return_value = []
     mock_course_model = Mock()
+    mock_course_model.get_all_courses.return_value = []
     mock_faculty_model = Mock()
+    mock_faculty_model.get_all_faculty.return_value = []
     mock_conflict_model = Mock()
+    mock_conflict_model.get_all_conflicts.return_value = []
 
     # The controller's _no_config() returns self.lab_model is None, so lab_model must be a Mock, not None
     controller = ChatbotController(

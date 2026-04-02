@@ -39,7 +39,7 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 ├── pyproject.toml           # Project dependencies and configuration
 ├── README.md                # Project documentation
 ├── example.json             # Example configuration file
-├── .env.example             # Required environment variables template
+├── .env                     # Required environment variables (NEEDS TO BE ADDED)
 ├── controllers/             # Application logic and workflows
 │   ├── app_controller.py    # Main controller
 │   ├── faculty_controller.py
@@ -120,10 +120,19 @@ Note: You can also skip this step and load a configuration file through the GUI 
 
 Run the program with an optional path to a JSON config file. If no path is provided, the application will start with an empty configuration that you can load or build through the GUI.
 
+Using uv run:
+```bash
+uv run run-app [config_path]
+```
+
 ```bash
 python main.py [config_path]
 ```
 
+You may also use uv run python:
+```bash
+uv run python main.py [config_path]
+```
 Once running, you'll see an interactive menu.
 
 What happens:
@@ -138,6 +147,12 @@ To stop the server:
 Press Ctrl+C in the terminal
 
 ** Example:
+# Using uv run with a config file
+uv run run-app example.json OR uv run python main.py example.json
+
+# Using uv run without a config file
+uv run run-app
+
 # With a config file
 python main.py example.json
 
@@ -378,7 +393,7 @@ Starting Without a Config File
 If you launch without a config path, you MUST load a configuration path to use the scheduler or editor.
 
 Apple Touch Icon Warnings
-When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs 404 warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
+When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-touch-icon.png and apple-touch-icon-precomposed.png in the background for home screen bookmarking. Since these files are not provided, NiceGUI logs warnings. These warnings are harmless and do not affect functionality. To avoid them, access the app at localhost:8080 instead, or set host='localhost' in the ui.run() call.
 ---
 
 # Acknowledgements

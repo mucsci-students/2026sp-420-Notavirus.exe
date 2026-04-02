@@ -151,7 +151,7 @@ class FacultyGUIView:
                                 def handle_time_change(e, is_start, related_input):
                                     if e.value and not related_input.value:
                                         related_input.value = (
-                                            "17:00" if is_start else "09:00"
+                                            "20:00" if is_start else "08:00"
                                         )
 
                                 with (
@@ -160,7 +160,7 @@ class FacultyGUIView:
                                     .bind_visibility_from(cb, "value")
                                 ):
                                     start_input = (
-                                        ui.input("Start (e.g. 09:00)")
+                                        ui.input("Start (e.g. 08:00)")
                                         .props(
                                             'outlined dense square color=dark label-color=grey-7 input-style="color: black !important"'
                                         )
@@ -171,7 +171,7 @@ class FacultyGUIView:
                                         "text-lg !text-black dark:!text-white"
                                     )
                                     end_input = (
-                                        ui.input("End (e.g. 17:00)")
+                                        ui.input("End (e.g. 20:00)")
                                         .props(
                                             'outlined dense square color=dark label-color=grey-7 input-style="color: black !important"'
                                         )
@@ -350,8 +350,8 @@ class FacultyGUIView:
                 time_pattern = re.compile(r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
                 for day, inputs in day_inputs.items():
                     if inputs["cb"].value:
-                        start_time = inputs["start"].value or "09:00"
-                        end_time = inputs["end"].value or "17:00"
+                        start_time = inputs["start"].value or "08:00"
+                        end_time = inputs["end"].value or "20:00"
                         if not time_pattern.match(start_time):
                             ui.notify(
                                 f'Invalid start time "{start_time}" for {day}. Use HH:MM format.',

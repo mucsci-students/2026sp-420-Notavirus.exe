@@ -375,3 +375,71 @@ def test_get_all_faculty(faculty_model):
     # Assert
     assert isinstance(all_faculty, list)
     assert len(all_faculty) > 0  # example.json should have faculty
+
+
+# ================================================================
+# TESTS: validate_faculty_references
+# ================================================================
+
+
+def test_validate_faculty_references(faculty_model):
+    """
+    Test validating and removing invalid faculty references from courses.
+    """
+    from scheduler import CourseConfig
+
+    # Add a mock course with one valid and one invalid faculty reference
+    test_course = CourseConfig(
+        course_id="TEST_REF_101",
+        credits=3,
+        faculty=["Valid Faculty", "Invalid Faculty Name"],
+        room=[],
+        lab=[],
+        conflicts=[],
+    )
+    faculty_model.config_model.config.config.courses.append(test_course)
+
+    # Add the valid faculty to the model so it gets recognized
+    valid_fac = build_faculty_config(
+        name="Valid Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(valid_fac)
+
+    # Run validation
+    removed_count = faculty_model.validate_faculty_references()
+
+    # The invalid faculty should have been removed
+    assert removed_count >= 1
+    assert "Invalid Faculty Name" not in test_course.faculty
+    assert "Valid Faculty" in test_course.faculty
+
+
+def test_validate_faculty_references_all_valid(faculty_model):
+    """
+    Test validation when all references are valid.
+    """
+    from scheduler import CourseConfig
+
+    test_course = CourseConfig(
+        course_id="TEST_REF_102",
+        credits=3,
+        faculty=["Valid Only"],
+        room=[],
+        lab=[],
+        conflicts=[],
+    )
+
+    # Clear courses to ensure we only test what we add and no other invalid refs exist in example.json
+    courses = faculty_model.config_model.config.config.courses
+    courses.clear()
+    courses.append(test_course)
+
+    valid_fac = build_faculty_config(
+        name="Valid Only", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(valid_fac)
+
+    removed_count = faculty_model.validate_faculty_references()
+
+    assert removed_count == 0
+    assert "Valid Only" in test_course.faculty

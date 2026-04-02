@@ -257,7 +257,7 @@ class FacultyModel:
         else:
             for day in data.get("days", []):
                 day_name = day_map.get(day, day)
-                times[day_name] = [TimeRange(start="09:00", end="17:00")]
+                times[day_name] = [TimeRange(start="08:00", end="20:00")]
 
         return FacultyConfig(
             name=data["name"],

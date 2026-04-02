@@ -190,22 +190,16 @@ class ConflictGUIView:
                     )
                     return
                 try:
-                    ok = controller.model.add_conflict(course_id_a, course_id_b)
-                    if ok:
-                        fresh_courses = controller.model.config_model.get_all_courses()
-                        fresh_counts: dict[str, int] = {}
-                        for c in fresh_courses:
-                            cid = c.course_id
-                            fresh_counts[cid] = fresh_counts.get(cid, 0) + 1
-                            fresh_label = f"{cid}.{fresh_counts[cid]:02d}"
-                            if fresh_label in course_map:
-                                course_map[fresh_label] = c
+                    success, message = controller.add_conflict(
+                        course_id_a, course_id_b, idx_a, idx_b
+                    )
+                    if success:
                         preview()
                         status.set_text(
                             f"✓ Conflict added between {label_a} and {label_b}."
                         )
                     else:
-                        status.set_text("⚠ Failed to add conflict.")
+                        status.set_text(f"⚠ {message}")
                 except Exception as e:
                     status.set_text(f"Error: {e}")
 

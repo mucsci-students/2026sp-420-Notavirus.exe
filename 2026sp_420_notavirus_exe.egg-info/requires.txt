@@ -1,0 +1,9 @@
+course-constraint-scheduler>=2.6.1
+nicegui>=3.2.0
+pytest-cov>=7.1.0
+ruff>=0.15.8
+ty>=0.0.26
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langgraph>=0.2.0
+python-dotenv>=1.0.0

@@ -9,13 +9,15 @@ Pytest automatically discovers and makes these fixtures available to all tests.
 import pytest
 import shutil
 from pathlib import Path
-
+from dotenv import load_dotenv
 from models.config_model import ConfigModel
 from models.faculty_model import FacultyModel
 from models.course_model import CourseModel
 from models.conflict_model import ConflictModel
 from models.lab_model import LabModel
 from models.room_model import RoomModel
+
+load_dotenv()
 
 
 # ================================================================

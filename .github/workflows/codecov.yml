@@ -26,7 +26,7 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
+        run: uv run pytest --cov --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v6

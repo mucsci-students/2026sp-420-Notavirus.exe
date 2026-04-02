@@ -6,6 +6,10 @@ ScheduleGUIView - Graphical-user interface for schedule interactions
     - No Model methods are called directly.
     - Config values (limit, config_path) are fetched through the Controller.
     - test_schedules() no longer constructs Models directly.
+
+Sprint 3 additions:
+  - Progress bar on /run_scheduler (SchedulerFacade drives percent updates)
+  - SchedulerFacade (Facade design pattern) replaces the raw model call
 """
 
 from typing import Any
@@ -16,6 +20,7 @@ from nicegui import ui
 from scheduler import OptimizerFlags
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
+from scheduler_facade import SchedulerFacade
 
 
 class _ScheduleState:
@@ -286,6 +291,27 @@ class ScheduleGUIView:
                     .props("use-chips")
                 )
 
+            # ----------------------------------------------------------------
+            # Progress bar (hidden until generation starts)
+            # ----------------------------------------------------------------
+            progress_card = ui.card().classes(
+                "w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-gray-900 gap-3"
+            )
+            progress_card.set_visibility(False)
+
+            with progress_card:
+                progress_message = ui.label("").classes(
+                    "text-sm !text-gray-600 dark:!text-gray-300 italic"
+                )
+                progress_bar = ui.linear_progress(
+                    value=0.0,
+                    size="12px",
+                    color="black",
+                ).props("show-value=false").classes("w-full rounded-full")
+                progress_label = ui.label("0%").classes(
+                    "text-xs !text-gray-400 dark:!text-gray-500 text-right w-full"
+                )
+
             status_label = ui.label("").classes(
                 "text-sm !text-gray-600 dark:!text-gray-300 italic"
             )
@@ -312,29 +338,73 @@ class ScheduleGUIView:
             if errors:
                 status_label.set_text(f"Configuration invalid:\n{errors}")
                 return
+
             limit = int(limit_input.value or config_limit)
-            status_label.set_text("Generating schedules… this may take a moment.")
+
+            # --- Show progress card, lock button ---
+            progress_card.set_visibility(True)
+            status_label.set_text("")
+            progress_bar.set_value(0.0)
+            progress_label.set_text("0%")
+            progress_message.set_text("Starting...")
             generate_btn.props("loading disabled")
-            try:
 
-                def _run():
-                    if GUIView.controller is None:
-                        return []
-                    return GUIView.controller.generate_schedules(limit=limit)
+            import queue as _queue
+            progress_q: _queue.Queue[tuple[int, str] | None] = _queue.Queue()
 
-                loop = asyncio.get_event_loop()
-                with ThreadPoolExecutor() as pool:
-                    schedules = await loop.run_in_executor(pool, _run)
-                if not schedules:
-                    status_label.set_text("No valid schedules could be generated.")
+            def _run() -> list[list]:
+                if GUIView.controller is None:
+                    return []
+                scheduler_model = GUIView.controller.scheduler_model
+                facade = SchedulerFacade(scheduler_model)
+                result = facade.generate(
+                    limit=limit,
+                    progress_callback=lambda pct, msg: progress_q.put((pct, msg)),
+                )
+                progress_q.put(None)
+                return result
+
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as pool:
+                future = loop.run_in_executor(pool, _run)
+
+                while not future.done():
+                    while not progress_q.empty():
+                        item = progress_q.get_nowait()
+                        if item is not None:
+                            pct, msg = item
+                            progress_bar.set_value(pct / 100)
+                            progress_label.set_text(f"{pct}%")
+                            progress_message.set_text(msg)
+                    await asyncio.sleep(0.05)
+
+                while not progress_q.empty():
+                    item = progress_q.get_nowait()
+                    if item is not None:
+                        pct, msg = item
+                        progress_bar.set_value(pct / 100)
+                        progress_label.set_text(f"{pct}%")
+                        progress_message.set_text(msg)
+
+                try:
+                    schedules = await future
+                except Exception as exc:
+                    status_label.set_text(f"Error: {exc}")
+                    progress_card.set_visibility(False)
+                    generate_btn.props(remove="loading disabled")
                     return
-                _state.schedules = schedules
-                _state.current_index = 0
-                ui.navigate.to("/display_schedules")
-            except Exception as e:
-                status_label.set_text(f"Error: {e}")
-            finally:
-                generate_btn.props(remove="loading disabled")
+
+            generate_btn.props(remove="loading disabled")
+
+            if not schedules:
+                progress_bar.set_value(0.0)
+                progress_label.set_text("0%")
+                status_label.set_text("No valid schedules could be generated.")
+                return
+
+            _state.schedules = schedules
+            _state.current_index = 0
+            ui.navigate.to("/display_schedules")
 
         generate_btn.on("click", on_generate)
 
@@ -636,7 +706,7 @@ class ScheduleGUIView:
         import os
         import sys
 
-        status = ui.label("Generating test schedules…").classes(
+        status = ui.label("Generating test schedules...").classes(
             "text-gray-600 italic p-4"
         )
 
@@ -647,7 +717,6 @@ class ScheduleGUIView:
                     return
                 from views.gui_view import GUIView
 
-                #    Load config first if not already loaded.
                 if GUIView.controller is None:
                     return
                 if GUIView.controller.config_path != sys.argv[1]:

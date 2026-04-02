@@ -4,7 +4,9 @@ from unittest.mock import Mock
 from controllers.chatbot_controller import ChatbotController
 
 
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason="OPENAI_API_KEY not set")
+@pytest.mark.skipif(
+    not os.environ.get("OPENAI_API_KEY"), reason="OPENAI_API_KEY not set"
+)
 def test_chatbot_what_can_you_do():
     """
     Integration test to see if the chatbot works by prompting it 'What can you do?'.
@@ -26,6 +28,7 @@ def test_chatbot_what_can_you_do():
     )
 
     import asyncio
+
     response = asyncio.run(controller.chat("What can you do?"))
     assert isinstance(response, str)
     assert len(response) > 0

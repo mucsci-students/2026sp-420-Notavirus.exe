@@ -12,15 +12,16 @@ Sprint 3 additions:
   - SchedulerFacade (Facade design pattern) replaces the raw model call
 """
 
-from typing import Any
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from nicegui import ui
 from scheduler import OptimizerFlags
+
+from scheduler_facade import SchedulerFacade
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
-from scheduler_facade import SchedulerFacade
 
 
 class _ScheduleState:
@@ -226,7 +227,7 @@ class ScheduleGUIView:
 
     @ui.page("/run_scheduler")
     @staticmethod
-    def run_scheduler():
+    def run_scheduler():  # noqa: C901
         GUITheme.applyTheming()
         if not require_config(back_url="/"):
             return
@@ -282,7 +283,7 @@ class ScheduleGUIView:
                 }
                 (
                     ui.select(
-                        options={flag: label for flag, label in _flag_labels.items()},
+                        options=dict(_flag_labels.items()),
                         multiple=True,
                         value=[],
                         label="Optimization",
@@ -303,11 +304,15 @@ class ScheduleGUIView:
                 progress_message = ui.label("").classes(
                     "text-sm !text-gray-600 dark:!text-gray-300 italic"
                 )
-                progress_bar = ui.linear_progress(
-                    value=0.0,
-                    size="12px",
-                    color="black",
-                ).props("show-value=false").classes("w-full rounded-full")
+                progress_bar = (
+                    ui.linear_progress(
+                        value=0.0,
+                        size="12px",
+                        color="black",
+                    )
+                    .props("show-value=false")
+                    .classes("w-full rounded-full")
+                )
                 progress_label = ui.label("0%").classes(
                     "text-xs !text-gray-400 dark:!text-gray-500 text-right w-full"
                 )
@@ -328,7 +333,7 @@ class ScheduleGUIView:
                     .classes("w-36 h-12 text-base dark:!bg-white dark:!text-black")
                 )
 
-        async def on_generate():
+        async def on_generate():  # noqa: C901
             if GUIView.controller is None or not GUIView.controller.has_config():
                 status_label.set_text("Error: No configuration loaded.")
                 return
@@ -350,6 +355,7 @@ class ScheduleGUIView:
             generate_btn.props("loading disabled")
 
             import queue as _queue
+
             progress_q: _queue.Queue[tuple[int, str] | None] = _queue.Queue()
 
             def _run() -> list[list]:
@@ -410,7 +416,7 @@ class ScheduleGUIView:
 
     @ui.page("/display_schedules")
     @staticmethod
-    def display_schedules():
+    def display_schedules():  # noqa: C901
         GUITheme.applyTheming()
         ui.query("body").style("background-color: var(--q-primary)").classes(
             "dark:!bg-black"

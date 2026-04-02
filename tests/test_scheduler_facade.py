@@ -10,16 +10,16 @@ a real config file or scheduler installation.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from scheduler_facade import SchedulerFacade
 
-
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_model(schedules: list[list] | None = None) -> MagicMock:
     """
@@ -46,6 +46,7 @@ def _make_model(schedules: list[list] | None = None) -> MagicMock:
 # Initialisation
 # ---------------------------------------------------------------------------
 
+
 class TestSchedulerFacadeInit:
     def test_stores_model_reference(self) -> None:
         model = _make_model()
@@ -56,6 +57,7 @@ class TestSchedulerFacadeInit:
 # ---------------------------------------------------------------------------
 # Validation
 # ---------------------------------------------------------------------------
+
 
 class TestSchedulerFacadeValidation:
     def test_raises_when_model_is_none(self) -> None:
@@ -74,6 +76,7 @@ class TestSchedulerFacadeValidation:
 # ---------------------------------------------------------------------------
 # Progress callback
 # ---------------------------------------------------------------------------
+
 
 class TestSchedulerFacadeProgress:
     def test_callback_called_on_each_milestone(self) -> None:
@@ -131,6 +134,7 @@ class TestSchedulerFacadeProgress:
 # Return value
 # ---------------------------------------------------------------------------
 
+
 class TestSchedulerFacadeResult:
     def test_returns_all_schedules(self) -> None:
         schedules = [[MagicMock()] for _ in range(3)]
@@ -157,6 +161,7 @@ class TestSchedulerFacadeResult:
 # ---------------------------------------------------------------------------
 # Error propagation
 # ---------------------------------------------------------------------------
+
 
 class TestSchedulerFacadeErrors:
     def test_scheduler_exception_propagates(self) -> None:

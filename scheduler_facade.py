@@ -4,7 +4,7 @@ SchedulerFacade - Facade design pattern for schedule generation.
 
 Wraps the multi-step schedule generation pipeline (config validation,
 Scheduler construction, model iteration, result collection) behind one
-clean method: generate(). 
+clean method: generate().
 
 The optional progress_callback(percent: int, message: str) hook lets any
 caller — the GUI, a CLI, a test — receive live progress updates without

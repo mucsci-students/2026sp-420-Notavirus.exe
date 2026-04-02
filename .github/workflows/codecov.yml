@@ -26,6 +26,8 @@ jobs:
         run: uv sync
 
       - name: Run tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: uv run pytest --cov --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload results to Codecov

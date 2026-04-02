@@ -188,7 +188,7 @@ def test_add_conflict_with_sections_success(conflict_model, course_model):
 
 def test_add_conflict_with_sections_out_of_bounds(conflict_model, course_model):
     courses = conflict_model.config_model.config.config.courses
-    idx_a = len(courses)
+    len(courses)
     course_model.add_course(build_test_course("OOB A"))
     idx_b = len(courses)
     course_model.add_course(build_test_course("OOB B"))
@@ -293,7 +293,7 @@ def test_delete_conflict_with_sections_success(conflict_model, course_model):
     course_model.add_course(build_test_course("DELSEC A"))
     idx_b = len(courses)
     course_model.add_course(build_test_course("DELSEC B"))
-    
+
     conflict_model.add_conflict(
         "DELSEC A", "DELSEC B", section_index_1=idx_a, section_index_2=idx_b
     )
@@ -311,7 +311,7 @@ def test_delete_conflict_with_sections_success(conflict_model, course_model):
 
 def test_delete_conflict_with_sections_out_of_bounds(conflict_model, course_model):
     courses = conflict_model.config_model.config.config.courses
-    idx_a = len(courses)
+    len(courses)
     course_model.add_course(build_test_course("DELOOB A"))
     idx_b = len(courses)
     course_model.add_course(build_test_course("DELOOB B"))

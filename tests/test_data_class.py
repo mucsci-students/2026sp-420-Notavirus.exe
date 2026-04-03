@@ -7,6 +7,7 @@ from time_config_data_class import time_config_data
 # MOCK CLASSES
 # ----------------------
 
+
 class MockMeeting:
     def __init__(self, name="TestMeeting"):
         self.name = name
@@ -29,6 +30,7 @@ class MockTimeSlotConfig:
 # FIXTURES
 # ----------------------
 
+
 @pytest.fixture
 def config():
     return MockTimeSlotConfig()
@@ -48,6 +50,7 @@ def class_pattern():
 # BASIC ACCESS
 # ----------------------
 
+
 def test_get_set_config(data, config):
     new_config = MockTimeSlotConfig()
     data.set_config(new_config)
@@ -57,6 +60,7 @@ def test_get_set_config(data, config):
 # ----------------------
 # TIME SLOT TESTS
 # ----------------------
+
 
 def test_add_and_get_day(data):
     data.add_day("Monday")
@@ -105,6 +109,7 @@ def test_remove_time_block(data):
 # CLASS PATTERN TESTS
 # ----------------------
 
+
 def test_add_class(data):
     cp = MockClassPattern()
     data.add_class(cp)
@@ -135,6 +140,7 @@ def test_set_classes(data):
 # ----------------------
 # MEETING TESTS
 # ----------------------
+
 
 def test_add_meeting(data, class_pattern):
     meeting = MockMeeting()
@@ -186,6 +192,7 @@ def test_remove_meeting_no_meetings(data, class_pattern):
 # ----------------------
 # CONFIG VALUE TESTS
 # ----------------------
+
 
 def test_max_time_gap(data):
     data.set_max_time_gap(15)

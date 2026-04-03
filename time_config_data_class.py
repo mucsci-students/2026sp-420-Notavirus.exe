@@ -1,18 +1,18 @@
-
 """
 Data class for time_slot_config
 
 has getters and setters for modifying the data within the config
 """
+
 from scheduler import TimeSlotConfig
 from scheduler import Meeting
 
 
 class time_config_data:
-
     def __init__(self, time_slot_config: TimeSlotConfig):
         self._config = time_slot_config
-         # ----------------------
+        # ----------------------
+
     # BASIC ACCESS
     # ----------------------
 

@@ -1,0 +1,53 @@
+name: 'Python CI Pipeline'
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Enforce formatting
+      # To run in terminal:
+      # uv run ruff format to format files
+        uses: astral-sh/ruff-action@v3.6.1
+        with:
+          args: 'format --check'
+          
+      - name: Lint code
+      # To run in terminal:
+      # uv run ruff check --fix --unsafe-fixes to fix all errors picked up by linter
+        uses: astral-sh/ruff-action@v3.6.1
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Type check
+      # To run in terminal:
+      # uv run ruff check
+      # include --fix --unsafe-fixes to resolve most issues
+        run: uv run ty check
+
+      - name: Run tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: uv run pytest
+
+  deploy:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Tests passed!"

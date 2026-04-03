@@ -1,10 +1,11 @@
 name: Run tests and upload coverage
 description: Run Codecov testing on a push and/or on a manual trigger.
 
-on: [push, pull_request, workflow_dispatch]
+on: [push, pull_request]
 
 jobs:
   test:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     name: Run tests and collect coverage
     runs-on: ubuntu-latest
     steps:
@@ -21,14 +22,23 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install Project
+        run: uv sync
+
       - name: Run tests
-        run: |
-          uv run --with pytest-cov --with nicegui --with course-constraint-scheduler \
-          pytest --cov=. --cov-branch --cov-report=xml
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: uv run pytest --cov --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1.2.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           

@@ -469,8 +469,12 @@ class GUIView:
                     "w-full !text-black dark:!text-white"
                 )
 
-                with ui.menu().props("no-parent-event anchor='top right' self='top left'") as menu:
-                    ui.time().bind_value(inp).props("color=black text-color=white no-caps")
+                with ui.menu().props(
+                    "no-parent-event anchor='top right' self='top left'"
+                ) as menu:
+                    ui.time().bind_value(inp).props(
+                        "color=black text-color=white no-caps"
+                    )
                     with ui.row().classes("justify-end"):
                         ui.button("Close", on_click=menu.close).props("flat").classes(
                             "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
@@ -642,7 +646,9 @@ class GUIView:
                                     )
                                     ui.button(
                                         icon="delete",
-                                        on_click=lambda i=idx - 1: delete_class_pattern(i),
+                                        on_click=lambda i=idx - 1: delete_class_pattern(
+                                            i
+                                        ),
                                     ).props("flat color=red")
 
                                 # Meetings expansion under the pattern

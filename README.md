@@ -294,7 +294,7 @@ left corner.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (260 tests total)
+# Run all tests (296 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
@@ -309,6 +309,12 @@ pytest tests/test_views/ -v
 
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
+
+# Run only time slot config tests (22 test)
+pytest tests/test_data_class.py -v
+
+# Run only facade design pattern tests (14 test)
+pytest tests/test_scheduler_facade.py -v
 
 # Run only chatbot/integration tests (1 tests)
 # These tests will NOT pass unless you have an API key entered

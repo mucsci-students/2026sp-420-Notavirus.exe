@@ -988,6 +988,12 @@ class GUIView:
         refresh_days()
         refresh_patterns()
 
+        ui.button("Back").props(
+            "rounded color=backbtn text-color=white no-caps"
+        ).classes(
+            "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)] fixed bottom-6 left-1/2 -translate-x-1/2"
+        ).on("click", lambda: ui.navigate.to("/"))
+
     @staticmethod
     def runGUI():
         """

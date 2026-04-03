@@ -17,6 +17,7 @@ Design pattern: Facade
 
 from __future__ import annotations
 
+import threading
 from typing import Callable
 
 ProgressCallback = Callable[[int, str], None]
@@ -53,17 +54,11 @@ class SchedulerFacade:
         self,
         limit: int = 1,
         progress_callback: ProgressCallback | None = None,
+        stop_event: threading.Event | None = None,
+        schedule_callback: Callable[[list], None] | None = None,
     ) -> list[list]:
         """
         Run the full schedule generation pipeline.
-
-        Progress milestones reported via callback:
-          0  % — starting
-         10  % — validation passed
-         25  % — scheduler ready
-         40  % — iteration begun
-         40-95% — incremental per-schedule
-         100 % — complete
 
         Parameters:
             limit (int): Maximum number of schedules to generate.
@@ -83,27 +78,21 @@ class SchedulerFacade:
             if progress_callback:
                 progress_callback(pct, msg)
 
-        report(0, "Starting schedule generation…")
-
-        # Step 1 — validate
-        report(10, "Validating configuration…")
         self._validate()
-
-        # Step 2 — apply limit to config so Scheduler respects it
-        report(25, "Preparing scheduler…")
         self._model.config_model.config.limit = limit
-
-        # Step 3 — kick off generation
-        report(40, "Running scheduler…")
         raw = self._model.generate_schedules(limit=limit)
 
-        # Step 4 — collect with incremental progress
+        report(0, "Generating schedules…")
         schedules: list[list] = []
         for schedule in raw:
+            if stop_event and stop_event.is_set():
+                break
             schedules.append(schedule)
+            if schedule_callback:
+                schedule_callback(schedule)
             n = len(schedules)
-            pct = 40 + int(55 * min(n / max(limit, 1), 1.0))
-            report(pct, f"Collected {n} schedule(s)…")
+            pct = int(100 * min(n / max(limit, 1), 1.0))
+            report(pct, f"Collected {n} of {limit} schedule(s)…")
 
         report(100, f"Done — {len(schedules)} schedule(s) generated.")
         return schedules

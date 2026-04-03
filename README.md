@@ -125,6 +125,7 @@ Using uv run:
 uv run run-app [config_path]
 ```
 
+Using python only:
 ```bash
 python main.py [config_path]
 ```
@@ -147,23 +148,37 @@ To stop the server:
 Press Ctrl+C in the terminal
 
 ** Example:
-# Using uv run with a config file
-uv run run-app example.json OR uv run python main.py example.json
+Using uv run with a config file
+```bash
+uv run run-app example.json 
+``` 
+OR 
+```bash
+uv run python main.py example.json
+```
 
-# Using uv run without a config file
+Using uv run without a config file
+```bash
 uv run run-app
+```
 
-# With a config file
+With a config file
+```bash
 python main.py example.json
+```
 
-# Without a config file
+Without a config file
+```bash
 python main.py 
+```
 
 Output:
 - Loading configuration from: example.json
 - 🚀 GUI SERVER STARTING
-- 🌐 Browser will open at: http://localhost:8080
+- 🌐 Open your browser to: http://localhost:8080
 - 🛑 To stop: Press Ctrl+C in this terminal
+- ⚠️ Ctrl+C during generation stops generating — press again to kill server
+
 
 ---
 

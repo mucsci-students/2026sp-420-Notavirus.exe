@@ -110,6 +110,22 @@ class ChatbotGUIView:
             .classes("ai-drawer") as drawer
         ):
             # Header
+            def _close():
+                drawer.hide()
+                app.storage.user["chat_open"] = False
+                app.storage.user["chat_history"] = []
+
+            def _export():
+                ctrl = ChatbotGUIView._chatbot_controller
+                if ctrl is None:
+                    ui.notify("No configuration loaded.", type="warning")
+                    return
+                ok = ctrl.save_config()
+                if ok:
+                    ui.notify("Configuration saved to disk.", type="positive")
+                else:
+                    ui.notify("Failed to save configuration.", type="negative")
+
             with ui.row().classes(
                 "w-full items-center justify-between px-4 py-3 ai-header"
             ):
@@ -118,23 +134,6 @@ class ChatbotGUIView:
                     ui.label("AI Assistant").classes(
                         "font-bold text-lg !text-black dark:!text-white"
                     )
-
-                def _close():
-                    drawer.hide()
-                    app.storage.user["chat_open"] = False
-                    app.storage.user["chat_history"] = []
-
-                def _export():
-                    ctrl = ChatbotGUIView._chatbot_controller
-                    if ctrl is None:
-                        ui.notify("No configuration loaded.", type="warning")
-                        return
-                    ok = ctrl.save_config()
-                    if ok:
-                        ui.notify("Configuration saved to disk.", type="positive")
-                    else:
-                        ui.notify("Failed to save configuration.", type="negative")
-
                 with ui.row().classes("items-center gap-1"):
                     ui.button("Export to Config", icon="save").props(
                         "flat dense"
@@ -182,11 +181,12 @@ class ChatbotGUIView:
                 typing = ui.html(sanitize=False, content="").classes("text-sm")
 
             # Input bar
-            with ui.row().classes("w-full items-center gap-2 px-3 py-3 ai-input-bar"):
+            with ui.row().classes("w-full items-start gap-2 px-3 py-3 ai-input-bar"):
                 query_input = (
-                    ui.input(placeholder="Message AI Assistant...")
+                    ui.textarea(placeholder="Message AI Assistant...")
                     .classes("flex-1 ai-input")
-                    .props("outlined dense")
+                    .props("outlined rows=2 autogrow")
+                    .style("max-height: 120px; overflow-y: auto;")
                 )
                 send_btn = (
                     ui.button(icon="send")

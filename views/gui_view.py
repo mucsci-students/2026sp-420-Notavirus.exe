@@ -464,22 +464,23 @@ class GUIView:
         # Helper UI Elements
         # -----------------------------
         def time_picker(label: str, value: str | None = None):
-            inp = ui.input(label=label, value=value or "").classes(
-                "w-full !text-black dark:!text-white"
-            )
-
-            with ui.menu().props("no-parent-event") as menu:
-                ui.time().bind_value(inp).props("color=black text-color=white no-caps")
-                with ui.row().classes("justify-end"):
-                    ui.button("Close", on_click=menu.close).props("flat").classes(
-                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
-                    )
-
-            # Icon to open menu
-            with inp.add_slot("append"):
-                ui.icon("access_time").on("click", menu.open).classes(
-                    "cursor-pointer !text-black dark:!text-white"
+            with ui.element("div").classes("relative w-full"):
+                inp = ui.input(label=label, value=value or "").classes(
+                    "w-full !text-black dark:!text-white"
                 )
+
+                with ui.menu().props("no-parent-event anchor='top right' self='top left'") as menu:
+                    ui.time().bind_value(inp).props("color=black text-color=white no-caps")
+                    with ui.row().classes("justify-end"):
+                        ui.button("Close", on_click=menu.close).props("flat").classes(
+                            "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                        )
+
+                # Icon to open menu
+                with inp.add_slot("append"):
+                    ui.icon("access_time").on("click", menu.open).classes(
+                        "cursor-pointer !text-black dark:!text-white"
+                    )
 
             return inp
 
@@ -488,9 +489,29 @@ class GUIView:
                 "w-full mb-2 !text-black dark:!text-white"
             )
 
+        ui.add_css("""
+            .outline-checkbox .q-checkbox__bg {
+                background-color: transparent !important;
+                border: 2px solid black !important;
+            }
+            body.body--dark .outline-checkbox .q-checkbox__bg {
+                border-color: white !important;
+            }
+            .outline-checkbox.q-checkbox--truthy .q-checkbox__bg,
+            .outline-checkbox.q-checkbox--indeterminate .q-checkbox__bg {
+                background-color: transparent !important;
+            }
+            .outline-checkbox .q-checkbox__svg {
+                color: black;
+            }
+            body.body--dark .outline-checkbox .q-checkbox__svg {
+                color: white;
+            }
+        """)
+
         def checkbox(label, value=False):
             return ui.checkbox(text=label, value=value).classes(
-                "!text-black dark:!text-white mb-2"
+                "!text-black dark:!text-white mb-2 outline-checkbox"
             )
 
         # -----------------------------
@@ -610,14 +631,19 @@ class GUIView:
                                 disabled_input = checkbox("Disabled", cls.disabled)
                                 start_input = time_picker("Start Time", cls.start_time)
 
-                                ui.button(
-                                    "Save",
-                                    on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
-                                        save_class_pattern(c, cr, dis, st)
-                                    ),
-                                ).classes(
-                                    "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
-                                )
+                                with ui.row().classes("gap-2 mt-2"):
+                                    ui.button(
+                                        "Save",
+                                        on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
+                                            save_class_pattern(c, cr, dis, st)
+                                        ),
+                                    ).classes(
+                                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                    )
+                                    ui.button(
+                                        icon="delete",
+                                        on_click=lambda i=idx - 1: delete_class_pattern(i),
+                                    ).props("flat color=red")
 
                                 # Meetings expansion under the pattern
                                 with ui.expansion("Meetings").classes(
@@ -686,10 +712,13 @@ class GUIView:
                 credits_input = number_input("Credits", 0)
                 disabled_input = checkbox("Disabled", False)
                 start_input = time_picker("Start Time")
+                ui.label("(This is optional)").classes(
+                    "text-xs italic text-gray-500 dark:text-gray-400 -mt-1 mb-2"
+                )
 
                 # Initial meeting fields (must have at least one meeting)
                 ui.label("Initial Meeting").classes(
-                    "text-lg mt-2 !text-black dark:!text-white"
+                    "text-lg mt-6 !text-black dark:!text-white"
                 )
                 day_input = ui.select(
                     options=time_config.get_days(), label="Day"
@@ -965,6 +994,10 @@ class GUIView:
                 ),
             )
             dialog.close()
+            refresh_patterns()
+
+        def delete_class_pattern(idx):
+            time_config.remove_class(idx)
             refresh_patterns()
 
         def delete_meeting(cls, idx):

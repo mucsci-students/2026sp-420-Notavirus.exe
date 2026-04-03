@@ -58,7 +58,9 @@ def save_configuration(
 
         # Helper to apply a specific feature update to the dictionary
         def update_feature(feat_name):
-            if feat_name in ["rooms", "labs", "courses"]:
+            if feat_name == "time_slot_config":
+                target_data["time_slot_config"] = updated["time_slot_config"]
+            elif feat_name in ["rooms", "labs", "courses"]:
                 target_data["config"][feat_name] = updated["config"][feat_name]
             elif feat_name == "faculty":
                 existing_raw_list = target_data["config"].get("faculty", [])
@@ -102,7 +104,7 @@ def save_configuration(
 
         # Apply updates based on feature argument
         if feature == "all":
-            for feat in ["rooms", "labs", "courses", "faculty"]:
+            for feat in ["rooms", "labs", "courses", "faculty", "time_slot_config"]:
                 update_feature(feat)
         else:
             update_feature(feature)

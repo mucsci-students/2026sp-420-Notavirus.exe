@@ -8,8 +8,12 @@ print config, run scheduler, and display schedules)
 """
 
 from typing import Any
+import re
 from nicegui import ui
 from views.gui_theme import GUITheme
+from time_config_data_class import time_config_data
+from scheduler import TimeBlock, Meeting
+from scheduler.config import ClassPattern
 
 
 class GUIView:
@@ -82,6 +86,9 @@ class GUIView:
                 ui.button("Print Config").props("rounded no-caps").classes(
                     "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
                 ).on("click", lambda: ui.navigate.to("/print_config"))
+                ui.button("Time Slot Config").props("rounded no-caps").classes(
+                    "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
+                ).on("click", lambda: ui.navigate.to("/time_config"))
                 with ui.row().classes("gap-6"):
                     ui.button("Run Scheduler").props("rounded no-caps").classes(
                         "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
@@ -417,6 +424,569 @@ class GUIView:
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
                 "click", lambda: ui.navigate.to("/")
             )
+
+    @ui.page("/time_config")
+    @staticmethod
+    def time_slot_config():
+        """
+        Full GUI for time slot configuration and class pattern management:
+        - Days / time blocks
+        - Class patterns
+        - Meetings (add/edit/delete)
+        """
+        GUITheme.applyTheming()
+        ui.query("body").style("background-color: var(--q-primary)").classes(
+            "dark:!bg-black"
+        )
+
+        cm = getattr(GUIView.controller, "config_model", None)
+        if cm is None:
+            with ui.column().classes("w-full items-center pt-12 gap-6"):
+                ui.label("No configuration loaded.").classes(
+                    "text-xl italic !text-gray-500 dark:!text-gray-400"
+                )
+                ui.button("Back").props(
+                    "rounded color=black text-color=white no-caps"
+                ).classes("w-80 h-16 text-xl mt-6 dark:!bg-white dark:!text-black").on(
+                    "click", lambda: ui.navigate.to("/")
+                )
+            return
+
+        time_config = time_config_data(cm.config.time_slot_config)
+
+        ui.label("Time Slot Config").classes(
+            "text-4xl mb-6 !text-black dark:!text-white"
+        )
+        days_container = ui.column().classes("w-full gap-4")
+        patterns_container = ui.column().classes("w-full gap-4")
+
+        # -----------------------------
+        # Helper UI Elements
+        # -----------------------------
+        def time_picker(label: str, value: str | None = None):
+            inp = ui.input(label=label, value=value or "").classes(
+                "w-full !text-black dark:!text-white"
+            )
+
+            with ui.menu().props("no-parent-event") as menu:
+                ui.time().bind_value(inp).props("color=black text-color=white no-caps")
+                with ui.row().classes("justify-end"):
+                    ui.button("Close", on_click=menu.close).props("flat").classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
+
+            # Icon to open menu
+            with inp.add_slot("append"):
+                ui.icon("access_time").on("click", menu.open).classes(
+                    "cursor-pointer !text-black dark:!text-white"
+                )
+
+            return inp
+
+        def number_input(label, value=0, min_val=0):
+            return ui.number(label=label, value=value, min=min_val).classes(
+                "w-full mb-2 !text-black dark:!text-white"
+            )
+
+        def checkbox(label, value=False):
+            return ui.checkbox(text=label, value=value).classes(
+                "!text-black dark:!text-white mb-2"
+            )
+
+        # -----------------------------
+        # Refresh functions
+        # -----------------------------
+        def refresh_days():
+            days_container.clear()
+            render_days()
+
+        def refresh_patterns():
+            patterns_container.clear()
+            render_patterns()
+
+        # -----------------------------
+        # Rendering
+        # -----------------------------
+        day_expansions = {}
+
+        def render_days():
+            day_expansions.clear()
+            with days_container:
+                with ui.expansion("Available Days", icon="meeting_room").classes(
+                    "w-full !text-black dark:!text-white"
+                ):
+                    with ui.row().classes("w-full justify-between items-center mb-2"):
+                        ui.label("Days").classes("text-lg !text-black dark:!text-white")
+                        ui.button(icon="add").props("flat round").classes(
+                            "!text-black dark:!text-white"
+                        ).on("click", add_time_block)
+
+                    for day, blocks in time_config.get_all_time_slots().items():
+                        # Create expansion for each day
+                        exp = ui.expansion(str(day)).classes(
+                            "w-full !text-black dark:!text-white"
+                        )
+
+                        # Create the inner container **as a child of the expansion**
+                        with exp:
+                            block_container = ui.column()
+                            day_expansions[day] = block_container
+
+                        # Initial render of blocks inside this container
+                        render_day_blocks(day)
+
+        def render_day_blocks(day):
+            container = day_expansions[day]
+            container.clear()
+            blocks = time_config.get_all_time_slots().get(day, [])
+
+            with container:
+                if not blocks:
+                    ui.label("No time blocks available").classes(
+                        "italic text-gray-500 dark:!text-gray-400"
+                    )
+                    return
+
+                for i, b in enumerate(blocks, start=1):
+                    # Each time block is its own expansion
+                    with ui.expansion(f"Time Slot {i}").classes(
+                        "w-full !text-black dark:!text-white"
+                    ):
+                        with ui.card().classes(
+                            "w-full p-4 bg-gray-100 dark:bg-gray-800"
+                        ):
+                            s_input = time_picker("Start Time", b.start)
+                            e_input = time_picker("End Time", b.end)
+                            sp_input = number_input("Spacing", b.spacing or 0)
+
+                            with ui.row().classes("gap-2 mt-2"):
+                                ui.button(
+                                    "Save",
+                                    on_click=lambda d=day, idx=i - 1, s=s_input, e=e_input, sp=sp_input: (
+                                        save_time_block(d, idx, s, e, sp)
+                                    ),
+                                ).classes(
+                                    "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                )
+                                ui.button(
+                                    icon="delete",
+                                    on_click=lambda d=day, idx=i - 1: delete_time_block(
+                                        d, idx
+                                    ),
+                                ).props("flat color=red")
+
+        def render_patterns():
+            """
+            Renders all class patterns under a single "Class Patterns" expandable.
+            Each pattern has its own expandable and contains meetings.
+            """
+            with patterns_container:
+                with ui.expansion("Class Patterns", icon="school").classes(
+                    "w-full !text-black dark:!text-white"
+                ):
+                    # Add Class Pattern button
+                    ui.button("Add Class Pattern", icon="add").props(
+                        "flat round"
+                    ).classes("!text-black dark:!text-white mb-2").on(
+                        "click", add_class_pattern
+                    )
+
+                    classes = time_config.get_classes()
+                    if not classes:
+                        ui.label("No class patterns available").classes(
+                            "italic text-gray-500 dark:!text-gray-400"
+                        )
+
+                    for idx, cls in enumerate(classes, start=1):
+                        # Each individual pattern expandable
+                        with ui.expansion(f"Pattern {idx}").classes(
+                            "w-full !text-black dark:!text-white"
+                        ):
+                            with ui.card().classes(
+                                "w-full p-4 bg-gray-100 dark:bg-gray-800"
+                            ):
+                                # Editable pattern fields
+                                credits_input = number_input("Credits", cls.credits)
+                                disabled_input = checkbox("Disabled", cls.disabled)
+                                start_input = time_picker("Start Time", cls.start_time)
+
+                                ui.button(
+                                    "Save",
+                                    on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
+                                        save_class_pattern(c, cr, dis, st)
+                                    ),
+                                ).classes(
+                                    "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                )
+
+                                # Meetings expansion under the pattern
+                                with ui.expansion("Meetings").classes(
+                                    "w-full !text-black dark:!text-white mt-2"
+                                ):
+                                    # Add Meeting button
+                                    ui.button("Add Meeting", icon="add").props(
+                                        "flat round"
+                                    ).classes("!text-black dark:!text-white mb-2").on(
+                                        "click", lambda c=cls: add_meeting(c)
+                                    )
+
+                                    for i, m in enumerate(cls.meetings):
+                                        with ui.card().classes(
+                                            "w-full p-4 bg-gray-200 dark:bg-gray-700"
+                                        ):
+                                            day_input = ui.select(
+                                                options=time_config.get_days(),
+                                                value=m.day,
+                                                label="Day",
+                                            ).classes(
+                                                "w-full mb-2 !text-black dark:!text-white"
+                                            )
+                                            start_input = time_picker(
+                                                "Start Time", m.start_time
+                                            )
+                                            dur_input = number_input(
+                                                "Duration", m.duration, 1
+                                            )
+                                            lab_input = checkbox("Lab Meeting", m.lab)
+
+                                            with ui.row().classes("gap-2 mt-2"):
+                                                ui.button(
+                                                    "Save",
+                                                    on_click=lambda cls=cls, idx=i, di=day_input, st=start_input, dur=dur_input, lab=lab_input: (
+                                                        save_meeting(
+                                                            cls, idx, di, st, dur, lab
+                                                        )
+                                                    ),
+                                                ).classes(
+                                                    "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                                )
+
+                                                # Only show delete button if more than one meeting
+                                                if len(cls.meetings) > 1:
+                                                    ui.button(
+                                                        icon="delete",
+                                                        on_click=lambda cls=cls, idx=i: (
+                                                            delete_meeting(cls, idx)
+                                                        ),
+                                                    ).props("flat color=red")
+
+        # -----------------------------
+        # Add Class Pattern Dialog (with one meeting)
+        # -----------------------------
+        def add_class_pattern():
+            with (
+                ui.dialog() as d,
+                ui.card().classes("w-96 p-4 bg-gray-100 dark:bg-gray-800"),
+            ):
+                ui.label("Add Class Pattern").classes(
+                    "text-xl mb-4 !text-black dark:!text-white"
+                )
+
+                # Empty pattern fields
+                credits_input = number_input("Credits", 0)
+                disabled_input = checkbox("Disabled", False)
+                start_input = time_picker("Start Time")
+
+                # Initial meeting fields (must have at least one meeting)
+                ui.label("Initial Meeting").classes(
+                    "text-lg mt-2 !text-black dark:!text-white"
+                )
+                day_input = ui.select(
+                    options=time_config.get_days(), label="Day"
+                ).classes("w-full mb-2 !text-black dark:!text-white")
+                start_meeting_input = time_picker("Start Time")
+                dur_input = number_input("Duration", 60, 1)
+                lab_input = checkbox("Lab Meeting")
+
+                with ui.row().classes("w-full justify-end gap-2"):
+                    ui.button("Cancel", on_click=d.close).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
+                    ui.button(
+                        "Add",
+                        on_click=lambda: add_class_pattern_submit(
+                            d,
+                            credits_input,
+                            disabled_input,
+                            start_input,
+                            day_input,
+                            start_meeting_input,
+                            dur_input,
+                            lab_input,
+                        ),
+                    ).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
+            d.open()
+
+        # -----------------------------
+        # Submit new class pattern with one meeting
+        # -----------------------------
+        def add_class_pattern_submit(
+            dialog,
+            credits_input,
+            disabled_input,
+            start_input,
+            day_input,
+            start_meeting_input,
+            dur_input,
+            lab_input,
+        ):
+            # Validate credits
+            try:
+                credits_val = int(credits_input.value)
+            except (ValueError, TypeError):
+                ui.notify("Credits must be an integer", color="red")
+                return
+
+            # Validate pattern start time
+            if start_input.value:
+                start_val = format_time(start_input.value)
+                if not is_valid_time(start_val):
+                    ui.notify("Pattern start time must be in HH:MM format", color="red")
+                    return
+
+            # Validate meeting inputs
+            if (
+                not day_input.value
+                or not start_meeting_input.value
+                or not dur_input.value
+            ):
+                ui.notify("All meeting fields are required", color="red")
+                return
+
+            start_meeting_val = format_time(start_meeting_input.value)
+            if not is_valid_time(start_meeting_val):
+                ui.notify("Meeting start time must be in HH:MM format", color="red")
+                return
+
+            try:
+                # Create pattern
+                new_pattern = ClassPattern(
+                    credits=credits_val,
+                    disabled=disabled_input.value,
+                    start_time=start_val,
+                    meetings=[
+                        Meeting(
+                            day=day_input.value,
+                            start_time=start_meeting_val,
+                            duration=dur_input.value,
+                            lab=lab_input.value,
+                        )
+                    ],
+                )
+                time_config.add_class(new_pattern)
+            except Exception as ex:
+                ui.notify(f"Error adding class pattern: {ex}", color="red")
+                return
+
+            dialog.close()
+            refresh_patterns()
+
+        # -----------------------------
+        # Actions
+        # -----------------------------
+        def add_time_block():
+            with (
+                ui.dialog() as d,
+                ui.card().classes("w-96 p-4 bg-gray-100 dark:bg-gray-800"),
+            ):
+                ui.label("Add Time Block").classes(
+                    "text-xl mb-4 !text-black dark:!text-white"
+                )
+                day_select = ui.select(
+                    options=time_config.get_days(), label="Day"
+                ).classes("w-full mb-2 !text-black dark:!text-white")
+                start_input = time_picker("Start Time")
+                end_input = time_picker("End Time")
+                spacing_input = number_input("Spacing", 0)
+                with ui.row().classes("w-full justify-end gap-2"):
+                    ui.button("Cancel", on_click=d.close).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
+                    ui.button(
+                        "Add",
+                        on_click=lambda d=d, ds=day_select, s=start_input, e=end_input, sp=spacing_input: (
+                            add_time_block_submit(d, ds, s, e, sp)
+                        ),
+                    ).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
+            d.open()
+            # Fix single-digit hours by adding leading zero
+
+        # Must be at the top-level of time_slot_config() so all functions can use it
+        def format_time(t: str):
+            if not t:
+                return None
+            t = t.strip()
+            # Add leading zero if single-digit hour (e.g., "8:00" -> "08:00")
+            match = re.match(r"^(\d):([0-5][0-9])$", t)
+            if match:
+                t = f"0{match.group(1)}:{match.group(2)}"
+            return t
+
+        def is_valid_time(t: str) -> bool:
+            pattern = r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+            return bool(re.match(pattern, t))
+
+        def add_time_block_submit(dialog, day_sel, start_inp, end_inp, sp_inp):
+            day_val = day_sel.value
+            start_val = format_time(start_inp.value)
+            end_val = format_time(end_inp.value)
+            spacing_val = sp_inp.value
+
+            # Validate that a day is selected
+            if not day_val:
+                ui.notify("Please select a day to add the time block.", color="red")
+                return
+
+            # Validate time strings
+            if (
+                not start_val
+                or not end_val
+                or not is_valid_time(start_val)
+                or not is_valid_time(end_val)
+            ):
+                ui.notify(
+                    "Start and End times must be in HH:MM format (e.g., 08:00)",
+                    color="red",
+                )
+                return
+
+            # Check that end time is after start time
+            start_hour, start_min = map(int, start_val.split(":"))
+            end_hour, end_min = map(int, end_val.split(":"))
+            if (end_hour, end_min) <= (start_hour, start_min):
+                ui.notify("The end time cannot be before the start time", color="red")
+                return
+
+            # Validate spacing
+            try:
+                spacing_val = int(spacing_val)
+            except (ValueError, TypeError):
+                ui.notify("Spacing must be an integer", color="red")
+                return
+
+            # Add the new time block
+            try:
+                time_config.add_time_block(
+                    day_val,
+                    TimeBlock(start=start_val, end=end_val, spacing=spacing_val),
+                )
+            except Exception as ex:
+                ui.notify(f"Error adding time block: {ex}", color="red")
+                return
+
+            # Only close dialog if everything is valid
+            dialog.close()
+            render_day_blocks(day_val)
+
+        def save_time_block(day, idx, s_input, e_input, sp_input):
+            start_val = format_time(s_input.value)
+            end_val = format_time(e_input.value)
+            spacing_val = sp_input.value
+
+            if (
+                not start_val
+                or not end_val
+                or not is_valid_time(start_val)
+                or not is_valid_time(end_val)
+            ):
+                ui.notify(
+                    "Start and End times must be in HH:MM format (e.g., 08:00)",
+                    color="red",
+                )
+                return
+
+            try:
+                spacing_val = int(spacing_val)
+            except (ValueError, TypeError):
+                ui.notify("Spacing must be an integer", color="red")
+                return
+
+            try:
+                time_config.update_time_block(
+                    day,
+                    idx,
+                    TimeBlock(start=start_val, end=end_val, spacing=spacing_val),
+                )
+            except Exception as ex:
+                ui.notify(f"Error saving time block: {ex}", color="red")
+                return
+
+            render_day_blocks(day)
+
+        def delete_time_block(day, idx):
+            time_config.remove_time_block(day, idx)
+            render_day_blocks(day)
+
+        def save_class_pattern(cls, cr_input, dis_input, st_input):
+            cls.credits = cr_input.value
+            cls.disabled = dis_input.value
+            cls.start_time = st_input.value or None
+            refresh_patterns()
+
+        def add_meeting(cls):
+            with (
+                ui.dialog() as d,
+                ui.card().classes("w-96 p-4 bg-gray-100 dark:bg-gray-800"),
+            ):
+                ui.label("Add Meeting").classes(
+                    "text-xl mb-4 !text-black dark:!text-white"
+                )
+                day_sel = ui.select(
+                    options=time_config.get_days(), label="Day"
+                ).classes("w-full mb-2 !text-black dark:!text-white")
+                start_inp = time_picker("Start Time")
+                dur_inp = number_input("Duration", 60, 1)
+                lab_chk = checkbox("Lab Meeting")
+                with ui.row().classes("w-full justify-end gap-2"):
+                    ui.button("Cancel", on_click=d.close)
+                    ui.button(
+                        "Add",
+                        on_click=lambda d=d, c=cls, ds=day_sel, st=start_inp, dur=dur_inp, lab=lab_chk: (
+                            add_meeting_submit(d, c, ds, st, dur, lab)
+                        ),
+                    )
+            d.open()
+
+        def add_meeting_submit(dialog, cls, day_sel, start_inp, dur_inp, lab_chk):
+            if not day_sel.value or not start_inp.value or not dur_inp.value:
+                ui.notify("Please fill all fields", color="red")
+                return
+            time_config.add_meeting(
+                cls,
+                Meeting(
+                    day=day_sel.value,
+                    start_time=start_inp.value,
+                    duration=dur_inp.value,
+                    lab=lab_chk.value,
+                ),
+            )
+            dialog.close()
+            refresh_patterns()
+
+        def delete_meeting(cls, idx):
+            time_config.remove_meeting(cls, idx)
+            refresh_patterns()
+
+        def save_meeting(cls, idx, day_input, start_input, dur_input, lab_input):
+            try:
+                meeting = cls.meetings[idx]
+                meeting.day = day_input.value
+                meeting.start_time = start_input.value
+                meeting.duration = dur_input.value
+                meeting.lab = lab_input.value
+                refresh_patterns()
+            except Exception as ex:
+                ui.notify(f"Error saving meeting: {ex}", color="red")
+
+        # -----------------------------
+        # Initial render
+        # -----------------------------
+        refresh_days()
+        refresh_patterns()
 
     @staticmethod
     def runGUI():

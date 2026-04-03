@@ -79,10 +79,10 @@ class SchedulerFacade:
                 progress_callback(pct, msg)
 
         self._validate()
+        report(0, "Generating schedules…")
         self._model.config_model.config.limit = limit
         raw = self._model.generate_schedules(limit=limit)
 
-        report(0, "Generating schedules…")
         schedules: list[list] = []
         for schedule in raw:
             if stop_event and stop_event.is_set():
@@ -91,7 +91,7 @@ class SchedulerFacade:
             if schedule_callback:
                 schedule_callback(schedule)
             n = len(schedules)
-            pct = int(100 * min(n / max(limit, 1), 1.0))
+            pct = 40 + int(55 * min(n / max(limit, 1), 1.0))
             report(pct, f"Collected {n} of {limit} schedule(s)…")
 
         report(100, f"Done — {len(schedules)} schedule(s) generated.")

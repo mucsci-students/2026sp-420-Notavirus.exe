@@ -351,6 +351,8 @@ class SchedulerController:
         print("=" * 70)
         print("  🌐 Open your browser to: http://localhost:8080")
         print("  🛑 Stop server: Press Ctrl+C in this terminal")
-        print("  ⚠️  Ctrl+C during generation stops generating — press again to kill server")
+        print(
+            "  ⚠️  Ctrl+C during generation stops generating — press again to kill server"
+        )
         print("=" * 70 + "\n")
         ui.run(title="Scheduler", reload=False, storage_secret="scheduler_secret_key")

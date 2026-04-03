@@ -556,15 +556,12 @@ class ScheduleGUIView:
                     .props("rounded outline color=red no-caps")
                     .classes("w-28 h-9 text-sm self-end")
                 )
-                progress_bar = (
-                    ui.linear_progress(
-                        value=_state.progress_pct / 100,
-                        size="12px",
-                        color="black",
-                        show_value=False,
-                    )
-                    .classes("w-full rounded-full")
-                )
+                progress_bar = ui.linear_progress(
+                    value=_state.progress_pct / 100,
+                    size="12px",
+                    color="black",
+                    show_value=False,
+                ).classes("w-full rounded-full")
                 progress_label = ui.label(f"{_state.progress_pct}%").classes(
                     "text-xs !text-gray-400 dark:!text-white text-right w-full"
                 )
@@ -609,7 +606,9 @@ class ScheduleGUIView:
                 cancel_btn.props(remove="disabled")
                 progress_card.set_visibility(False)
             except RuntimeError:
-                _state.pending_navigate = bool(_state.schedules and not _state.generation_error)
+                _state.pending_navigate = bool(
+                    _state.schedules and not _state.generation_error
+                )
                 return
 
             if _state.generation_error:
@@ -710,8 +709,8 @@ class ScheduleGUIView:
                     facade.generate(
                         limit=limit,
                         progress_callback=lambda pct, msg: (
-                            setattr(_state, "progress_pct", pct),
-                            setattr(_state, "progress_msg", msg),
+                            setattr(_state, "progress_pct", pct)
+                            or setattr(_state, "progress_msg", msg)
                         ),
                         schedule_callback=lambda s: _state.schedules.append(s),
                         stop_event=_state.stop_event,
@@ -884,7 +883,8 @@ class ScheduleGUIView:
                     )
                 generation_status = ui.label(
                     f"Generating {_state.generation_limit} schedules…"
-                    if _state.is_generating else "Generation complete."
+                    if _state.is_generating
+                    else "Generation complete."
                 ).classes("text-xs !text-gray-400 text-center")
 
             with (
@@ -985,27 +985,29 @@ class ScheduleGUIView:
                 box-shadow: 0 0 12px rgba(255,255,255,0.25);
             }
         """)
-        with ui.row().classes("gap-4 justify-center fixed bottom-4 left-0 right-0 z-40 py-2"):
+        with ui.row().classes(
+            "gap-4 justify-center fixed bottom-4 left-0 right-0 z-40 py-2"
+        ):
             ui.button("Back to Home").props(
                 "rounded color=black text-color=white no-caps"
-            ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn").on(
-                "click", lambda: ui.navigate.to("/")
-            )
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", lambda: ui.navigate.to("/"))
             ui.button("Generate Schedules").props(
                 "rounded color=black text-color=white no-caps"
-            ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn").on(
-                "click", lambda: ui.navigate.to("/run_scheduler")
-            )
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", lambda: ui.navigate.to("/run_scheduler"))
             ui.button("Export Schedules").props(
                 "rounded color=black text-color=white no-caps"
-            ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn").on(
-                "click", export_dialog.open
-            )
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", export_dialog.open)
             ui.button("Import Schedules").props(
                 "rounded color=black text-color=white no-caps"
-            ).classes("w-48 h-12 text-base dark:!bg-white dark:!text-black sticky-btn").on(
-                "click", upload_dialog.open
-            )
+            ).classes(
+                "w-48 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", upload_dialog.open)
 
         def _render_room_calendar(location_filter: str | None = None):
             """Render calendar grid organized by room/lab."""
@@ -1228,7 +1230,9 @@ class ScheduleGUIView:
             _render_faculty_calendar(faculty_filter=None)
             room_table.update()
             faculty_table.update()
-            index_label.set_text(f"Schedule {_state.current_index + 1} of {len(_state.schedules)}")
+            index_label.set_text(
+                f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
+            )
             _sync_btn_states()
 
         def go_prev():

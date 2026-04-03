@@ -11,6 +11,7 @@ from typing import Any
 import re
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 from time_config_data_class import time_config_data
 from scheduler import TimeBlock, Meeting
 from scheduler.config import ClassPattern
@@ -63,36 +64,74 @@ class GUIView:
                 # Setup — 2×3 grid
                 with ui.column().classes("items-center gap-2"):
                     ui.label("Setup").classes(header_classes)
-                    with ui.element("table").classes("border-separate border-spacing-3"):
+                    with ui.element("table").classes(
+                        "border-separate border-spacing-[40px]"
+                    ):
                         with ui.element("tbody"):
                             for row in [
-                                ("Faculty",  "/faculty",  "Room",             "/room"),
-                                ("Course",   "/course",   "Lab",              "/lab"),
-                                ("Conflict", "/conflict", "Time Slot Config", "/time_config"),
+                                ("Faculty", "/faculty", "Room", "/room"),
+                                ("Course", "/course", "Lab", "/lab"),
+                                ("Conflict", "/conflict", "Time Slots", "/time_config"),
                             ]:
                                 with ui.element("tr"):
-                                    for label, route in [(row[0], row[1]), (row[2], row[3])]:
+                                    for label, route in [
+                                        (row[0], row[1]),
+                                        (row[2], row[3]),
+                                    ]:
                                         with ui.element("td"):
-                                            ui.button(label).props("rounded no-caps").classes(btn_classes).on("click", lambda r=route: ui.navigate.to(r))
+                                            ui.button(label).props(
+                                                "rounded no-caps"
+                                            ).classes(btn_classes).on(
+                                                "click",
+                                                lambda r=route: ui.navigate.to(r),
+                                            )
 
                 # Run — 2×3 with Print Config solo at bottom
                 with ui.column().classes("items-center gap-2"):
                     ui.label("Run").classes(header_classes)
-                    with ui.element("table").classes("border-separate border-spacing-3"):
+                    with ui.element("table").classes(
+                        "border-separate border-spacing-[40px]"
+                    ):
                         with ui.element("tbody"):
                             with ui.element("tr"):
                                 with ui.element("td"):
-                                    ui.button("Generate Schedules").props("rounded no-caps").classes(btn_classes).on("click", lambda: ui.navigate.to("/run_scheduler"))
+                                    ui.button("Generate Schedules").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click",
+                                        lambda: ui.navigate.to("/run_scheduler"),
+                                    )
                                 with ui.element("td"):
-                                    ui.button("Display Schedules").props("rounded no-caps").classes(btn_classes).on("click", lambda: ui.navigate.to("/display_schedules"))
+                                    ui.button("Display Schedules").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click",
+                                        lambda: ui.navigate.to("/display_schedules"),
+                                    )
                             with ui.element("tr"):
                                 with ui.element("td"):
-                                    ui.button("Load Configuration").props("rounded no-caps").classes(btn_classes).on("click", lambda: load_dialog.open())
+                                    ui.button("Load Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: load_dialog.open()
+                                    )
                                 with ui.element("td"):
-                                    ui.button("Export Configuration").props("rounded no-caps").classes(btn_classes).on("click", lambda: GUIView.export_configuration())
+                                    ui.button("Export Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: GUIView.export_configuration()
+                                    )
                             with ui.element("tr"):
-                                with ui.element("td").props("colspan=2").classes("text-center"):
-                                    ui.button("Print Config").props("rounded no-caps").classes(btn_classes).on("click", lambda: ui.navigate.to("/print_config"))
+                                with (
+                                    ui.element("td")
+                                    .props("colspan=2")
+                                    .classes("text-center")
+                                ):
+                                    ui.button("Print Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: ui.navigate.to("/print_config")
+                                    )
 
         with ui.dialog() as load_dialog:
             with (
@@ -225,6 +264,7 @@ class GUIView:
                         status_label.style("color: red !important;")
                         status_label.set_text(f"Error: {ex}")
                         import os
+
                         try:
                             os.remove(file_path)
                         except Exception:
@@ -434,18 +474,11 @@ class GUIView:
             "dark:!bg-black"
         )
 
-        cm = getattr(GUIView.controller, "config_model", None)
-        if cm is None:
-            with ui.column().classes("w-full items-center pt-12 gap-6"):
-                ui.label("No configuration loaded.").classes(
-                    "text-xl italic !text-gray-500 dark:!text-gray-400"
-                )
-                ui.button("Back").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-80 h-16 text-xl mt-6 dark:!bg-white dark:!text-black").on(
-                    "click", lambda: ui.navigate.to("/")
-                )
+        if not require_config(back_url="/"):
             return
+
+        cm = getattr(GUIView.controller, "config_model", None)
+        assert cm is not None
 
         time_config = time_config_data(cm.config.time_slot_config)
 

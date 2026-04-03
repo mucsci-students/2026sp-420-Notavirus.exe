@@ -26,7 +26,7 @@ class ChatbotGUIView:
                header/footer borders, input overrides, and typing animation. */
 
             /* ── Drawer background: white in light mode, dark grey in dark mode ── */
-            .ai-drawer { background: #ffffff !important; }
+            .ai-drawer { background: #e3e3e3 !important; }
             .body--dark .ai-drawer { background: #1e1e1e !important; }
 
             /* ── Bubble rows: user messages align right, AI messages align left ── */
@@ -80,11 +80,20 @@ class ChatbotGUIView:
             .ai-header  { border-bottom: 1px solid rgba(128,128,128,0.25); flex-shrink: 0; }
             .ai-input-bar { border-top: 1px solid rgba(128,128,128,0.25); flex-shrink: 0; }
 
+            /* ── Override Quasar input field colors inside the chat panel (light mode) ── */
+            body:not(.body--dark) .ai-input .q-field__native   { color: #111111 !important; }
+            body:not(.body--dark) .ai-input .q-field__control  { background: #e8e8e8 !important; }
+            body:not(.body--dark) .ai-input.q-field--focused .q-field__control { background: #e8e8e8 !important; }
+            body:not(.body--dark) .ai-input.q-field--focused .q-field__native  { color: #000000 !important; }
+            body:not(.body--dark) .ai-input.q-field--highlighted .q-field__control:after { border-color: #000000 !important; }
+
             /* ── Override Quasar input field colors inside the chat panel (dark mode) ── */
             .body--dark .ai-input .q-field__control { background: #2a2a2a !important; }
             .body--dark .ai-input .q-field__native   { color: #f0f0f0    !important; }
             .body--dark .ai-input .q-field__label    { color: #aaa       !important; }
             .body--dark .ai-input .q-field__outline  { border-color: rgba(255,255,255,0.2) !important; }
+            .body--dark .ai-input.q-field--focused .q-field__control { background: #2a2a2a !important; }
+            .body--dark .ai-input.q-field--focused .q-field__native  { color: #f0f0f0    !important; }
 
             /* ── Animated dots shown while the AI is thinking ── */
             .typing-dot {
@@ -126,23 +135,19 @@ class ChatbotGUIView:
                 else:
                     ui.notify("Failed to save configuration.", type="negative")
 
-            with ui.row().classes(
-                "w-full items-center justify-between px-4 py-3 ai-header"
-            ):
-                with ui.row().classes("items-center gap-2"):
-                    ui.icon("smart_toy").classes("!text-black dark:!text-white")
-                    ui.label("AI Assistant").classes(
-                        "font-bold text-lg !text-black dark:!text-white"
-                    )
-                with ui.row().classes("items-center gap-1"):
-                    ui.button("Export to Config", icon="save").props(
-                        "flat dense"
-                    ).classes("text-xs !text-black dark:!text-white").on(
-                        "click", _export
-                    )
+            with ui.column().classes("w-full px-4 py-3 ai-header gap-1"):
+                with ui.row().classes("w-full items-center justify-between"):
+                    with ui.row().classes("items-center gap-2"):
+                        ui.icon("smart_toy").classes("!text-black dark:!text-white")
+                        ui.label("AI Assistant").classes(
+                            "font-bold text-lg !text-black dark:!text-white"
+                        )
                     ui.button(icon="close").props("flat round dense").classes(
                         "!text-black dark:!text-white"
                     ).on("click", _close)
+                ui.button("Export to Config", icon="save").props("flat dense").classes(
+                    "text-xs !text-black dark:!text-white self-start"
+                ).on("click", _export)
 
             # Messages
             scroll = ui.scroll_area().style(

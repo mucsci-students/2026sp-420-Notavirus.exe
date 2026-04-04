@@ -498,7 +498,7 @@ class GUIView:
                 )
 
                 with ui.menu().props(
-                    "no-parent-event anchor='top right' self='top left'"
+                    "no-parent-event anchor='bottom left' self='top left'"
                 ) as menu:
                     ui.time().bind_value(inp).props(
                         "color=black text-color=white no-caps"

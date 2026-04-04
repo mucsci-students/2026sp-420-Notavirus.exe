@@ -3,6 +3,8 @@ README.md
 main.py
 pyproject.toml
 safe_save.py
+scheduler_facade.py
+time_config_data_class.py
 2026sp_420_notavirus_exe.egg-info/PKG-INFO
 2026sp_420_notavirus_exe.egg-info/SOURCES.txt
 2026sp_420_notavirus_exe.egg-info/dependency_links.txt
@@ -26,7 +28,9 @@ models/faculty_model.py
 models/lab_model.py
 models/room_model.py
 models/scheduler_model.py
+tests/test_data_class.py
 tests/test_safe_save.py
+tests/test_scheduler_facade.py
 views/chatbot_gui_view.py
 views/conflict_gui_view.py
 views/course_gui_view.py

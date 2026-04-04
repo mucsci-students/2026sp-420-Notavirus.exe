@@ -253,6 +253,11 @@ def test_get_rooms_empty(controller, mock_models):
 
 
 def test_add_course_success(controller, mock_models):
+    mock_models["room_model"].get_all_rooms.return_value = ["Roddy 140"]
+    mock_models["lab_model"].get_all_labs.return_value = []
+    faculty_mock = Mock()
+    faculty_mock.name = "Hardy"
+    mock_models["faculty_model"].get_all_faculty.return_value = [faculty_mock]
     mock_models["course_model"].add_course.return_value = True
     result = controller._add_course("CMSC 340", 3, "Roddy 140", "", "Hardy")
     assert "CMSC 340" in result

@@ -15,6 +15,8 @@ Sprint 3 additions:
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+import threading as _threading
+
 
 from nicegui import ui
 from scheduler import OptimizerFlags
@@ -35,6 +37,13 @@ class _ScheduleState:
     def __init__(self):
         self.schedules: list[list] = []
         self.current_index: int = 0
+        self.is_generating: bool = False
+        self.progress_pct: int = 0
+        self.progress_msg: str = ""
+        self.stop_event = None
+        self.generation_error: str | None = None
+        self.pending_navigate: bool = False
+        self.generation_limit: int = 0
 
 
 _state = _ScheduleState()
@@ -463,6 +472,10 @@ class ScheduleGUIView:
     @staticmethod
     def run_scheduler():  # noqa: C901
         GUITheme.applyTheming()
+        ui.add_css("""
+            .body--dark .q-linear-progress__model { background: white !important; }
+            .body--dark .q-linear-progress__track { background: rgba(255,255,255,0.2) !important; }
+        """)
         if not require_config(back_url="/"):
             return
         ui.query("body").style("background-color: var(--q-primary)").classes(
@@ -532,23 +545,25 @@ class ScheduleGUIView:
             progress_card = ui.card().classes(
                 "w-full rounded-2xl shadow-md p-6 !bg-white dark:!bg-gray-900 gap-3"
             )
-            progress_card.set_visibility(False)
+            progress_card.set_visibility(_state.is_generating)
 
             with progress_card:
-                progress_message = ui.label("").classes(
+                progress_message = ui.label(_state.progress_msg).classes(
                     "text-sm !text-gray-600 dark:!text-gray-300 italic"
                 )
-                progress_bar = (
-                    ui.linear_progress(
-                        value=0.0,
-                        size="12px",
-                        color="black",
-                    )
-                    .props("show-value=false")
-                    .classes("w-full rounded-full")
+                cancel_btn = (
+                    ui.button("Cancel")
+                    .props("rounded outline color=red no-caps")
+                    .classes("w-28 h-9 text-sm self-end")
                 )
-                progress_label = ui.label("0%").classes(
-                    "text-xs !text-gray-400 dark:!text-gray-500 text-right w-full"
+                progress_bar = ui.linear_progress(
+                    value=_state.progress_pct / 100,
+                    size="12px",
+                    color="black",
+                    show_value=False,
+                ).classes("w-full rounded-full")
+                progress_label = ui.label(f"{_state.progress_pct}%").classes(
+                    "text-xs !text-gray-400 dark:!text-white text-right w-full"
                 )
 
             status_label = ui.label("").classes(
@@ -567,11 +582,98 @@ class ScheduleGUIView:
                     .classes("w-36 h-12 text-base dark:!bg-white dark:!text-black")
                 )
 
-        async def on_generate():  # noqa: C901
+        if _state.is_generating:
+            generate_btn.props("loading disabled")
+
+        # ------------------------------------------------------------------
+        # Poll _state and push updates to this page's UI elements.
+        # Runs as a background coroutine — exits silently if the client
+        # disconnects, leaving the generation thread untouched.
+        # ------------------------------------------------------------------
+        async def _attach_poll():  # noqa: C901
+            while _state.is_generating:
+                try:
+                    progress_bar.set_value(_state.progress_pct / 100)
+                    progress_label.set_text(f"{_state.progress_pct}%")
+                    progress_message.set_text(_state.progress_msg)
+                except RuntimeError:
+                    return
+                await asyncio.sleep(0.05)
+
+            # Generation finished — update UI
+            try:
+                generate_btn.props(remove="loading disabled")
+                cancel_btn.props(remove="disabled")
+                progress_card.set_visibility(False)
+            except RuntimeError:
+                _state.pending_navigate = bool(
+                    _state.schedules and not _state.generation_error
+                )
+                return
+
+            if _state.generation_error:
+                try:
+                    status_label.set_text(f"Error: {_state.generation_error}")
+                except RuntimeError:
+                    pass
+                return
+
+            cancelled = _state.stop_event and _state.stop_event.is_set()
+            if cancelled:
+                if _state.schedules:
+                    _state.current_index = 0
+                    try:
+                        ui.navigate.to("/display_schedules")
+                    except RuntimeError:
+                        _state.pending_navigate = True
+                else:
+                    try:
+                        status_label.set_text("Generation cancelled.")
+                    except RuntimeError:
+                        pass
+                return
+
+            if not _state.schedules:
+                try:
+                    diagnosis = GUIView.controller.diagnose_schedule_failure()
+                    status_label.set_text(
+                        diagnosis or "No valid schedules could be generated."
+                    )
+                except RuntimeError:
+                    pass
+                return
+
+            _state.current_index = 0
+            try:
+                ui.navigate.to("/display_schedules")
+            except RuntimeError:
+                _state.pending_navigate = True
+
+        # Re-attach poll if generation was already running when page loaded
+        if _state.is_generating:
+            asyncio.ensure_future(_attach_poll())
+
+        # Navigate if generation finished while the user was away
+        if _state.pending_navigate:
+            _state.pending_navigate = False
+            ui.navigate.to("/display_schedules")
+            return
+
+        def _on_cancel():
+            if _state.stop_event:
+                _state.stop_event.set()
+            try:
+                cancel_btn.props("disabled")
+            except RuntimeError:
+                pass
+
+        cancel_btn.on("click", _on_cancel)
+
+        async def on_generate():
+            if _state.is_generating:
+                return
             if GUIView.controller is None or not GUIView.controller.has_config():
                 status_label.set_text("Error: No configuration loaded.")
-                return
-            if GUIView.controller is None:
                 return
             errors = GUIView.controller.validate_schedule_config()
             if errors:
@@ -580,7 +682,16 @@ class ScheduleGUIView:
 
             limit = int(limit_input.value or config_limit)
 
-            # --- Show progress card, lock button ---
+            _state.schedules = []
+            _state.current_index = 0
+            _state.generation_error = None
+            _state.progress_pct = 0
+            _state.progress_msg = "Starting..."
+            _state.pending_navigate = False
+            _state.generation_limit = limit
+            _state.stop_event = _threading.Event()
+            _state.is_generating = True
+
             progress_card.set_visibility(True)
             status_label.set_text("")
             progress_bar.set_value(0.0)
@@ -588,65 +699,32 @@ class ScheduleGUIView:
             progress_message.set_text("Starting...")
             generate_btn.props("loading disabled")
 
-            import queue as _queue
-
-            progress_q: _queue.Queue[tuple[int, str] | None] = _queue.Queue()
-
-            def _run() -> list[list]:
-                if GUIView.controller is None:
-                    return []
-                scheduler_model = GUIView.controller.scheduler_model
-                facade = SchedulerFacade(scheduler_model)
-                result = facade.generate(
-                    limit=limit,
-                    progress_callback=lambda pct, msg: progress_q.put((pct, msg)),
-                )
-                progress_q.put(None)
-                return result
-
-            loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor() as pool:
-                future = loop.run_in_executor(pool, _run)
-
-                while not future.done():
-                    while not progress_q.empty():
-                        item = progress_q.get_nowait()
-                        if item is not None:
-                            pct, msg = item
-                            progress_bar.set_value(pct / 100)
-                            progress_label.set_text(f"{pct}%")
-                            progress_message.set_text(msg)
-                    await asyncio.sleep(0.05)
-
-                while not progress_q.empty():
-                    item = progress_q.get_nowait()
-                    if item is not None:
-                        pct, msg = item
-                        progress_bar.set_value(pct / 100)
-                        progress_label.set_text(f"{pct}%")
-                        progress_message.set_text(msg)
-
+            def _run():
                 try:
-                    schedules = await future
+                    if GUIView.controller is None:
+                        _state.generation_error = "No controller"
+                        return
+                    scheduler_model = GUIView.controller.scheduler_model
+                    facade = SchedulerFacade(scheduler_model)
+                    facade.generate(
+                        limit=limit,
+                        progress_callback=lambda pct, msg: (
+                            setattr(_state, "progress_pct", pct)
+                            or setattr(_state, "progress_msg", msg)
+                        ),
+                        schedule_callback=lambda s: _state.schedules.append(s),
+                        stop_event=_state.stop_event,
+                    )
                 except Exception as exc:
-                    status_label.set_text(f"Error: {exc}")
-                    progress_card.set_visibility(False)
-                    generate_btn.props(remove="loading disabled")
+                    _state.generation_error = str(exc)
+                finally:
+                    _state.is_generating = False
 
-            generate_btn.props(remove="loading disabled")
+            pool = ThreadPoolExecutor()
+            asyncio.get_event_loop().run_in_executor(pool, _run)
+            pool.shutdown(wait=False)
 
-            if not schedules:
-                progress_bar.set_value(0.0)
-                progress_label.set_text("0%")
-                diagnosis = GUIView.controller.diagnose_schedule_failure()
-                status_label.set_text(
-                    diagnosis or "No valid schedules could be generated."
-                )
-                return
-
-            _state.schedules = schedules
-            _state.current_index = 0
-            ui.navigate.to("/display_schedules")
+            await _attach_poll()
 
         generate_btn.on("click", on_generate)
 
@@ -761,7 +839,12 @@ class ScheduleGUIView:
                     "text-2xl !text-black dark:!text-white"
                 )
                 ui.label("Please generate schedules first.").classes("text-gray-600")
-                ui.button("Go to Generator").props(
+                ui.button("Home").props(
+                    "rounded color=black text-color=white no-caps"
+                ).classes("w-48 h-12 text-base dark:!bg-white dark:!text-black").on(
+                    "click", lambda: ui.navigate.to("/")
+                )
+                ui.button("Generate Schedules").props(
                     "rounded color=black text-color=white no-caps"
                 ).classes("w-48 h-12 text-base dark:!bg-white dark:!text-black").on(
                     "click", lambda: ui.navigate.to("/run_scheduler")
@@ -773,31 +856,36 @@ class ScheduleGUIView:
                 )
             return
 
-        total = len(_state.schedules)
         room_filter = [None]
         faculty_filter = [None]
 
-        with ui.column().classes("gap-4 items-center w-full px-4 pt-6 pb-10"):
+        with ui.column().classes("gap-4 items-center w-full px-4 pt-6 pb-24"):
             ui.label("Schedule Viewer").classes(
                 "text-4xl font-bold !text-black dark:!text-white"
             )
 
-            with ui.row().classes("items-center gap-4 justify-center"):
-                prev_btn = (
-                    ui.button(icon="chevron_left")
-                    .props("round flat color=black")
-                    .classes("dark:!text-white")
-                )
-                index_label = ui.label(
-                    f"Schedule {_state.current_index + 1} of {total}"
-                ).classes(
-                    "text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center"
-                )
-                next_btn = (
-                    ui.button(icon="chevron_right")
-                    .props("round flat color=black")
-                    .classes("dark:!text-white")
-                )
+            with ui.column().classes("items-center gap-1"):
+                with ui.row().classes("items-center gap-4 justify-center"):
+                    prev_btn = (
+                        ui.button(icon="chevron_left")
+                        .props("round flat color=black")
+                        .classes("dark:!text-white")
+                    )
+                    index_label = ui.label(
+                        f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
+                    ).classes(
+                        "text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center"
+                    )
+                    next_btn = (
+                        ui.button(icon="chevron_right")
+                        .props("round flat color=black")
+                        .classes("dark:!text-white")
+                    )
+                generation_status = ui.label(
+                    f"Generating {_state.generation_limit} schedules…"
+                    if _state.is_generating
+                    else "Generation complete."
+                ).classes("text-xs !text-gray-400 text-center")
 
             with (
                 ui.card()
@@ -889,27 +977,37 @@ class ScheduleGUIView:
                             ).classes("min-w-[180px]")
                         calendar_faculty_container = ui.column().classes("w-full px-2")
 
-            with ui.row().classes("gap-4 justify-center"):
-                ui.button("Back to Home").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black").on(
-                    "click", lambda: ui.navigate.to("/")
-                )
-                ui.button("Generate New").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black").on(
-                    "click", lambda: ui.navigate.to("/run_scheduler")
-                )
-                ui.button("Export Schedules").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-44 h-12 text-base dark:!bg-white dark:!text-black").on(
-                    "click", export_dialog.open
-                )
-                ui.button("Import Schedules").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-48 h-12 text-base dark:!bg-white dark:!text-black").on(
-                    "click", upload_dialog.open
-                )
+        ui.add_css("""
+            .sticky-btn {
+                box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+            }
+            .body--dark .sticky-btn {
+                box-shadow: 0 0 12px rgba(255,255,255,0.25);
+            }
+        """)
+        with ui.row().classes(
+            "gap-4 justify-center fixed bottom-4 left-0 right-0 z-40 py-2"
+        ):
+            ui.button("Back to Home").props(
+                "rounded color=black text-color=white no-caps"
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", lambda: ui.navigate.to("/"))
+            ui.button("Generate Schedules").props(
+                "rounded color=black text-color=white no-caps"
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", lambda: ui.navigate.to("/run_scheduler"))
+            ui.button("Export Schedules").props(
+                "rounded color=black text-color=white no-caps"
+            ).classes(
+                "w-44 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", export_dialog.open)
+            ui.button("Import Schedules").props(
+                "rounded color=black text-color=white no-caps"
+            ).classes(
+                "w-48 h-12 text-base dark:!bg-white dark:!text-black sticky-btn"
+            ).on("click", upload_dialog.open)
 
         def _render_room_calendar(location_filter: str | None = None):
             """Render calendar grid organized by room/lab."""
@@ -1109,7 +1207,7 @@ class ScheduleGUIView:
                 prev_btn.props("disabled")
             else:
                 prev_btn.props(remove="disabled")
-            if _state.current_index == total - 1:
+            if _state.current_index >= len(_state.schedules) - 1:
                 next_btn.props("disabled")
             else:
                 next_btn.props(remove="disabled")
@@ -1132,7 +1230,9 @@ class ScheduleGUIView:
             _render_faculty_calendar(faculty_filter=None)
             room_table.update()
             faculty_table.update()
-            index_label.set_text(f"Schedule {_state.current_index + 1} of {total}")
+            index_label.set_text(
+                f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
+            )
             _sync_btn_states()
 
         def go_prev():
@@ -1141,13 +1241,35 @@ class ScheduleGUIView:
                 _reload_schedule()
 
         def go_next():
-            if _state.current_index < total - 1:
+            if _state.current_index < len(_state.schedules) - 1:
                 _state.current_index += 1
                 _reload_schedule()
 
         prev_btn.on("click", go_prev)
         next_btn.on("click", go_next)
         _reload_schedule()
+
+        async def _poll_count():
+            last_count = len(_state.schedules)
+            while _state.is_generating:
+                await asyncio.sleep(0.2)
+                current_count = len(_state.schedules)
+                if current_count != last_count:
+                    last_count = current_count
+                    try:
+                        index_label.set_text(
+                            f"Schedule {_state.current_index + 1} of {current_count}"
+                        )
+                        _sync_btn_states()
+                    except RuntimeError:
+                        return
+            try:
+                generation_status.set_text("Generation complete.")
+            except RuntimeError:
+                pass
+
+        if _state.is_generating:
+            asyncio.ensure_future(_poll_count())
 
     @ui.page("/test_schedules")
     @staticmethod

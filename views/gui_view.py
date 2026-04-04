@@ -11,6 +11,7 @@ from typing import Any
 import re
 from nicegui import ui
 from views.gui_theme import GUITheme
+from views.gui_utils import require_config
 from time_config_data_class import time_config_data
 from scheduler import TimeBlock, Meeting
 from scheduler.config import ClassPattern
@@ -53,56 +54,84 @@ class GUIView:
             }
         """)
 
-        with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
-            # Title
-            ui.label("Scheduler").classes("text-4xl mb-10 !text-black dark:!text-white")
+        with ui.column().classes("w-full items-center pt-12 pb-12 font-sans gap-10"):
+            ui.label("Scheduler").classes("text-4xl !text-black dark:!text-white")
 
-            # Row 1
-            with ui.row().classes("gap-12 mb-4"):
-                ui.button("Faculty").props("rounded no-caps").classes(
-                    "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/faculty"))
-                ui.button("Room").props("rounded no-caps").classes(
-                    "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/room"))
+            btn_classes = "w-52 h-14 text-lg !bg-black dark:!bg-white !text-white dark:!text-black"
+            header_classes = "text-sm font-semibold !text-gray-500 dark:!text-gray-400 tracking-widest uppercase text-center pb-2"
 
-            # Row 2
-            with ui.row().classes("gap-12 mb-4"):
-                ui.button("Course").props("rounded no-caps").classes(
-                    "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/course"))
-                ui.button("Conflict").props("rounded no-caps").classes(
-                    "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/conflict"))
+            with ui.row().classes("gap-16 items-start justify-center"):
+                # Setup — 2×3 grid
+                with ui.column().classes("items-center gap-2"):
+                    ui.label("Setup").classes(header_classes)
+                    with ui.element("table").classes(
+                        "border-separate border-spacing-[40px]"
+                    ):
+                        with ui.element("tbody"):
+                            for row in [
+                                ("Faculty", "/faculty", "Room", "/room"),
+                                ("Course", "/course", "Lab", "/lab"),
+                                ("Conflict", "/conflict", "Time Slots", "/time_config"),
+                            ]:
+                                with ui.element("tr"):
+                                    for label, route in [
+                                        (row[0], row[1]),
+                                        (row[2], row[3]),
+                                    ]:
+                                        with ui.element("td"):
+                                            ui.button(label).props(
+                                                "rounded no-caps"
+                                            ).classes(btn_classes).on(
+                                                "click",
+                                                lambda r=route: ui.navigate.to(r),
+                                            )
 
-            # Row 3 (Lab)
-            with ui.row().classes("mb-12"):
-                ui.button("Lab").props("rounded no-caps").classes(
-                    "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/lab"))
-
-            # Wide buttons vertically stacked
-            with ui.column().classes("gap-6 items-center w-full"):
-                ui.button("Print Config").props("rounded no-caps").classes(
-                    "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/print_config"))
-                ui.button("Time Slot Config").props("rounded no-caps").classes(
-                    "w-80 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                ).on("click", lambda: ui.navigate.to("/time_config"))
-                with ui.row().classes("gap-6"):
-                    ui.button("Run Scheduler").props("rounded no-caps").classes(
-                        "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                    ).on("click", lambda: ui.navigate.to("/run_scheduler"))
-                    ui.button("Display Schedules").props("rounded no-caps").classes(
-                        "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                    ).on("click", lambda: ui.navigate.to("/display_schedules"))
-                with ui.row().classes("gap-6"):
-                    ui.button("Load Configuration").props("rounded no-caps").classes(
-                        "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                    ).on("click", lambda: load_dialog.open())
-                    ui.button("Export Configuration").props("rounded no-caps").classes(
-                        "w-40 h-16 text-xl !bg-black dark:!bg-white !text-white dark:!text-black"
-                    ).on("click", GUIView.export_configuration)
+                # Run — 2×3 with Print Config solo at bottom
+                with ui.column().classes("items-center gap-2"):
+                    ui.label("Run").classes(header_classes)
+                    with ui.element("table").classes(
+                        "border-separate border-spacing-[40px]"
+                    ):
+                        with ui.element("tbody"):
+                            with ui.element("tr"):
+                                with ui.element("td"):
+                                    ui.button("Generate Schedules").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click",
+                                        lambda: ui.navigate.to("/run_scheduler"),
+                                    )
+                                with ui.element("td"):
+                                    ui.button("Display Schedules").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click",
+                                        lambda: ui.navigate.to("/display_schedules"),
+                                    )
+                            with ui.element("tr"):
+                                with ui.element("td"):
+                                    ui.button("Load Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: load_dialog.open()
+                                    )
+                                with ui.element("td"):
+                                    ui.button("Export Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: GUIView.export_configuration()
+                                    )
+                            with ui.element("tr"):
+                                with (
+                                    ui.element("td")
+                                    .props("colspan=2")
+                                    .classes("text-center")
+                                ):
+                                    ui.button("Print Configuration").props(
+                                        "rounded no-caps"
+                                    ).classes(btn_classes).on(
+                                        "click", lambda: ui.navigate.to("/print_config")
+                                    )
 
         with ui.dialog() as load_dialog:
             with (
@@ -234,6 +263,12 @@ class GUIView:
                     except Exception as ex:
                         status_label.style("color: red !important;")
                         status_label.set_text(f"Error: {ex}")
+                        import os
+
+                        try:
+                            os.remove(file_path)
+                        except Exception:
+                            pass
 
                 ui.upload(
                     label="Select JSON file",
@@ -439,23 +474,16 @@ class GUIView:
             "dark:!bg-black"
         )
 
-        cm = getattr(GUIView.controller, "config_model", None)
-        if cm is None:
-            with ui.column().classes("w-full items-center pt-12 gap-6"):
-                ui.label("No configuration loaded.").classes(
-                    "text-xl italic !text-gray-500 dark:!text-gray-400"
-                )
-                ui.button("Back").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-80 h-16 text-xl mt-6 dark:!bg-white dark:!text-black").on(
-                    "click", lambda: ui.navigate.to("/")
-                )
+        if not require_config(back_url="/"):
             return
+
+        cm = getattr(GUIView.controller, "config_model", None)
+        assert cm is not None
 
         time_config = time_config_data(cm.config.time_slot_config)
 
         ui.label("Time Slot Config").classes(
-            "text-4xl mb-6 !text-black dark:!text-white"
+            "text-4xl mb-6 !text-black dark:!text-white text-center w-full"
         )
         days_container = ui.column().classes("w-full gap-4")
         patterns_container = ui.column().classes("w-full gap-4")
@@ -464,22 +492,27 @@ class GUIView:
         # Helper UI Elements
         # -----------------------------
         def time_picker(label: str, value: str | None = None):
-            inp = ui.input(label=label, value=value or "").classes(
-                "w-full !text-black dark:!text-white"
-            )
-
-            with ui.menu().props("no-parent-event") as menu:
-                ui.time().bind_value(inp).props("color=black text-color=white no-caps")
-                with ui.row().classes("justify-end"):
-                    ui.button("Close", on_click=menu.close).props("flat").classes(
-                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
-                    )
-
-            # Icon to open menu
-            with inp.add_slot("append"):
-                ui.icon("access_time").on("click", menu.open).classes(
-                    "cursor-pointer !text-black dark:!text-white"
+            with ui.element("div").classes("relative w-full"):
+                inp = ui.input(label=label, value=value or "").classes(
+                    "w-full !text-black dark:!text-white"
                 )
+
+                with ui.menu().props(
+                    "no-parent-event anchor='top right' self='top left'"
+                ) as menu:
+                    ui.time().bind_value(inp).props(
+                        "color=black text-color=white no-caps"
+                    )
+                    with ui.row().classes("justify-end"):
+                        ui.button("Close", on_click=menu.close).props("flat").classes(
+                            "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                        )
+
+                # Icon to open menu
+                with inp.add_slot("append"):
+                    ui.icon("access_time").on("click", menu.open).classes(
+                        "cursor-pointer !text-black dark:!text-white"
+                    )
 
             return inp
 
@@ -488,9 +521,45 @@ class GUIView:
                 "w-full mb-2 !text-black dark:!text-white"
             )
 
+        ui.add_css("""
+            .q-field__label {
+                color: rgba(0, 0, 0, 0.54) !important;
+            }
+            body.body--dark .q-field__label {
+                color: rgba(255, 255, 255, 0.7) !important;
+            }
+            .time-config-expansion.q-expansion-item--expanded
+                > .q-expansion-item__container
+                > .q-item {
+                background-color: #f3f4f6 !important;
+            }
+            body.body--dark .time-config-expansion.q-expansion-item--expanded
+                > .q-expansion-item__container
+                > .q-item {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+            .outline-checkbox .q-checkbox__bg {
+                background-color: transparent !important;
+                border: 2px solid black !important;
+            }
+            body.body--dark .outline-checkbox .q-checkbox__bg {
+                border-color: white !important;
+            }
+            .outline-checkbox.q-checkbox--truthy .q-checkbox__bg,
+            .outline-checkbox.q-checkbox--indeterminate .q-checkbox__bg {
+                background-color: transparent !important;
+            }
+            .outline-checkbox .q-checkbox__svg {
+                color: black;
+            }
+            body.body--dark .outline-checkbox .q-checkbox__svg {
+                color: white;
+            }
+        """)
+
         def checkbox(label, value=False):
             return ui.checkbox(text=label, value=value).classes(
-                "!text-black dark:!text-white mb-2"
+                "!text-black dark:!text-white mb-2 outline-checkbox"
             )
 
         # -----------------------------
@@ -513,7 +582,7 @@ class GUIView:
             day_expansions.clear()
             with days_container:
                 with ui.expansion("Available Days", icon="meeting_room").classes(
-                    "w-full !text-black dark:!text-white"
+                    "w-full !text-black dark:!text-white time-config-expansion"
                 ):
                     with ui.row().classes("w-full justify-between items-center mb-2"):
                         ui.label("Days").classes("text-lg !text-black dark:!text-white")
@@ -524,7 +593,7 @@ class GUIView:
                     for day, blocks in time_config.get_all_time_slots().items():
                         # Create expansion for each day
                         exp = ui.expansion(str(day)).classes(
-                            "w-full !text-black dark:!text-white"
+                            "w-full !text-black dark:!text-white time-config-expansion"
                         )
 
                         # Create the inner container **as a child of the expansion**
@@ -550,7 +619,7 @@ class GUIView:
                 for i, b in enumerate(blocks, start=1):
                     # Each time block is its own expansion
                     with ui.expansion(f"Time Slot {i}").classes(
-                        "w-full !text-black dark:!text-white"
+                        "w-full !text-black dark:!text-white time-config-expansion"
                     ):
                         with ui.card().classes(
                             "w-full p-4 bg-gray-100 dark:bg-gray-800"
@@ -582,7 +651,7 @@ class GUIView:
             """
             with patterns_container:
                 with ui.expansion("Class Patterns", icon="school").classes(
-                    "w-full !text-black dark:!text-white"
+                    "w-full !text-black dark:!text-white time-config-expansion"
                 ):
                     # Add Class Pattern button
                     ui.button("Add Class Pattern", icon="add").props(
@@ -600,7 +669,7 @@ class GUIView:
                     for idx, cls in enumerate(classes, start=1):
                         # Each individual pattern expandable
                         with ui.expansion(f"Pattern {idx}").classes(
-                            "w-full !text-black dark:!text-white"
+                            "w-full !text-black dark:!text-white time-config-expansion"
                         ):
                             with ui.card().classes(
                                 "w-full p-4 bg-gray-100 dark:bg-gray-800"
@@ -610,18 +679,25 @@ class GUIView:
                                 disabled_input = checkbox("Disabled", cls.disabled)
                                 start_input = time_picker("Start Time", cls.start_time)
 
-                                ui.button(
-                                    "Save",
-                                    on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
-                                        save_class_pattern(c, cr, dis, st)
-                                    ),
-                                ).classes(
-                                    "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
-                                )
+                                with ui.row().classes("gap-2 mt-2"):
+                                    ui.button(
+                                        "Save",
+                                        on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
+                                            save_class_pattern(c, cr, dis, st)
+                                        ),
+                                    ).classes(
+                                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                    )
+                                    ui.button(
+                                        icon="delete",
+                                        on_click=lambda i=idx - 1: delete_class_pattern(
+                                            i
+                                        ),
+                                    ).props("flat color=red")
 
                                 # Meetings expansion under the pattern
                                 with ui.expansion("Meetings").classes(
-                                    "w-full !text-black dark:!text-white mt-2"
+                                    "w-full !text-black dark:!text-white mt-2 time-config-expansion"
                                 ):
                                     # Add Meeting button
                                     ui.button("Add Meeting", icon="add").props(
@@ -686,10 +762,13 @@ class GUIView:
                 credits_input = number_input("Credits", 0)
                 disabled_input = checkbox("Disabled", False)
                 start_input = time_picker("Start Time")
+                ui.label("(This is optional)").classes(
+                    "text-xs italic text-gray-500 dark:text-gray-400 -mt-1 mb-2"
+                )
 
                 # Initial meeting fields (must have at least one meeting)
                 ui.label("Initial Meeting").classes(
-                    "text-lg mt-2 !text-black dark:!text-white"
+                    "text-lg mt-6 !text-black dark:!text-white"
                 )
                 day_input = ui.select(
                     options=time_config.get_days(), label="Day"
@@ -740,6 +819,8 @@ class GUIView:
                 return
 
             # Validate pattern start time
+            start_val: str | None = None
+
             if start_input.value:
                 start_val = format_time(start_input.value)
                 if not is_valid_time(start_val):
@@ -942,12 +1023,16 @@ class GUIView:
                 dur_inp = number_input("Duration", 60, 1)
                 lab_chk = checkbox("Lab Meeting")
                 with ui.row().classes("w-full justify-end gap-2"):
-                    ui.button("Cancel", on_click=d.close)
+                    ui.button("Cancel", on_click=d.close).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
                     ui.button(
                         "Add",
                         on_click=lambda d=d, c=cls, ds=day_sel, st=start_inp, dur=dur_inp, lab=lab_chk: (
                             add_meeting_submit(d, c, ds, st, dur, lab)
                         ),
+                    ).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
                     )
             d.open()
 
@@ -965,6 +1050,10 @@ class GUIView:
                 ),
             )
             dialog.close()
+            refresh_patterns()
+
+        def delete_class_pattern(idx):
+            time_config.remove_class(idx)
             refresh_patterns()
 
         def delete_meeting(cls, idx):
@@ -987,6 +1076,12 @@ class GUIView:
         # -----------------------------
         refresh_days()
         refresh_patterns()
+
+        ui.button("Back").props(
+            "rounded color=backbtn text-color=white no-caps"
+        ).classes(
+            "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)] fixed bottom-6 left-1/2 -translate-x-1/2"
+        ).on("click", lambda: ui.navigate.to("/"))
 
     @staticmethod
     def runGUI():

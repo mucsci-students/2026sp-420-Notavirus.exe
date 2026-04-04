@@ -111,10 +111,18 @@ def require_config(back_url: str = "/") -> bool:
                         else:
                             status_label.style("color: red !important;")
                             status_label.set_text(message)
+                            try:
+                                os.remove(file_path)
+                            except Exception:
+                                pass
 
                     except Exception as ex:
                         status_label.style("color: red !important;")
                         status_label.set_text(f"Error: {ex}")
+                        try:
+                            os.remove(file_path)
+                        except Exception:
+                            pass
 
                 ui.upload(
                     label="Select JSON file",

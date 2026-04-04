@@ -269,6 +269,31 @@ class ChatbotController:
             room_list = [r.strip() for r in rooms.split(",") if r.strip()]
             lab_list = [lab.strip() for lab in labs.split(",") if lab.strip()]
             faculty_list = [f.strip() for f in faculty.split(",") if f.strip()]
+
+            existing_rooms = set(self.room_model.get_all_rooms())
+            invalid_rooms = [r for r in room_list if r not in existing_rooms]
+            if invalid_rooms:
+                return (
+                    f"Failed to add course '{course_id}': the following rooms do not exist: "
+                    f"{', '.join(invalid_rooms)}. Valid rooms: {', '.join(sorted(existing_rooms)) or 'none'}."
+                )
+
+            existing_labs = set(self.lab_model.get_all_labs())
+            invalid_labs = [lab for lab in lab_list if lab not in existing_labs]
+            if invalid_labs:
+                return (
+                    f"Failed to add course '{course_id}': the following labs do not exist: "
+                    f"{', '.join(invalid_labs)}. Valid labs: {', '.join(sorted(existing_labs)) or 'none'}."
+                )
+
+            existing_faculty = {f.name for f in self.faculty_model.get_all_faculty()}
+            invalid_faculty = [f for f in faculty_list if f not in existing_faculty]
+            if invalid_faculty:
+                return (
+                    f"Failed to add course '{course_id}': the following faculty do not exist: "
+                    f"{', '.join(invalid_faculty)}. Valid faculty: {', '.join(sorted(existing_faculty)) or 'none'}."
+                )
+
             course = CourseConfig(
                 course_id=course_id,
                 credits=credits,

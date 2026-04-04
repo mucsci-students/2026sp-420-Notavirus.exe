@@ -20,7 +20,7 @@ package = true
 default-groups = ["dev"]
 
 [tool.setuptools]
-py-modules = ["main", "safe_save"]
+py-modules = ["main", "safe_save", "scheduler_facade", "time_config_data_class"]
 
 [tool.setuptools.packages.find]
 include = ["models*", "views*", "controllers*"]

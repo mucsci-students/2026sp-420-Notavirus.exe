@@ -139,11 +139,21 @@ class CourseController:
             tuple[bool, str]: (success, message)
         """
         try:
+            # Calculate 1-based relative section number before deletion
+            display_index = section_index
+            if section_index is not None:
+                all_courses = self.model.get_all_courses()
+                if 0 <= section_index < len(all_courses):
+                    display_index = 0
+                    for i in range(section_index + 1):
+                        if all_courses[i].course_id == course_id:
+                            display_index += 1
+
             success = self.model.delete_course(course_id, section_index)
             if success:
                 self.config_model.save_feature("temp", "courses")
                 label = (
-                    f"'{course_id}' section {section_index}"
+                    f"'{course_id}' section {display_index}"
                     if section_index is not None
                     else f"'{course_id}'"
                 )

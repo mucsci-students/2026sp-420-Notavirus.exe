@@ -819,6 +819,8 @@ class GUIView:
                 return
 
             # Validate pattern start time
+            start_val: str | None = None
+
             if start_input.value:
                 start_val = format_time(start_input.value)
                 if not is_valid_time(start_val):
@@ -1021,12 +1023,16 @@ class GUIView:
                 dur_inp = number_input("Duration", 60, 1)
                 lab_chk = checkbox("Lab Meeting")
                 with ui.row().classes("w-full justify-end gap-2"):
-                    ui.button("Cancel", on_click=d.close)
+                    ui.button("Cancel", on_click=d.close).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                    )
                     ui.button(
                         "Add",
                         on_click=lambda d=d, c=cls, ds=day_sel, st=start_inp, dur=dur_inp, lab=lab_chk: (
                             add_meeting_submit(d, c, ds, st, dur, lab)
                         ),
+                    ).classes(
+                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
                     )
             d.open()
 

@@ -379,7 +379,9 @@ def test_modify_faculty_invalid_times(controller, mock_models):
 def test_modify_faculty_course_preferences(controller, mock_models):
     mock_models["faculty_model"].faculty_exists.return_value = True
     mock_models["faculty_model"].modify_faculty.return_value = True
-    result = controller._modify_faculty("Hardy", course_preferences="CMSC 161:8,CMSC 340")
+    result = controller._modify_faculty(
+        "Hardy", course_preferences="CMSC 161:8,CMSC 340"
+    )
     assert "updated" in result
     assert "course preferences" in result
 

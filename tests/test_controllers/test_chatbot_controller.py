@@ -333,15 +333,85 @@ def test_delete_faculty_failure(controller, mock_models):
     assert "Failed" in result
 
 
-def test_modify_faculty_invalid_field(controller, mock_models):
-    result = controller._modify_faculty("Hardy", "invalid_field", 10)
-    assert "Invalid field" in result
+def test_modify_faculty_not_found(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = False
+    mock_models["faculty_model"].get_all_faculty.return_value = []
+    result = controller._modify_faculty("Hardy", is_full_time=True)
+    assert "not found" in result
 
 
-def test_modify_faculty_success(controller, mock_models):
-    mock_models["faculty_model"].modify_faculty.return_value = True
-    result = controller._modify_faculty("Hardy", "maximum_credits", 12)
+def test_modify_faculty_no_changes(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    result = controller._modify_faculty("Hardy")
+    assert "No changes" in result
+
+
+def test_modify_faculty_set_position(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].set_position_type.return_value = True
+    result = controller._modify_faculty("Hardy", is_full_time=True)
     assert "updated" in result
+    assert "full time" in result
+
+
+def test_modify_faculty_set_adjunct(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].set_position_type.return_value = True
+    result = controller._modify_faculty("Hardy", is_full_time=False)
+    assert "updated" in result
+    assert "adjunct" in result
+
+
+def test_modify_faculty_update_times(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].modify_faculty.return_value = True
+    result = controller._modify_faculty("Hardy", times="MON:08:00-17:00")
+    assert "updated" in result
+    assert "availability times" in result
+
+
+def test_modify_faculty_invalid_times(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    result = controller._modify_faculty("Hardy", times="not-valid")
+    assert "invalid" in result
+
+
+def test_modify_faculty_course_preferences(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].modify_faculty.return_value = True
+    result = controller._modify_faculty(
+        "Hardy", course_preferences="CMSC 161:8,CMSC 340"
+    )
+    assert "updated" in result
+    assert "course preferences" in result
+
+
+def test_modify_faculty_room_preferences(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].modify_faculty.return_value = True
+    result = controller._modify_faculty("Hardy", room_preferences="Room A:7")
+    assert "updated" in result
+    assert "room preferences" in result
+
+
+def test_modify_faculty_lab_preferences(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].modify_faculty.return_value = True
+    result = controller._modify_faculty("Hardy", lab_preferences="Lab 1:9,Lab 2")
+    assert "updated" in result
+    assert "lab preferences" in result
+
+
+def test_modify_faculty_multiple_fields(controller, mock_models):
+    mock_models["faculty_model"].faculty_exists.return_value = True
+    mock_models["faculty_model"].set_position_type.return_value = True
+    mock_models["faculty_model"].modify_faculty.return_value = True
+    result = controller._modify_faculty(
+        "Hardy", is_full_time=False, course_preferences="CMSC 161:5"
+    )
+    assert "updated" in result
+    assert "adjunct" in result
+    assert "course preferences" in result
 
 
 def test_get_faculty_with_faculty(controller, mock_models):

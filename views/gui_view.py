@@ -492,13 +492,16 @@ class GUIView:
         # Helper UI Elements
         # -----------------------------
         def time_picker(label: str, value: str | None = None):
-            with ui.element("div").classes("relative w-full"):
-                inp = ui.input(label=label, value=value or "").classes(
-                    "w-full !text-black dark:!text-white"
-                )
+            inp = ui.input(label=label, value=value or "").classes(
+                "w-full !text-black dark:!text-white"
+            )
 
+            with inp.add_slot("append"):
+                icon = ui.icon("access_time").classes(
+                    "cursor-pointer !text-black dark:!text-white"
+                )
                 with ui.menu().props(
-                    "no-parent-event anchor='bottom left' self='top left'"
+                    "no-parent-event anchor='top right' self='bottom right'"
                 ) as menu:
                     ui.time().bind_value(inp).props(
                         "color=black text-color=white no-caps"
@@ -507,12 +510,7 @@ class GUIView:
                         ui.button("Close", on_click=menu.close).props("flat").classes(
                             "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
                         )
-
-                # Icon to open menu
-                with inp.add_slot("append"):
-                    ui.icon("access_time").on("click", menu.open).classes(
-                        "cursor-pointer !text-black dark:!text-white"
-                    )
+                icon.on("click", menu.open)
 
             return inp
 

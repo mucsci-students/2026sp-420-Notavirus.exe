@@ -10,6 +10,7 @@ import asyncio
 import difflib
 import logging
 from functools import wraps
+from typing import Optional
 
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import StructuredTool
@@ -43,6 +44,7 @@ Rules:
 - Only call get_course_details when the user explicitly asks for more info about a specific course.
 - When adding a course, ask the user for: course ID, credits, acceptable rooms (comma-separated), acceptable labs (comma-separated, can be empty), and faculty (comma-separated, can be empty).
 - When adding faculty, ask for: name, position (full time or adjunct), max days (default 5), and availability times in the format "MON:08:00-17:00,WED:08:00-17:00".
+- When modifying faculty, ask for their name, then ask which fields to change: position (full time or adjunct), availability times (format 'MON:08:00-17:00'), course preferences (comma-separated course IDs with optional weights like 'CMSC 161:8'), room preferences (comma-separated room names with optional weights), or lab preferences (comma-separated lab names with optional weights). Only pass the fields the user wants to change.
 - Valid days are: MON, TUE, WED, THU, FRI.
 - All changes are in-memory only. Remind the user to press the Export to Config button to save changes to disk.
 - If the user asks for something outside your capabilities, say so clearly.
@@ -109,10 +111,26 @@ class _DeleteFacultySchema(BaseModel):
 
 class _ModifyFacultySchema(BaseModel):
     name: str = Field(description="Faculty member's name")
-    field: str = Field(
-        description="Field to modify: 'maximum_credits', 'minimum_credits', 'unique_course_limit', or 'maximum_days'"
+    is_full_time: Optional[bool] = Field(
+        default=None,
+        description="True for full time, False for adjunct. Omit if not changing.",
     )
-    value: int = Field(description="New integer value for the field")
+    times: Optional[str] = Field(
+        default=None,
+        description="Availability times in format 'MON:08:00-17:00,WED:09:00-18:00'. Omit if not changing.",
+    )
+    course_preferences: Optional[str] = Field(
+        default=None,
+        description="Comma-separated course IDs with optional weights, e.g. 'CMSC 161:8,CMSC 340:5'. Omit if not changing.",
+    )
+    room_preferences: Optional[str] = Field(
+        default=None,
+        description="Comma-separated room names with optional weights, e.g. 'Room A:8,Room B:5'. Omit if not changing.",
+    )
+    lab_preferences: Optional[str] = Field(
+        default=None,
+        description="Comma-separated lab names with optional weights, e.g. 'Lab 1:8,Lab 2:5'. Omit if not changing.",
+    )
 
 
 class _CourseDetailsSchema(BaseModel):
@@ -432,20 +450,69 @@ class ChatbotController:
             return f"Faculty '{name}' deleted"
         return f"Failed to delete faculty '{name}' (not found).{self._suggest_faculty(name)}"
 
+    @staticmethod
+    def _parse_preferences(pref_str: str) -> dict:
+        """Parse 'Item:weight,Item2:5' into {item: weight} dict. Default weight is 5."""
+        result = {}
+        for part in pref_str.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if ":" in part:
+                item, _, weight_str = part.rpartition(":")
+                try:
+                    result[item.strip()] = int(weight_str.strip())
+                except ValueError:
+                    result[part.strip()] = 5
+            else:
+                result[part] = 5
+        return result
+
     @requires_config
-    def _modify_faculty(self, name: str, field: str, value: int) -> str:
-        valid_fields = {
-            "maximum_credits",
-            "minimum_credits",
-            "unique_course_limit",
-            "maximum_days",
-        }
-        if field not in valid_fields:
-            return f"Invalid field '{field}'. Valid fields: {', '.join(sorted(valid_fields))}."
-        ok = self.faculty_model.modify_faculty(name, field, value)
-        if ok:
-            return f"Faculty '{name}' field '{field}' updated to {value}."
-        return f"Failed to modify faculty '{name}' (not found)."
+    def _modify_faculty(
+        self,
+        name: str,
+        is_full_time: Optional[bool] = None,
+        times: Optional[str] = None,
+        course_preferences: Optional[str] = None,
+        room_preferences: Optional[str] = None,
+        lab_preferences: Optional[str] = None,
+    ) -> str:
+        if not self.faculty_model.faculty_exists(name):
+            return f"Faculty '{name}' not found.{self._suggest_faculty(name)}"
+
+        updated = []
+
+        if is_full_time is not None:
+            ok = self.faculty_model.set_position_type(name, is_full_time)
+            if ok:
+                updated.append("full time" if is_full_time else "adjunct")
+
+        if times is not None:
+            times_dict = self._parse_times(times)
+            if not times_dict:
+                return "Failed: times string is invalid. Use format 'MON:08:00-17:00,WED:09:00-18:00'."
+            self.faculty_model.modify_faculty(name, "times", times_dict)
+            updated.append("availability times")
+
+        if course_preferences is not None:
+            prefs = self._parse_preferences(course_preferences)
+            self.faculty_model.modify_faculty(name, "course_preferences", prefs)
+            updated.append("course preferences")
+
+        if room_preferences is not None:
+            prefs = self._parse_preferences(room_preferences)
+            self.faculty_model.modify_faculty(name, "room_preferences", prefs)
+            updated.append("room preferences")
+
+        if lab_preferences is not None:
+            prefs = self._parse_preferences(lab_preferences)
+            self.faculty_model.modify_faculty(name, "lab_preferences", prefs)
+            updated.append("lab preferences")
+
+        if not updated:
+            return "No changes specified."
+        return f"Faculty '{name}' updated: {', '.join(updated)}."
 
     @requires_config
     def _get_faculty(self) -> str:
@@ -612,7 +679,7 @@ class ChatbotController:
             StructuredTool.from_function(
                 name="modify_faculty",
                 func=self._modify_faculty,
-                description="Modify a faculty field (maximum_credits, minimum_credits, unique_course_limit, maximum_days)",
+                description="Modify a faculty member's position (full time/adjunct), availability times, course preferences, room preferences, or lab preferences. All fields except name are optional.",
                 args_schema=_ModifyFacultySchema,
             ),
             StructuredTool.from_function(

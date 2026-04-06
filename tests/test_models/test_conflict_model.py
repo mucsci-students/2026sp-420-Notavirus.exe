@@ -27,11 +27,12 @@ TEST_COPY_CONFIG = "test_copy.json"
 # PYTEST FIXTURES
 # ================================================================
 
+
 @pytest.fixture
 def test_config():
     """
     Create a fresh copy of example.json for each test.
-    
+
     Yields:
         str: Path to test configuration file
     """
@@ -68,15 +69,16 @@ def course_model(config_model):
 # HELPER FUNCTIONS
 # ================================================================
 
+
 def build_test_course(course_id, credits=3, conflicts=None) -> CourseConfig:
     """
     Build a simple test CourseConfig.
-    
+
     Parameters:
         course_id (str): Course ID
         credits (int): Number of credits
         conflicts (list): List of conflicting course IDs
-    
+
     Returns:
         CourseConfig: Configured course object
     """
@@ -86,7 +88,7 @@ def build_test_course(course_id, credits=3, conflicts=None) -> CourseConfig:
         room=[],
         lab=[],
         faculty=[],
-        conflicts=conflicts if conflicts is not None else []
+        conflicts=conflicts if conflicts is not None else [],
     )
 
 
@@ -94,10 +96,11 @@ def build_test_course(course_id, credits=3, conflicts=None) -> CourseConfig:
 # TESTS: Add Conflict
 # ================================================================
 
+
 def test_add_conflict_success(conflict_model, course_model):
     """
     Test successfully adding a mutual conflict between two courses.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -107,43 +110,43 @@ def test_add_conflict_success(conflict_model, course_model):
     course_b = build_test_course("CONF B")
     course_model.add_course(course_a)
     course_model.add_course(course_b)
-    
+
     # Add conflict
     result = conflict_model.add_conflict("CONF A", "CONF B")
-    
+
     # Assert
-    assert result == True
-    assert conflict_model.conflict_exists("CONF A", "CONF B") == True
+    assert result
+    assert conflict_model.conflict_exists("CONF A", "CONF B")
 
 
 def test_add_conflict_self_conflict(conflict_model):
     """
     Test that adding a self-conflict fails.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
     """
     result = conflict_model.add_conflict("SAME 101", "SAME 101")
-    
-    assert result == False
+
+    assert not result
 
 
 def test_add_conflict_nonexistent_courses(conflict_model):
     """
     Test that adding conflict between non-existent courses fails.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
     """
     result = conflict_model.add_conflict("FAKE A", "FAKE B")
-    
-    assert result == False
+
+    assert not result
 
 
 def test_add_conflict_mutual(conflict_model, course_model):
     """
     Test that adding conflict is mutual (A conflicts with B AND B conflicts with A).
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -153,26 +156,72 @@ def test_add_conflict_mutual(conflict_model, course_model):
     course_b = build_test_course("MUTUAL B")
     course_model.add_course(course_a)
     course_model.add_course(course_b)
-    
+
     # Add conflict
     conflict_model.add_conflict("MUTUAL A", "MUTUAL B")
-        
+
     # Check both directions
     course_a_updated = course_model.get_course_by_id("MUTUAL A")
     course_b_updated = course_model.get_course_by_id("MUTUAL B")
-    
+
     assert "MUTUAL B" in course_a_updated.conflicts
     assert "MUTUAL A" in course_b_updated.conflicts
+
+
+def test_add_conflict_with_sections_success(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("SEC A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("SEC B"))
+
+    result = conflict_model.add_conflict(
+        "SEC A", "SEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    assert result
+    c1 = conflict_model.config_model.config.config.courses[idx_a]
+    c2 = conflict_model.config_model.config.config.courses[idx_b]
+    assert "SEC B" in c1.conflicts
+    assert "SEC A" in c2.conflicts
+
+
+def test_add_conflict_with_sections_out_of_bounds(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    len(courses)
+    course_model.add_course(build_test_course("OOB A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("OOB B"))
+
+    result = conflict_model.add_conflict(
+        "OOB A", "OOB B", section_index_1=999, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_add_conflict_with_sections_mismatched_course_id(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("MISMATCH A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("MISMATCH B"))
+
+    # Give wrong course IDs for these indices
+    result = conflict_model.add_conflict(
+        "WRONG A", "WRONG B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
 
 
 # ================================================================
 # TESTS: Delete Conflict
 # ================================================================
 
+
 def test_delete_conflict_success(conflict_model, course_model):
     """
     Test successfully deleting a conflict.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -183,19 +232,19 @@ def test_delete_conflict_success(conflict_model, course_model):
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     conflict_model.add_conflict("DEL A", "DEL B")
-    
+
     # Delete conflict
     result = conflict_model.delete_conflict("DEL A", "DEL B")
-    
+
     # Assert
-    assert result == True
-    assert conflict_model.conflict_exists("DEL A", "DEL B") == False
+    assert result
+    assert not conflict_model.conflict_exists("DEL A", "DEL B")
 
 
 def test_delete_conflict_not_found(conflict_model, course_model):
     """
     Test deleting a non-existent conflict fails.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -205,17 +254,17 @@ def test_delete_conflict_not_found(conflict_model, course_model):
     course_b = build_test_course("NO B")
     course_model.add_course(course_a)
     course_model.add_course(course_b)
-    
+
     # Try to delete non-existent conflict
     result = conflict_model.delete_conflict("NO A", "NO B")
-    
-    assert result == False
+
+    assert not result
 
 
 def test_delete_conflict_mutual(conflict_model, course_model):
     """
     Test that deleting conflict removes it from both courses.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -226,26 +275,90 @@ def test_delete_conflict_mutual(conflict_model, course_model):
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     conflict_model.add_conflict("DELMUT A", "DELMUT B")
-    
+
     # Delete conflict
     conflict_model.delete_conflict("DELMUT A", "DELMUT B")
-    
+
     # Check both directions removed
     course_a_updated = course_model.get_course_by_id("DELMUT A")
     course_b_updated = course_model.get_course_by_id("DELMUT B")
-    
+
     assert "DELMUT B" not in course_a_updated.conflicts
     assert "DELMUT A" not in course_b_updated.conflicts
+
+
+def test_delete_conflict_with_sections_success(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELSEC A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELSEC B"))
+
+    conflict_model.add_conflict(
+        "DELSEC A", "DELSEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    result = conflict_model.delete_conflict(
+        "DELSEC A", "DELSEC B", section_index_1=idx_a, section_index_2=idx_b
+    )
+
+    assert result
+    c1 = conflict_model.config_model.config.config.courses[idx_a]
+    c2 = conflict_model.config_model.config.config.courses[idx_b]
+    assert "DELSEC B" not in c1.conflicts
+    assert "DELSEC A" not in c2.conflicts
+
+
+def test_delete_conflict_with_sections_out_of_bounds(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    len(courses)
+    course_model.add_course(build_test_course("DELOOB A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELOOB B"))
+
+    result = conflict_model.delete_conflict(
+        "DELOOB A", "DELOOB B", section_index_1=99, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_delete_conflict_with_sections_mismatched_course_id(
+    conflict_model, course_model
+):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELMIS A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELMIS B"))
+
+    result = conflict_model.delete_conflict(
+        "WRONG A", "WRONG B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
+
+
+def test_delete_conflict_with_sections_not_found(conflict_model, course_model):
+    courses = conflict_model.config_model.config.config.courses
+    idx_a = len(courses)
+    course_model.add_course(build_test_course("DELNOT A"))
+    idx_b = len(courses)
+    course_model.add_course(build_test_course("DELNOT B"))
+
+    result = conflict_model.delete_conflict(
+        "DELNOT A", "DELNOT B", section_index_1=idx_a, section_index_2=idx_b
+    )
+    assert not result
 
 
 # ================================================================
 # TESTS: Modify Conflict (Mode 1 - Replace Left Side)
 # ================================================================
 
+
 def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     """
     Test mode 1: Replace course_id of conflict (A-B -> C-B).
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -254,39 +367,35 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
     course_a = build_test_course("MOD1 A")
     course_b = build_test_course("MOD1 B")
     course_c = build_test_course("MOD1 C")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD1 A", "MOD1 B")
-    
-    
+
     # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD1 A")
     target_conflict_course = course_model.get_course_by_id("MOD1 B")
     target_new_course = course_model.get_course_by_id("MOD1 C")
-    
+
     # Modify: A-B -> C-B
     result = conflict_model.modify_conflict(
-        selected_course,
-        target_conflict_course,
-        target_new_course,
-        modify_mode=1
+        selected_course, target_conflict_course, target_new_course, modify_mode=1
     )
-    
+
     # Assert
-    assert result == True
-    
+    assert result
+
     # Verify: A no longer conflicts with B
     course_a_updated = course_model.get_course_by_id("MOD1 A")
     assert "MOD1 B" not in course_a_updated.conflicts
-    
+
     # Verify: C now conflicts with B
     course_c_updated = course_model.get_course_by_id("MOD1 C")
     assert "MOD1 B" in course_c_updated.conflicts
-    
+
     # Verify: B conflicts with C (not A)
     course_b_updated = course_model.get_course_by_id("MOD1 B")
     assert "MOD1 C" in course_b_updated.conflicts
@@ -296,7 +405,7 @@ def test_modify_conflict_mode_1_replace_left_side(conflict_model, course_model):
 def test_modify_conflict_mode_1_no_duplicates(conflict_model, course_model):
     """
     Test mode 1: Ensure no duplicate entries are created on target course.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -304,28 +413,27 @@ def test_modify_conflict_mode_1_no_duplicates(conflict_model, course_model):
     # Setup
     course_a = build_test_course("DUP1 A")
     course_b = build_test_course("DUP1 B")
-    course_c = build_test_course("DUP1 C", conflicts=["DUP1 B"])  # C already conflicts with B
-    
+    course_c = build_test_course(
+        "DUP1 C", conflicts=["DUP1 B"]
+    )  # C already conflicts with B
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     # Add A-B conflict
     conflict_model.add_conflict("DUP1 A", "DUP1 B")
-    
+
     # Get course objects
     selected_course = course_model.get_course_by_id("DUP1 A")
     target_conflict_course = course_model.get_course_by_id("DUP1 B")
     target_new_course = course_model.get_course_by_id("DUP1 C")
-    
+
     # Modify: A-B -> C-B (C already has B as conflict)
     conflict_model.modify_conflict(
-        selected_course,
-        target_conflict_course,
-        target_new_course,
-        modify_mode=1
+        selected_course, target_conflict_course, target_new_course, modify_mode=1
     )
-    
+
     # Verify no duplicates
     course_c_updated = course_model.get_course_by_id("DUP1 C")
     assert course_c_updated.conflicts.count("DUP1 B") == 1
@@ -335,10 +443,11 @@ def test_modify_conflict_mode_1_no_duplicates(conflict_model, course_model):
 # TESTS: Modify Conflict (Mode 2 - Replace Right Side)
 # ================================================================
 
+
 def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model):
     """
     Test mode 2: Replace course stored as a conflict (A-B -> A-C).
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -347,41 +456,36 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
     course_a = build_test_course("MOD2 A")
     course_b = build_test_course("MOD2 B")
     course_c = build_test_course("MOD2 C")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     # Add initial conflict A-B
     conflict_model.add_conflict("MOD2 A", "MOD2 B")
-    
-    
+
     # Get FRESH course objects AFTER reload (they now have conflicts)
     selected_course = course_model.get_course_by_id("MOD2 A")
     target_conflict_course = course_model.get_course_by_id("MOD2 B")
     target_new_course = course_model.get_course_by_id("MOD2 C")
-    
+
     # Modify: A-B -> A-C
     result = conflict_model.modify_conflict(
-        selected_course,
-        target_conflict_course,
-        target_new_course,
-        modify_mode=2
+        selected_course, target_conflict_course, target_new_course, modify_mode=2
     )
-    
-    # Assert
-    assert result == True
 
-    
+    # Assert
+    assert result
+
     # Verify: A no longer conflicts with B, now conflicts with C
     course_a_updated = course_model.get_course_by_id("MOD2 A")
     assert "MOD2 B" not in course_a_updated.conflicts
     assert "MOD2 C" in course_a_updated.conflicts
-    
+
     # Verify: B no longer conflicts with A
     course_b_updated = course_model.get_course_by_id("MOD2 B")
     assert "MOD2 A" not in course_b_updated.conflicts
-    
+
     # Verify: C now conflicts with A
     course_c_updated = course_model.get_course_by_id("MOD2 C")
     assert "MOD2 A" in course_c_updated.conflicts
@@ -390,7 +494,7 @@ def test_modify_conflict_mode_2_replace_right_side(conflict_model, course_model)
 def test_modify_conflict_mode_2_no_duplicates(conflict_model, course_model):
     """
     Test mode 2: Ensure no duplicate entries are created on target course.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -398,28 +502,27 @@ def test_modify_conflict_mode_2_no_duplicates(conflict_model, course_model):
     # Setup
     course_a = build_test_course("DUP2 A")
     course_b = build_test_course("DUP2 B")
-    course_c = build_test_course("DUP2 C", conflicts=["DUP2 A"])  # C already conflicts with A
-    
+    course_c = build_test_course(
+        "DUP2 C", conflicts=["DUP2 A"]
+    )  # C already conflicts with A
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     # Add A-B conflict
     conflict_model.add_conflict("DUP2 A", "DUP2 B")
-    
+
     # Get course objects
     selected_course = course_model.get_course_by_id("DUP2 A")
     target_conflict_course = course_model.get_course_by_id("DUP2 B")
     target_new_course = course_model.get_course_by_id("DUP2 C")
-    
+
     # Modify: A-B -> A-C (C already has A as conflict)
     conflict_model.modify_conflict(
-        selected_course,
-        target_conflict_course,
-        target_new_course,
-        modify_mode=2
+        selected_course, target_conflict_course, target_new_course, modify_mode=2
     )
-    
+
     # Verify no duplicates
     course_c_updated = course_model.get_course_by_id("DUP2 C")
     assert course_c_updated.conflicts.count("DUP2 A") == 1
@@ -429,10 +532,11 @@ def test_modify_conflict_mode_2_no_duplicates(conflict_model, course_model):
 # TESTS: Modify Conflict Validation
 # ================================================================
 
+
 def test_modify_conflict_not_present_fails(conflict_model, course_model):
     """
     Test that modification fails if the conflict is not present.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -441,32 +545,29 @@ def test_modify_conflict_not_present_fails(conflict_model, course_model):
     course_a = build_test_course("NOPRES A")
     course_b = build_test_course("NOPRES B")
     course_c = build_test_course("NOPRES C")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     # Get course objects
     selected_course = course_model.get_course_by_id("NOPRES A")
     target_conflict_course = course_model.get_course_by_id("NOPRES B")
     target_new_course = course_model.get_course_by_id("NOPRES C")
-    
+
     # Try to modify non-existent conflict
     result = conflict_model.modify_conflict(
-        selected_course,
-        target_conflict_course,
-        target_new_course,
-        modify_mode=1
+        selected_course, target_conflict_course, target_new_course, modify_mode=1
     )
-    
+
     # Assert fails
-    assert result == False
+    assert not result
 
 
 def test_modify_conflict_invalid_mode(conflict_model, course_model):
     """
     Test that modification fails with invalid mode.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -475,37 +576,38 @@ def test_modify_conflict_invalid_mode(conflict_model, course_model):
     course_a = build_test_course("INVMODE A")
     course_b = build_test_course("INVMODE B")
     course_c = build_test_course("INVMODE C")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
     conflict_model.add_conflict("INVMODE A", "INVMODE B")
-    
+
     # Get course objects
     selected_course = course_model.get_course_by_id("INVMODE A")
     target_conflict_course = course_model.get_course_by_id("INVMODE B")
     target_new_course = course_model.get_course_by_id("INVMODE C")
-    
+
     # Try invalid mode (3)
     result = conflict_model.modify_conflict(
         selected_course,
         target_conflict_course,
         target_new_course,
-        modify_mode=3  # Invalid
+        modify_mode=3,  # Invalid
     )
-    
+
     # Assert fails
-    assert result == False
+    assert not result
 
 
 # ================================================================
 # TESTS: Get Conflicts
 # ================================================================
 
+
 def test_get_all_conflicts(conflict_model, course_model):
     """
     Test getting all unique conflict pairs.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -514,28 +616,32 @@ def test_get_all_conflicts(conflict_model, course_model):
     course_a = build_test_course("ALL A")
     course_b = build_test_course("ALL B")
     course_c = build_test_course("ALL C")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     course_model.add_course(course_c)
-    
+
     conflict_model.add_conflict("ALL A", "ALL B")
     conflict_model.add_conflict("ALL B", "ALL C")
-    
+
     # Get all conflicts
     all_conflicts = conflict_model.get_all_conflicts()
-    
+
     # Assert
     assert isinstance(all_conflicts, list)
     assert len(all_conflicts) >= 2  # At least our two conflicts
-    
+
     # Check conflicts are unique pairs (sorted tuples)
-    assert any((c1 == "ALL A" and c2 == "ALL B") or (c1 == "ALL B" and c2 == "ALL A") for c1, c2, i1, i2 in all_conflicts)
+    assert any(
+        (c1 == "ALL A" and c2 == "ALL B") or (c1 == "ALL B" and c2 == "ALL A")
+        for c1, c2, i1, i2 in all_conflicts
+    )
+
 
 def test_conflict_exists_true(conflict_model, course_model):
     """
     Test conflict_exists returns True for existing conflict.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -543,20 +649,22 @@ def test_conflict_exists_true(conflict_model, course_model):
     # Setup
     course_a = build_test_course("EXISTS A")
     course_b = build_test_course("EXISTS B")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
     conflict_model.add_conflict("EXISTS A", "EXISTS B")
-    
+
     # Test
-    assert conflict_model.conflict_exists("EXISTS A", "EXISTS B") == True
-    assert conflict_model.conflict_exists("EXISTS B", "EXISTS A") == True  # Order shouldn't matter
+    assert conflict_model.conflict_exists("EXISTS A", "EXISTS B")
+    assert conflict_model.conflict_exists(
+        "EXISTS B", "EXISTS A"
+    )  # Order shouldn't matter
 
 
 def test_conflict_exists_false(conflict_model, course_model):
     """
     Test conflict_exists returns False for non-existent conflict.
-    
+
     Parameters:
         conflict_model (ConflictModel): Conflict model fixture
         course_model (CourseModel): Course model fixture
@@ -564,9 +672,9 @@ def test_conflict_exists_false(conflict_model, course_model):
     # Setup: Add courses but no conflict
     course_a = build_test_course("NOEXIST A")
     course_b = build_test_course("NOEXIST B")
-    
+
     course_model.add_course(course_a)
     course_model.add_course(course_b)
-    
+
     # Test
-    assert conflict_model.conflict_exists("NOEXIST A", "NOEXIST B") == False
+    assert not conflict_model.conflict_exists("NOEXIST A", "NOEXIST B")

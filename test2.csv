@@ -3,7 +3,9 @@
     "rooms": [
       "Roddy 136",
       "Roddy 140",
-      "Roddy 147"
+      "Roddy 147",
+      "44",
+      "777"
     ],
     "labs": [
       "Linux",
@@ -21,9 +23,12 @@
         "lab": [],
         "conflicts": [
           "CMSC 161",
-          "CMSC 162"
+          "CMSC 162",
+          "CMSC 453"
         ],
-        "faculty": []
+        "faculty": [
+          "Hardy"
+        ]
       },
       {
         "course_id": "CMSC 140",
@@ -36,9 +41,12 @@
         "lab": [],
         "conflicts": [
           "CMSC 161",
-          "CMSC 162"
+          "CMSC 162",
+          "CMSC 453"
         ],
-        "faculty": []
+        "faculty": [
+          "Hardy"
+        ]
       },
       {
         "course_id": "CMSC 152",
@@ -53,7 +61,9 @@
           "Linux"
         ],
         "conflicts": [],
-        "faculty": []
+        "faculty": [
+          "Hardy"
+        ]
       },
       {
         "course_id": "CMSC 161",
@@ -83,7 +93,11 @@
           "Linux"
         ],
         "conflicts": [],
-        "faculty": []
+        "faculty": [
+          "Zoppetti",
+          "Rogers",
+          "Wertz"
+        ]
       },
       {
         "course_id": "CMSC 161",
@@ -99,7 +113,11 @@
         "conflicts": [
           "CMSC 140"
         ],
-        "faculty": []
+        "faculty": [
+          "Zoppetti",
+          "Rogers",
+          "Wertz"
+        ]
       },
       {
         "course_id": "CMSC 162",
@@ -113,7 +131,9 @@
         "conflicts": [
           "CMSC 140"
         ],
-        "faculty": []
+        "faculty": [
+          "Hogg"
+        ]
       },
       {
         "course_id": "CMSC 330",
@@ -129,10 +149,11 @@
         ],
         "conflicts": [
           "CMSC 362",
-          "CMSC 366",
-          "CMSC 340"
+          "CMSC 366"
         ],
-        "faculty": []
+        "faculty": [
+          "Xie"
+        ]
       },
       {
         "course_id": "CMSC 340",
@@ -150,10 +171,11 @@
           "CMSC 380",
           "CMSC 420",
           "CMSC 453",
-          "CMSC 476",
-          "CMSC 330"
+          "CMSC 476"
         ],
-        "faculty": []
+        "faculty": [
+          "Yang"
+        ]
       },
       {
         "course_id": "CMSC 340",
@@ -172,7 +194,9 @@
           "CMSC 366",
           "CMSC 330"
         ],
-        "faculty": []
+        "faculty": [
+          "Yang"
+        ]
       },
       {
         "course_id": "CMSC 362",
@@ -187,7 +211,9 @@
           "CMSC 330",
           "CMSC 366"
         ],
-        "faculty": []
+        "faculty": [
+          "Zoppetti"
+        ]
       },
       {
         "course_id": "CMSC 366",
@@ -206,7 +232,9 @@
           "CMSC 362",
           "CMSC 330"
         ],
-        "faculty": []
+        "faculty": [
+          "Xie"
+        ]
       },
       {
         "course_id": "CMSC 366",
@@ -224,7 +252,9 @@
           "CMSC 362",
           "CMSC 330"
         ],
-        "faculty": []
+        "faculty": [
+          "Xie"
+        ]
       },
       {
         "course_id": "CMSC 380",
@@ -241,7 +271,9 @@
           "CMSC 453",
           "CMSC 476"
         ],
-        "faculty": []
+        "faculty": [
+          "Hogg"
+        ]
       },
       {
         "course_id": "CMSC 420",
@@ -257,7 +289,9 @@
           "CMSC 453",
           "CMSC 476"
         ],
-        "faculty": []
+        "faculty": [
+          "Hobbs"
+        ]
       },
       {
         "course_id": "CMSC 453",
@@ -274,9 +308,12 @@
         "conflicts": [
           "CMSC 380",
           "CMSC 420",
-          "CMSC 476"
+          "CMSC 476",
+          "CMSC 140"
         ],
-        "faculty": []
+        "faculty": [
+          "Yang"
+        ]
       },
       {
         "course_id": "CMSC 476",
@@ -292,7 +329,9 @@
           "CMSC 420",
           "CMSC 453"
         ],
-        "faculty": []
+        "faculty": [
+          "Zoppetti"
+        ]
       }
     ],
     "faculty": [
@@ -397,9 +436,9 @@
           "Mac": 3
         },
         "mandatory_days": [
-          "FRI",
           "MON",
-          "WED"
+          "WED",
+          "FRI"
         ]
       },
       {
@@ -723,6 +762,17 @@
           "Linux": 1
         },
         "mandatory_days": []
+      },
+      {
+        "name": "mike hunt",
+        "maximum_credits": 12,
+        "maximum_days": 5,
+        "minimum_credits": 0,
+        "unique_course_limit": 2,
+        "times": {},
+        "course_preferences": {},
+        "room_preferences": {},
+        "lab_preferences": {}
       }
     ]
   },
@@ -1134,7 +1184,7 @@
     "max_time_gap": 30,
     "min_time_overlap": 45
   },
-  "limit": 100,
+  "limit": 1,
   "optimizer_flags": [
     "faculty_course",
     "faculty_room",

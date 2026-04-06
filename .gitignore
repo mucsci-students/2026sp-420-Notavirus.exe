@@ -6,10 +6,17 @@ __pycache__/
 .pytest_cache/
 venv/
 test_copy.json
+.coverage
 
 # IDE files
 .vscode/
 .idea/
 .DS_Store
 .nicegui/
+
+
+.claude/
+
+
+.env
 

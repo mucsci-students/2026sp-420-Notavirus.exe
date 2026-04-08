@@ -443,3 +443,119 @@ def test_validate_faculty_references_all_valid(faculty_model):
 
     assert removed_count == 0
     assert "Valid Only" in test_course.faculty
+
+
+# ================================================================
+# TESTS: set_position_type, set_maximum_credits, build_faculty_config
+# ================================================================
+
+
+def test_set_position_type_fulltime(faculty_model):
+    """Test setting a faculty to fulltime."""
+    fac = build_faculty_config(name="Pos Fac", isFullTime="n", dates=["M"], courses={})
+    faculty_model.add_faculty(fac)
+
+    # Set min_credits high to test clamping
+    faculty_model.modify_faculty("Pos Fac", "maximum_credits", 15)
+    faculty_model.modify_faculty("Pos Fac", "minimum_credits", 15)
+
+    result = faculty_model.set_position_type("Pos Fac", True)
+    assert result is True
+
+    updated = faculty_model.get_faculty_by_name("Pos Fac")
+    assert updated.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
+    assert updated.maximum_credits == FULL_TIME_MAX_CREDITS
+    assert updated.minimum_credits <= FULL_TIME_MAX_CREDITS
+
+
+def test_set_position_type_adjunct(faculty_model):
+    """Test setting a faculty to adjunct."""
+    fac = build_faculty_config(name="Pos Fac2", isFullTime="y", dates=["M"], courses={})
+    faculty_model.add_faculty(fac)
+
+    # Set min_credits high to test clamping
+    faculty_model.modify_faculty("Pos Fac2", "maximum_credits", 10)
+    faculty_model.modify_faculty("Pos Fac2", "minimum_credits", 10)
+
+    result = faculty_model.set_position_type("Pos Fac2", False)
+    assert result is True
+
+    updated = faculty_model.get_faculty_by_name("Pos Fac2")
+    assert updated.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
+    assert updated.maximum_credits == ADJUNCT_MAX_CREDITS
+    assert updated.minimum_credits <= ADJUNCT_MAX_CREDITS
+
+
+def test_set_position_type_not_found(faculty_model):
+    """Test set_position_type on non-existent faculty."""
+    assert faculty_model.set_position_type("Nobody", True) is False
+
+
+def test_set_maximum_credits(faculty_model):
+    """Test setting maximum credits and cascading effects."""
+    fac = build_faculty_config(name="Cred Fac", isFullTime="y", dates=["M"], courses={})
+    faculty_model.add_faculty(fac)
+
+    faculty_model.modify_faculty("Cred Fac", "minimum_credits", 10)
+
+    # Test setting to low value (<= ADJUNCT_MAX_CREDITS)
+    result = faculty_model.set_maximum_credits("Cred Fac", ADJUNCT_MAX_CREDITS)
+    assert result is True
+
+    updated = faculty_model.get_faculty_by_name("Cred Fac")
+    assert updated.maximum_credits == ADJUNCT_MAX_CREDITS
+    assert updated.minimum_credits <= ADJUNCT_MAX_CREDITS
+    assert updated.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
+
+    # Test setting to high value
+    result = faculty_model.set_maximum_credits("Cred Fac", FULL_TIME_MAX_CREDITS)
+    assert result is True
+
+    updated2 = faculty_model.get_faculty_by_name("Cred Fac")
+    assert updated2.maximum_credits == FULL_TIME_MAX_CREDITS
+    assert updated2.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
+
+
+def test_set_maximum_credits_not_found(faculty_model):
+    """Test set_maximum_credits on non-existent faculty."""
+    assert faculty_model.set_maximum_credits("Nobody", 5) is False
+
+
+def test_build_faculty_config_fulltime(faculty_model):
+    """Test build_faculty_config for fulltime with times."""
+    data = {
+        "name": "Jane Doe",
+        "is_full_time": True,
+        "times": {
+            "M": [{"start": "08:00", "end": "10:00"}],
+            "UnknownDay": [{"start": "08:00", "end": "12:00"}],
+        },
+        "course_preferences": {"CS101": 1},
+        "lab_preferences": {"CS101L": 2},
+    }
+    config = faculty_model.build_faculty_config(data)
+    assert config.name == "Jane Doe"
+    assert config.maximum_credits == FULL_TIME_MAX_CREDITS
+    assert config.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
+    assert "MON" in config.times
+    assert config.course_preferences == {"CS101": 1}
+    assert config.lab_preferences == {"CS101L": 2}
+
+
+def test_build_faculty_config_adjunct_days_else(faculty_model):
+    """Test build_faculty_config for adjunct using the days else branch."""
+    data = {
+        "name": "John Adjunct",
+        "is_full_time": False,
+        "days": ["M", "W", "F"],
+    }
+    config = faculty_model.build_faculty_config(data)
+    assert config.name == "John Adjunct"
+    assert config.maximum_credits == ADJUNCT_MAX_CREDITS
+    assert config.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
+    # The else branch sets 08:00 to 20:00
+    assert "MON" in config.times
+    assert config.times["MON"][0].start == "08:00"
+    assert config.times["MON"][0].end == "20:00"
+    assert "WED" in config.times
+    assert "FRI" in config.times

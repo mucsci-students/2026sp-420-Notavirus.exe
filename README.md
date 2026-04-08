@@ -279,7 +279,10 @@ It contains a sample set of CMSC courses with pre-defined conflicts, faculty,
 and time slots.
 
 ---
+## Design Patterns
 
+Data Class Design Pattern - Implemented by Keller
+found in `time_config_data_class.py` and used in `gui_view.py` to modify the time slot config.
 
 ## GUI Navigation 
 

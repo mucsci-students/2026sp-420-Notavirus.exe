@@ -281,8 +281,16 @@ and time slots.
 ---
 ## Design Patterns
 
+MVC Design Pattern
+Implemented throughout all files found in the views, models, and controllers files
+
 Data Class Design Pattern - Implemented by Keller
-found in `time_config_data_class.py` and used in `gui_view.py` to modify the time slot config.
+Found in `time_config_data_class.py` and used in `gui_view.py` to modify the time slot config.
+
+Decorator Design Pattern
+Found in controllers/chatbot_controller.py and uses a function `requires_config` that wraps around other functions.
+
+Facade Design Pattern 
 
 ## GUI Navigation 
 

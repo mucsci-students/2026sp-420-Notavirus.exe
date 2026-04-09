@@ -111,7 +111,10 @@ class ChatbotGUIView:
 
         with (
             ui.left_drawer(
-                value=app.storage.user.get("chat_open", False), bordered=True, top_corner=True, bottom_corner=True
+                value=app.storage.user.get("chat_open", False),
+                bordered=True,
+                top_corner=True,
+                bottom_corner=True,
             )
             .style(
                 "width: 25vw; min-width: 340px; padding: 0; display: flex; flex-direction: column;"

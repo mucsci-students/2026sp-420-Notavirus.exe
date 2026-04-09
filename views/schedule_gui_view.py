@@ -18,7 +18,7 @@ from typing import Any
 import threading as _threading
 
 
-from nicegui import ui
+from nicegui import ui, app
 from scheduler import OptimizerFlags
 
 from scheduler_facade import SchedulerFacade
@@ -738,6 +738,14 @@ class ScheduleGUIView:
         ui.add_css("""
             .body--dark .schedule-card { background-color: #1a1a1a !important; }
             .q-uploader__title, .q-uploader__subtitle, .q-uploader .q-btn { color: black !important; }
+            .chart-btn-active {
+                background-color: #e5e7eb !important;
+                border-radius: 8px !important;
+            }
+            .body--dark .chart-btn-active {
+                background-color: rgba(255, 255, 255, 0.15) !important;
+                border-radius: 8px !important;
+            }
         """)
 
         from views.gui_view import GUIView
@@ -864,28 +872,173 @@ class ScheduleGUIView:
                 "text-4xl font-bold !text-black dark:!text-white"
             )
 
-            with ui.column().classes("items-center gap-1"):
-                with ui.row().classes("items-center gap-4 justify-center"):
-                    prev_btn = (
-                        ui.button(icon="chevron_left")
-                        .props("round flat color=black")
-                        .classes("dark:!text-white")
-                    )
-                    index_label = ui.label(
-                        f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
-                    ).classes(
-                        "text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center"
-                    )
-                    next_btn = (
-                        ui.button(icon="chevron_right")
-                        .props("round flat color=black")
-                        .classes("dark:!text-white")
-                    )
+            # ── Chart state ──────────────────────────────────────────────────
+            _METRIC_LABELS = {
+                "courses": "Number of Courses",
+                "credits": "Number of Credits",
+                "hours": "Number of Hours",
+            }
+            _METRIC_CYCLE = ["courses", "credits", "hours"]
+            show_faculty_chart = [False]
+            show_room_chart = [False]
+            faculty_metric = ["courses"]
+
+            # ── Nav row with chart toggle buttons on the right ───────────────
+            with ui.column().classes("items-center gap-1 w-full max-w-7xl"):
+                with ui.row().classes("items-center w-full"):
+                    ui.element("div").classes("flex-1")
+                    with ui.row().classes("items-center gap-4"):
+                        prev_btn = (
+                            ui.button(icon="chevron_left")
+                            .props("round flat color=black")
+                            .classes("dark:!text-white")
+                        )
+                        index_label = ui.label(
+                            f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
+                        ).classes(
+                            "text-lg font-semibold !text-black dark:!text-white min-w-[160px] text-center"
+                        )
+                        next_btn = (
+                            ui.button(icon="chevron_right")
+                            .props("round flat color=black")
+                            .classes("dark:!text-white")
+                        )
+                    with ui.row().classes("flex-1 items-center justify-end gap-2"):
+                        faculty_chart_btn = (
+                            ui.button("Faculty Heat Map", icon="person")
+                            .props("flat no-caps color=black")
+                            .classes("dark:!text-white text-sm")
+                        )
+                        room_chart_btn = (
+                            ui.button("Room Utilization", icon="meeting_room")
+                            .props("flat no-caps color=black")
+                            .classes("dark:!text-white text-sm")
+                        )
                 generation_status = ui.label(
                     f"Generating {_state.generation_limit} schedules…"
                     if _state.is_generating
                     else "Generation complete."
                 ).classes("text-xs !text-gray-400 text-center")
+
+            # ── Chart helpers ────────────────────────────────────────────────
+            def _get_axis_color() -> str:
+                # Read fresh each time so toggling dark mode mid-session works.
+                # `is True` avoids treating None (auto mode) as dark.
+                return (
+                    "#ffffff"
+                    if app.storage.user.get("dark_mode") is True
+                    else "#333333"
+                )
+
+            # ── Chart color palette (one color per bar) ──────────────────────
+            _BAR_COLORS = [
+                "#ff00b7",
+                "#007bff",
+                "#b300ff",
+                "#ff8000",
+                "#1eff00",
+                "#ff005d",
+                "#ffc800",
+                "#02eaff",
+                "#fffb00",
+                "#0004ff",
+                "#ff0000",
+                "#00FFD9",
+                "#cc00fa",
+                "#aaff00",
+            ]
+
+            def _colored_data(values: list) -> list:
+                """Wrap plain values into ECharts per-bar color objects."""
+                return [
+                    {
+                        "value": v,
+                        "itemStyle": {"color": _BAR_COLORS[i % len(_BAR_COLORS)]},
+                    }
+                    for i, v in enumerate(values)
+                ]
+
+            def _base_echart(y_label: str) -> dict:
+                color = _get_axis_color()
+                return {
+                    "tooltip": {"trigger": "axis"},
+                    "grid": {
+                        "left": "13%",
+                        "right": "3%",
+                        "bottom": "42%",
+                        "top": "6%",
+                    },
+                    "xAxis": {
+                        "type": "category",
+                        "data": [],
+                        "axisLabel": {
+                            "rotate": 40,
+                            "fontSize": 11,
+                            "color": color,
+                            "interval": 0,
+                        },
+                    },
+                    "yAxis": {
+                        "type": "value",
+                        "name": y_label,
+                        "nameLocation": "middle",
+                        "nameGap": 35,
+                        "nameTextStyle": {"color": color, "fontSize": 11},
+                        "axisLabel": {"color": color, "fontSize": 11},
+                        "minInterval": 1,
+                    },
+                    "series": [{"type": "bar", "data": [], "barMaxWidth": 40}],
+                }
+
+            # ── Both chart cards side by side, fixed 50% width each ─────────────
+            _is_dark = bool(app.storage.user.get("dark_mode", False))
+            _axis_color = "#ffffff" if _is_dark else "#333333"
+            charts_row = ui.row().classes(
+                "w-full max-w-7xl gap-4 flex-nowrap justify-center"
+            )
+            with charts_row:
+                faculty_chart_card = (
+                    ui.card()
+                    .style(
+                        "background-color: white; border: none; width: calc(50% - 8px); flex: 0 0 calc(50% - 8px);"
+                    )
+                    .classes("rounded-2xl shadow-md schedule-card p-2")
+                )
+                faculty_chart_card.set_visibility(False)
+                with faculty_chart_card:
+                    with ui.row().classes("items-center w-full mb-1"):
+                        metric_select = ui.select(
+                            options=list(_METRIC_LABELS.values()),
+                            value=_METRIC_LABELS["courses"],
+                            label="Metric",
+                        ).classes("text-sm min-w-[180px]")
+                        ui.label("Faculty Heat Map").classes(
+                            "text-base font-bold !text-black dark:!text-white flex-1 text-center"
+                        )
+                        ui.element("div").classes("min-w-[180px]")
+                    faculty_chart = (
+                        ui.echart(_base_echart(_METRIC_LABELS["courses"]))
+                        .classes("w-full")
+                        .style("height: 160px;")
+                    )
+
+                room_chart_card = (
+                    ui.card()
+                    .style(
+                        "background-color: white; border: none; width: calc(50% - 8px); flex: 0 0 calc(50% - 8px);"
+                    )
+                    .classes("rounded-2xl shadow-md schedule-card p-2")
+                )
+                room_chart_card.set_visibility(False)
+                with room_chart_card:
+                    ui.label("Room Utilization").classes(
+                        "text-base font-bold !text-black dark:!text-white mb-1 w-full text-center"
+                    )
+                    room_chart = (
+                        ui.echart(_base_echart("Courses Assigned"))
+                        .classes("w-full")
+                        .style("height: 160px;")
+                    )
 
             with (
                 ui.card()
@@ -1212,6 +1365,82 @@ class ScheduleGUIView:
             else:
                 next_btn.props(remove="disabled")
 
+        def _get_sched_ctrl():
+            return (
+                GUIView.controller.schedule_controller if GUIView.controller else None
+            )
+
+        def _render_faculty_chart():
+            if not show_faculty_chart[0]:
+                return
+            sched_ctrl = _get_sched_ctrl()
+            if sched_ctrl is None:
+                return
+            course_model = getattr(GUIView.controller, "course_model", None)
+            schedule = _state.schedules[_state.current_index]
+            names, values = sched_ctrl.get_faculty_chart_data(
+                schedule, faculty_metric[0], course_model
+            )
+            color = _get_axis_color()
+            faculty_chart.options["xAxis"]["data"] = names
+            faculty_chart.options["xAxis"]["axisLabel"]["color"] = color
+            faculty_chart.options["series"][0]["data"] = _colored_data(values)
+            faculty_chart.options["yAxis"]["name"] = _METRIC_LABELS[faculty_metric[0]]
+            faculty_chart.options["yAxis"]["nameTextStyle"]["color"] = color
+            faculty_chart.options["yAxis"]["axisLabel"]["color"] = color
+            faculty_chart.update()
+
+        def _render_room_chart():
+            if not show_room_chart[0]:
+                return
+            sched_ctrl = _get_sched_ctrl()
+            if sched_ctrl is None:
+                return
+            schedule = _state.schedules[_state.current_index]
+            names, values = sched_ctrl.get_room_chart_data(schedule)
+            color = _get_axis_color()
+            room_chart.options["xAxis"]["data"] = names
+            room_chart.options["xAxis"]["axisLabel"]["color"] = color
+            room_chart.options["series"][0]["data"] = _colored_data(values)
+            room_chart.options["yAxis"]["nameTextStyle"]["color"] = color
+            room_chart.options["yAxis"]["axisLabel"]["color"] = color
+            room_chart.update()
+
+        async def toggle_faculty_chart():
+            show_faculty_chart[0] = not show_faculty_chart[0]
+            faculty_chart_card.set_visibility(show_faculty_chart[0])
+            if show_faculty_chart[0]:
+                faculty_chart_btn.classes("chart-btn-active")
+            else:
+                faculty_chart_btn.classes(remove="chart-btn-active")
+            await asyncio.sleep(0.05)
+            _render_faculty_chart()
+
+        async def toggle_room_chart():
+            show_room_chart[0] = not show_room_chart[0]
+            room_chart_card.set_visibility(show_room_chart[0])
+            if show_room_chart[0]:
+                room_chart_btn.classes("chart-btn-active")
+            else:
+                room_chart_btn.classes(remove="chart-btn-active")
+            await asyncio.sleep(0.05)
+            _render_room_chart()
+
+        def on_metric_change(e):
+            faculty_metric[0] = next(
+                k for k, v in _METRIC_LABELS.items() if v == e.value
+            )
+            _render_faculty_chart()
+
+        faculty_chart_btn.on("click", toggle_faculty_chart)
+        room_chart_btn.on("click", toggle_room_chart)
+        metric_select.on_value_change(on_metric_change)
+
+        # Re-render charts whenever dark mode is toggled so axis colors update immediately.
+        ui.dark_mode().bind_value(app.storage.user, "dark_mode").on_value_change(
+            lambda _: (_render_faculty_chart(), _render_room_chart())
+        )
+
         def _reload_schedule():
             schedule = _state.schedules[_state.current_index]
             room_filter[0] = None
@@ -1230,6 +1459,8 @@ class ScheduleGUIView:
             _render_faculty_calendar(faculty_filter=None)
             room_table.update()
             faculty_table.update()
+            _render_faculty_chart()
+            _render_room_chart()
             index_label.set_text(
                 f"Schedule {_state.current_index + 1} of {len(_state.schedules)}"
             )

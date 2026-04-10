@@ -258,7 +258,7 @@ def test_sort_time_slots():
     """Test _sort_time_slots sorts by chronological time."""
     from views.schedule_gui_view import _sort_time_slots
 
-    # Unsorted time slots from different days
+    # Unsorted time slots — strings already have day prefix, no "DAY " prepended
     time_slots = {
         "THU 14:10-16:00",
         "MON 09:00-10:30",
@@ -269,7 +269,7 @@ def test_sort_time_slots():
 
     sorted_slots = _sort_time_slots(time_slots)
 
-    # Should be sorted by start time, not by string
+    # Should be sorted by start time only (day is ignored in sort key)
     expected_order = [
         "WED 08:00-09:30",
         "MON 09:00-10:30",

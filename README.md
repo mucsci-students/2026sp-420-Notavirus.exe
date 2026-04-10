@@ -331,7 +331,7 @@ pytest tests/test_data_class.py -v
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
-# Run only chatbot/integration tests (1 tests)
+# Run only chatbot/integration tests (1 test)
 # These tests will NOT pass unless you have an API key entered
 #    Follow the instructions to adding an API key found in the Setup section
 pytest tests/test_integration/ -v 

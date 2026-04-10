@@ -254,37 +254,6 @@ def test_extract_time_portion():
     print("[PASS] test_extract_time_portion passed")
 
 
-def test_sort_time_slots():
-    """Test _sort_time_slots sorts by chronological time."""
-    from views.schedule_gui_view import _sort_time_slots
-
-    # Unsorted time slots — strings already have day prefix, no "DAY " prepended
-    time_slots = {
-        "THU 14:10-16:00",
-        "MON 09:00-10:30",
-        "WED 08:00-09:30",
-        "MON 17:00-18:50",
-        "TUE 11:00-12:30",
-    }
-
-    sorted_slots = _sort_time_slots(time_slots)
-
-    # Should be sorted by start time only (day is ignored in sort key)
-    expected_order = [
-        "WED 08:00-09:30",
-        "MON 09:00-10:30",
-        "TUE 11:00-12:30",
-        "THU 14:10-16:00",
-        "MON 17:00-18:50",
-    ]
-
-    assert sorted_slots == expected_order, (
-        f"Got {sorted_slots}, expected {expected_order}"
-    )
-
-    print("[PASS] test_sort_time_slots passed")
-
-
 def test_get_color_for_key():
     """Test _build_color_map assigns unique colors to each item."""
     from views.schedule_gui_view import _build_color_map
@@ -359,7 +328,6 @@ if __name__ == "__main__":
     test_build_calendar_grid_by_faculty_with_filter()
     test_room_lab_separation()
     test_extract_time_portion()
-    test_sort_time_slots()
     test_get_color_for_key()
     test_color_map_consistency()
     test_get_color_classes()

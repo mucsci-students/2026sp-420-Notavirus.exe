@@ -309,17 +309,17 @@ left corner.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (296 tests total)
+# Run all tests (303 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
 # Run only model tests (137 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (109 tests)
+# Run only controller tests (117 tests)
 pytest tests/test_controllers/ -v
 
-# Run only views tests (12 tests)
+# Run only views tests (11 tests)
 pytest tests/test_views/ -v 
 
 # Run only safe_save.py test (1 test)
@@ -343,8 +343,8 @@ pytest tests/ --cov=models --cov=controllers
 Test Coverage:
 
 ✅ 137 model tests - Data operations and business logic
-✅ 109 controller tests - Integration and workflow
-✅ 12 view tests - Calendar view of generated schedules
+✅ 117 controller tests - Integration and workflow
+✅ 11 view tests - Calendar view of generated schedules
 ✅ 1 safe_save test - The save feature used by save and save to config 
 ✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 

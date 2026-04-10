@@ -290,28 +290,9 @@ Found in `time_config_data_class.py` and used in `gui_view.py` to modify the tim
 Decorator Design Pattern
 Found in controllers/chatbot_controller.py and uses a function `requires_config` that wraps around other functions.
 
-Facade Design Pattern 
+Facade Design Pattern
+Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
 
-## GUI Navigation 
-
-The main GUI presents a menu with buttons for each feature:
-┌─────────────────────────────┐
-│                [Light/Dark] │
-│         Scheduler           │
-├─────────────────────────────┤
-│    Faculty   │    Room      │
-│    Course    │  Conflict    │
-│             Lab             │
-├─────────────────────────────┤
-│         Print Config        │
-│         Run Scheduler       │
-│       Display Schedules     │
-├─────────────────────────────┤
-│ [AI]                        │
-└─────────────────────────────┘
-Click any button to access that feature's interface. Each feature page includes forms for input and displays results in a user-friendly format. There is a light/dark toggle mode
-in the top right corner and an AI tool to use in the bottom
-left corner. 
 
 ---
 

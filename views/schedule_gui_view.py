@@ -167,7 +167,9 @@ def _parse_time_string(time_str: str) -> tuple[int, int] | None:
         return None
 
 
-def _extract_time_range(time_str: str) -> tuple[tuple[int, int], tuple[int, int]] | None:
+def _extract_time_range(
+    time_str: str,
+) -> tuple[tuple[int, int], tuple[int, int]] | None:
     """Parse time string like 'MON 09:00-10:30' to ((start_h, start_m), (end_h, end_m))."""
     try:
         time_str = time_str.strip()
@@ -185,12 +187,12 @@ def _extract_time_range(time_str: str) -> tuple[tuple[int, int], tuple[int, int]
 
 def _generate_hourly_slots(schedule: list) -> list[str]:
     """Generate hourly time slots based on course times in schedule.
-    
+
     Returns list of slots like "09:00-10:00", "10:00-11:00", etc.
     """
     min_hour = 23
     max_hour = 0
-    
+
     for ci in schedule:
         for time_instance in ci.times:
             time_str = str(time_instance).strip()
@@ -200,15 +202,15 @@ def _generate_hourly_slots(schedule: list) -> list[str]:
                 end_h, end_m = time_range[1]
                 min_hour = min(min_hour, start_h)
                 max_hour = max(max_hour, end_h)
-    
+
     if min_hour == 23:  # No valid times found
         min_hour = 8
         max_hour = 20
-    
+
     slots = []
     for hour in range(min_hour, max_hour):
-        slots.append(f"{hour:02d}:00-{hour+1:02d}:00")
-    
+        slots.append(f"{hour:02d}:00-{hour + 1:02d}:00")
+
     return slots
 
 
@@ -235,18 +237,18 @@ def _time_overlaps_hour(course_time_str: str, hour_slot: str) -> bool:
     try:
         course_range = _extract_time_range(course_time_str)
         slot_range = _extract_time_range("DAY " + hour_slot)
-        
+
         if not course_range or not slot_range:
             return False
-        
+
         (c_start_h, c_start_m), (c_end_h, c_end_m) = course_range
         (s_start_h, s_start_m), (s_end_h, s_end_m) = slot_range
-        
+
         c_start_min = c_start_h * 60 + c_start_m
         c_end_min = c_end_h * 60 + c_end_m
         s_start_min = s_start_h * 60 + s_start_m
         s_end_min = s_end_h * 60 + s_end_m
-        
+
         return c_start_min < s_end_min and c_end_min > s_start_min
     except Exception:
         return False
@@ -266,11 +268,11 @@ def _calculate_course_duration_minutes(course_time_str: str) -> int:
     time_range = _extract_time_range(course_time_str)
     if not time_range:
         return 60
-    
+
     (start_h, start_m), (end_h, end_m) = time_range
     start_total_min = start_h * 60 + start_m
     end_total_min = end_h * 60 + end_m
-    
+
     duration = end_total_min - start_total_min
     return max(duration, 50)
 
@@ -387,20 +389,18 @@ def _build_calendar_grid_by_room(
                     continue
                 time_str = str(time_instance).strip()
                 day = _extract_day(time_str)
-                
+
                 if not day:
                     continue
-                    
+
                 if day not in calendar_data[room]:
                     calendar_data[room][day] = {}
-                
+
                 course_code = ci.course_str.rsplit(".", 1)[0]
                 section = (
-                    ci.course_str.rsplit(".", 1)[1]
-                    if "." in ci.course_str
-                    else "01"
+                    ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
                 )
-                
+
                 course_info = {
                     "course": course_code,
                     "section": section,
@@ -408,7 +408,7 @@ def _build_calendar_grid_by_room(
                     "type": "Lecture",
                     "full_course_str": ci.course_str,
                 }
-                
+
                 for hour_slot in hourly_slots:
                     if _time_overlaps_hour(time_str, hour_slot):
                         if hour_slot not in calendar_data[room][day]:
@@ -427,18 +427,16 @@ def _build_calendar_grid_by_room(
             time_instance = ci.times[ci.lab_index]
             time_str = str(time_instance).strip()
             day = _extract_day(time_str)
-            
+
             if not day:
                 continue
-                
+
             if day not in calendar_data[lab]:
                 calendar_data[lab][day] = {}
 
             course_code = ci.course_str.rsplit(".", 1)[0]
-            section = (
-                ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
-            )
-            
+            section = ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
+
             course_info = {
                 "course": course_code,
                 "section": section,
@@ -446,7 +444,7 @@ def _build_calendar_grid_by_room(
                 "type": "Lab",
                 "full_course_str": ci.course_str,
             }
-            
+
             for hour_slot in hourly_slots:
                 if _time_overlaps_hour(time_str, hour_slot):
                     if hour_slot not in calendar_data[lab][day]:
@@ -477,20 +475,18 @@ def _build_calendar_grid_by_faculty(
         for i, time_instance in enumerate(ci.times):
             time_str = str(time_instance).strip()
             day = _extract_day(time_str)
-            
+
             if not day:
                 continue
-                
+
             if day not in calendar_data[faculty]:
                 calendar_data[faculty][day] = {}
 
             course_code = ci.course_str.rsplit(".", 1)[0]
-            section = (
-                ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
-            )
+            section = ci.course_str.rsplit(".", 1)[1] if "." in ci.course_str else "01"
             location = ci.room if i != ci.lab_index else ci.lab
             location_type = "Room" if i != ci.lab_index else "Lab"
-            
+
             course_info = {
                 "course": course_code,
                 "section": section,
@@ -498,7 +494,7 @@ def _build_calendar_grid_by_faculty(
                 "type": location_type,
                 "full_course_str": ci.course_str,
             }
-            
+
             for hour_slot in hourly_slots:
                 if _time_overlaps_hour(time_str, hour_slot):
                     if hour_slot not in calendar_data[faculty][day]:
@@ -962,8 +958,9 @@ class ScheduleGUIView:
 
         def _show_course_detail(info: dict):
             detail_dialog.clear()
-            with detail_dialog, ui.card().classes(
-                "w-[380px] rounded-2xl shadow-xl p-6 gap-3"
+            with (
+                detail_dialog,
+                ui.card().classes("w-[380px] rounded-2xl shadow-xl p-6 gap-3"),
             ):
                 with ui.row().classes("w-full justify-between items-center"):
                     ui.label(
@@ -1220,13 +1217,21 @@ class ScheduleGUIView:
                                     "text-xs font-semibold text-center flex-1"
                                 )
 
-                        grid = ui.row().classes(
-                            "w-full gap-0 border border-gray-300 dark:border-gray-600"
-                        ).style("position: relative;")
+                        grid = (
+                            ui.row()
+                            .classes(
+                                "w-full gap-0 border border-gray-300 dark:border-gray-600"
+                            )
+                            .style("position: relative;")
+                        )
 
                         with grid:
-                            time_col = ui.column().classes("gap-0").style(
-                                f"width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                            time_col = (
+                                ui.column()
+                                .classes("gap-0")
+                                .style(
+                                    "width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                                )
                             )
                             with time_col:
                                 for hour in range(min_hour, max_hour):
@@ -1238,9 +1243,13 @@ class ScheduleGUIView:
                                     )
 
                             for day in days:
-                                day_col = ui.column().classes(
-                                    "flex-1 border-r border-gray-300 dark:border-gray-600"
-                                ).style("position: relative; overflow: visible;")
+                                day_col = (
+                                    ui.column()
+                                    .classes(
+                                        "flex-1 border-r border-gray-300 dark:border-gray-600"
+                                    )
+                                    .style("position: relative; overflow: visible;")
+                                )
 
                                 with day_col:
                                     total_height = hour_height * total_hours
@@ -1269,11 +1278,21 @@ class ScheduleGUIView:
                                             if key not in all_courses_for_day:
                                                 all_courses_for_day[key] = course_info
 
-                                    for (course_id, faculty), course_info in all_courses_for_day.items():
+                                    for (
+                                        course_id,
+                                        faculty,
+                                    ), course_info in all_courses_for_day.items():
                                         course_time_str = None
-                                        for ci in _state.schedules[_state.current_index]:
-                                            if ci.course_str == course_id and ci.faculty == faculty:
-                                                for t_idx, time_instance in enumerate(ci.times):
+                                        for ci in _state.schedules[
+                                            _state.current_index
+                                        ]:
+                                            if (
+                                                ci.course_str == course_id
+                                                and ci.faculty == faculty
+                                            ):
+                                                for t_idx, time_instance in enumerate(
+                                                    ci.times
+                                                ):
                                                     t_str = str(time_instance).strip()
                                                     if _extract_day(t_str) == day:
                                                         course_time_str = t_str
@@ -1282,58 +1301,78 @@ class ScheduleGUIView:
                                                     break
 
                                         if course_time_str:
-                                            time_range = _extract_time_range(course_time_str)
+                                            time_range = _extract_time_range(
+                                                course_time_str
+                                            )
                                             if time_range:
                                                 start_time, end_time = time_range
                                                 start_hour, start_min = start_time
 
-                                                duration_minutes = _calculate_course_duration_minutes(
-                                                    course_time_str
+                                                duration_minutes = (
+                                                    _calculate_course_duration_minutes(
+                                                        course_time_str
+                                                    )
                                                 )
                                                 top_offset = (
-                                                    (start_hour - min_hour) * hour_height
+                                                    (start_hour - min_hour)
+                                                    * hour_height
                                                 ) + (start_min * pixels_per_minute)
                                                 block_height = max(
                                                     20,
-                                                    int(duration_minutes * pixels_per_minute),
+                                                    int(
+                                                        duration_minutes
+                                                        * pixels_per_minute
+                                                    ),
                                                 )
 
                                                 color_tuple = faculty_color_map.get(
                                                     faculty, COURSE_COLORS[0]
                                                 )
-                                                color_class = _get_color_classes(color_tuple)
+                                                color_class = _get_color_classes(
+                                                    color_tuple
+                                                )
 
-                                                block = ui.card().classes(
-                                                    f"{color_class} p-1 text-xs shadow-sm absolute"
-                                                ).style(
-                                                    f"top: {top_offset}px; left: 1px; right: 1px; "
-                                                    f"height: {block_height}px; overflow: hidden; "
-                                                    f"border-radius: 3px; z-index: 10; "
-                                                    f"box-sizing: border-box; cursor: pointer;"
+                                                block = (
+                                                    ui.card()
+                                                    .classes(
+                                                        f"{color_class} p-1 text-xs shadow-sm absolute"
+                                                    )
+                                                    .style(
+                                                        f"top: {top_offset}px; left: 1px; right: 1px; "
+                                                        f"height: {block_height}px; overflow: hidden; "
+                                                        f"border-radius: 3px; z-index: 10; "
+                                                        f"box-sizing: border-box; cursor: pointer;"
+                                                    )
                                                 )
                                                 with block:
-                                                    ui.label(course_info["course"]).classes(
+                                                    ui.label(
+                                                        course_info["course"]
+                                                    ).classes(
                                                         "font-bold text-xs leading-tight"
                                                     )
                                                     ui.label(
                                                         f"Sec: {course_info['section']}"
                                                     ).classes("text-xs leading-tight")
-                                                    
 
                                                 # Factory to capture loop variables
                                                 def _make_room_handler(cid, fac):
                                                     def _handler():
                                                         info = _get_full_course_info(
-                                                            _state.schedules[_state.current_index],
+                                                            _state.schedules[
+                                                                _state.current_index
+                                                            ],
                                                             cid,
                                                             fac,
                                                         )
                                                         _show_course_detail(info)
+
                                                     return _handler
 
                                                 block.on(
                                                     "click",
-                                                    _make_room_handler(course_id, faculty),
+                                                    _make_room_handler(
+                                                        course_id, faculty
+                                                    ),
                                                 )
 
         def _render_faculty_calendar(faculty_filter: str | None = None):
@@ -1387,13 +1426,21 @@ class ScheduleGUIView:
                                     "text-xs font-semibold text-center flex-1"
                                 )
 
-                        grid = ui.row().classes(
-                            "w-full gap-0 border border-gray-300 dark:border-gray-600"
-                        ).style("position: relative;")
+                        grid = (
+                            ui.row()
+                            .classes(
+                                "w-full gap-0 border border-gray-300 dark:border-gray-600"
+                            )
+                            .style("position: relative;")
+                        )
 
                         with grid:
-                            time_col = ui.column().classes("gap-0").style(
-                                f"width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                            time_col = (
+                                ui.column()
+                                .classes("gap-0")
+                                .style(
+                                    "width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                                )
                             )
                             with time_col:
                                 for hour in range(min_hour, max_hour):
@@ -1405,9 +1452,13 @@ class ScheduleGUIView:
                                     )
 
                             for day in days:
-                                day_col = ui.column().classes(
-                                    "flex-1 border-r border-gray-300 dark:border-gray-600"
-                                ).style("position: relative; overflow: visible;")
+                                day_col = (
+                                    ui.column()
+                                    .classes(
+                                        "flex-1 border-r border-gray-300 dark:border-gray-600"
+                                    )
+                                    .style("position: relative; overflow: visible;")
+                                )
 
                                 with day_col:
                                     total_height = hour_height * total_hours
@@ -1435,11 +1486,21 @@ class ScheduleGUIView:
                                             if key not in all_courses_for_day:
                                                 all_courses_for_day[key] = course_info
 
-                                    for course_id, course_info in all_courses_for_day.items():
+                                    for (
+                                        course_id,
+                                        course_info,
+                                    ) in all_courses_for_day.items():
                                         course_time_str = None
-                                        for ci in _state.schedules[_state.current_index]:
-                                            if ci.course_str == course_id and ci.faculty == faculty:
-                                                for t_idx, time_instance in enumerate(ci.times):
+                                        for ci in _state.schedules[
+                                            _state.current_index
+                                        ]:
+                                            if (
+                                                ci.course_str == course_id
+                                                and ci.faculty == faculty
+                                            ):
+                                                for t_idx, time_instance in enumerate(
+                                                    ci.times
+                                                ):
                                                     t_str = str(time_instance).strip()
                                                     if _extract_day(t_str) == day:
                                                         course_time_str = t_str
@@ -1448,58 +1509,79 @@ class ScheduleGUIView:
                                                     break
 
                                         if course_time_str:
-                                            time_range = _extract_time_range(course_time_str)
+                                            time_range = _extract_time_range(
+                                                course_time_str
+                                            )
                                             if time_range:
                                                 start_time, end_time = time_range
                                                 start_hour, start_min = start_time
 
-                                                duration_minutes = _calculate_course_duration_minutes(
-                                                    course_time_str
+                                                duration_minutes = (
+                                                    _calculate_course_duration_minutes(
+                                                        course_time_str
+                                                    )
                                                 )
                                                 top_offset = (
-                                                    (start_hour - min_hour) * hour_height
+                                                    (start_hour - min_hour)
+                                                    * hour_height
                                                 ) + (start_min * pixels_per_minute)
                                                 block_height = max(
                                                     20,
-                                                    int(duration_minutes * pixels_per_minute),
+                                                    int(
+                                                        duration_minutes
+                                                        * pixels_per_minute
+                                                    ),
                                                 )
 
                                                 color_tuple = course_color_map.get(
-                                                    course_info["course"], COURSE_COLORS[0]
+                                                    course_info["course"],
+                                                    COURSE_COLORS[0],
                                                 )
-                                                color_class = _get_color_classes(color_tuple)
+                                                color_class = _get_color_classes(
+                                                    color_tuple
+                                                )
 
-                                                block = ui.card().classes(
-                                                    f"{color_class} p-1 text-xs shadow-sm absolute"
-                                                ).style(
-                                                    f"top: {top_offset}px; left: 1px; right: 1px; "
-                                                    f"height: {block_height}px; overflow: hidden; "
-                                                    f"border-radius: 3px; z-index: 10; "
-                                                    f"box-sizing: border-box; cursor: pointer;"
+                                                block = (
+                                                    ui.card()
+                                                    .classes(
+                                                        f"{color_class} p-1 text-xs shadow-sm absolute"
+                                                    )
+                                                    .style(
+                                                        f"top: {top_offset}px; left: 1px; right: 1px; "
+                                                        f"height: {block_height}px; overflow: hidden; "
+                                                        f"border-radius: 3px; z-index: 10; "
+                                                        f"box-sizing: border-box; cursor: pointer;"
+                                                    )
                                                 )
                                                 with block:
-                                                    ui.label(course_info["course"]).classes(
+                                                    ui.label(
+                                                        course_info["course"]
+                                                    ).classes(
                                                         "font-bold text-xs leading-tight"
                                                     )
                                                     ui.label(
                                                         f"Sec: {course_info['section']}"
                                                     ).classes("text-xs leading-tight")
-                                                 
 
                                                 # Factory to capture loop variables
                                                 def _make_faculty_handler(cid, fac):
                                                     def _handler():
                                                         info = _get_full_course_info(
-                                                            _state.schedules[_state.current_index],
+                                                            _state.schedules[
+                                                                _state.current_index
+                                                            ],
                                                             cid,
                                                             fac,
                                                         )
                                                         _show_course_detail(info)
+
                                                     return _handler
 
                                                 block.on(
                                                     "click",
-                                                    _make_faculty_handler(course_id, faculty),
+                                                    _make_faculty_handler(
+                                                        course_id, faculty
+                                                    ),
                                                 )
 
         def on_room_filter(e):

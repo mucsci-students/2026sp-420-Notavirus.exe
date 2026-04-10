@@ -21,12 +21,15 @@ from views.schedule_gui_view import (
     _extract_time_portion,
     _build_color_map,
     _get_color_classes,
+    _extract_day,
+    _calculate_course_span,
     COURSE_COLORS,
 )
 
 
 class _FacultyCalendarState:
     """Holds calendar state for faculty view."""
+
     def __init__(self):
         self.schedules: list[list] = []
         self.current_index: int = 0
@@ -1187,7 +1190,7 @@ class FacultyGUIView:
     def faculty_view():
         """
         Displays faculty schedules in a calendar view.
-        
+
         Allows users to upload or generate schedules and view them as
         calendar grids organized by faculty member.
 
@@ -1246,7 +1249,7 @@ class FacultyGUIView:
         def _render_faculty_calendars(faculty_filter: str | None = None):
             """Render calendar grids for each faculty member."""
             calendar_container.clear()
-            
+
             if not _faculty_calendar_state.schedules:
                 with calendar_container:
                     ui.label("No schedules loaded.").classes(
@@ -1254,7 +1257,9 @@ class FacultyGUIView:
                     )
                 return
 
-            current_schedule = _faculty_calendar_state.schedules[_faculty_calendar_state.current_index]
+            current_schedule = _faculty_calendar_state.schedules[
+                _faculty_calendar_state.current_index
+            ]
             calendar_data = _build_calendar_grid_by_faculty(
                 current_schedule, faculty_filter=faculty_filter
             )
@@ -1267,12 +1272,9 @@ class FacultyGUIView:
                 return
 
             days, hourly_slots = _extract_calendar_metadata(current_schedule)
-            
+
             # Build color map for courses
-            all_courses = [
-                ci.course_str.rsplit(".", 1)[0]
-                for ci in current_schedule
-            ]
+            all_courses = [ci.course_str.rsplit(".", 1)[0] for ci in current_schedule]
             course_color_map = _build_color_map(all_courses)
 
             for faculty in sorted(calendar_data.keys()):
@@ -1289,7 +1291,9 @@ class FacultyGUIView:
                         )
 
                         # Track rendered courses by day to show as connected blocks
-                        rendered_courses_by_day: dict[str, set[str]] = {day: set() for day in days}
+                        rendered_courses_by_day: dict[str, set[str]] = {
+                            day: set() for day in days
+                        }
 
                         # Calendar grid
                         with ui.column().classes("w-full overflow-x-auto"):
@@ -1320,41 +1324,68 @@ class FacultyGUIView:
                                             "flex-1 p-1 min-h-20 border border-gray-200 dark:border-gray-700"
                                         ):
                                             for course_info in courses:
-                                                course_id = course_info.get("full_course_str", "")
-                                                
+                                                course_id = course_info.get(
+                                                    "full_course_str", ""
+                                                )
+
                                                 # Skip if already rendered in this day (render as single block)
-                                                if course_id in rendered_courses_by_day[day]:
+                                                if (
+                                                    course_id
+                                                    in rendered_courses_by_day[day]
+                                                ):
                                                     continue
-                                                
-                                                rendered_courses_by_day[day].add(course_id)
-                                                
+
+                                                rendered_courses_by_day[day].add(
+                                                    course_id
+                                                )
+
                                                 # Calculate span for this course
                                                 course_time_str = None
                                                 for ci in current_schedule:
-                                                    if (ci.course_str == course_id and ci.faculty == faculty):
-                                                        for t_idx, time_instance in enumerate(ci.times):
-                                                            t_str = str(time_instance).strip()
-                                                            if _extract_day(t_str) == day:
+                                                    if (
+                                                        ci.course_str == course_id
+                                                        and ci.faculty == faculty
+                                                    ):
+                                                        for (
+                                                            t_idx,
+                                                            time_instance,
+                                                        ) in enumerate(ci.times):
+                                                            t_str = str(
+                                                                time_instance
+                                                            ).strip()
+                                                            if (
+                                                                _extract_day(t_str)
+                                                                == day
+                                                            ):
                                                                 course_time_str = t_str
                                                                 break
                                                         if course_time_str:
                                                             break
-                                                
+
                                                 span = 1
                                                 if course_time_str:
-                                                    span = _calculate_course_span(course_time_str, hourly_slots)
-                                                
+                                                    span = _calculate_course_span(
+                                                        course_time_str, hourly_slots
+                                                    )
+
                                                 # Color by course code
                                                 color_tuple = course_color_map.get(
-                                                    course_info["course"], COURSE_COLORS[0]
+                                                    course_info["course"],
+                                                    COURSE_COLORS[0],
                                                 )
                                                 bg_color = _get_color_classes(
                                                     f"{color_tuple[0]} {color_tuple[1]}"
                                                 )
-                                                with ui.card().classes(
-                                                    f"{bg_color} p-1.5 text-sm w-full"
-                                                ).style(
-                                                    f"min-height: {20 * span * 5}px;" if span > 1 else ""
+                                                with (
+                                                    ui.card()
+                                                    .classes(
+                                                        f"{bg_color} p-1.5 text-sm w-full"
+                                                    )
+                                                    .style(
+                                                        f"min-height: {20 * span * 5}px;"
+                                                        if span > 1
+                                                        else ""
+                                                    )
                                                 ):
                                                     ui.label(
                                                         course_info["course"]
@@ -1372,7 +1403,7 @@ class FacultyGUIView:
         def _reload_calendar():
             """Reload calendar with current filters."""
             faculty_val = None
-            if faculty_filter_select and hasattr(faculty_filter_select, 'value'):
+            if faculty_filter_select and hasattr(faculty_filter_select, "value"):
                 faculty_val = faculty_filter_select.value
                 if faculty_val == "All":
                     faculty_val = None
@@ -1409,7 +1440,9 @@ class FacultyGUIView:
 
             # Faculty filter
             if _faculty_calendar_state.schedules:
-                current_schedule = _faculty_calendar_state.schedules[_faculty_calendar_state.current_index]
+                current_schedule = _faculty_calendar_state.schedules[
+                    _faculty_calendar_state.current_index
+                ]
                 faculty_options = ["All"] + sorted(
                     {ci.faculty for ci in current_schedule}
                 )

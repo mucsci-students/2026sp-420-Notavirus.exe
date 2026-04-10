@@ -75,8 +75,9 @@ def test_extract_calendar_metadata():
     assert "FRI" in days
     assert days == ["MON", "TUE", "WED", "THU", "FRI"]
 
-    assert "MON 10:00-11:30" in time_slots
-    assert "TUE 11:00-12:30" in time_slots
+    # time_slots are now hourly buckets like "10:00-11:00", not full course strings
+    assert "10:00-11:00" in time_slots
+    assert "11:00-12:00" in time_slots
 
     print("[PASS] test_extract_calendar_metadata passed")
 
@@ -105,9 +106,12 @@ def test_build_calendar_grid_by_room():
 
     assert "Roddy 136" in calendar_data
     assert "MON" in calendar_data["Roddy 136"]
-    assert "MON 10:00-11:30" in calendar_data["Roddy 136"]["MON"]
 
-    course_info = calendar_data["Roddy 136"]["MON"]["MON 10:00-11:30"][0]
+    # Keys are now hourly slots; "MON 10:00-11:30" spans "10:00-11:00" and "11:00-12:00"
+    assert "10:00-11:00" in calendar_data["Roddy 136"]["MON"]
+    assert "11:00-12:00" in calendar_data["Roddy 136"]["MON"]
+
+    course_info = calendar_data["Roddy 136"]["MON"]["10:00-11:00"][0]
     assert course_info["course"] == "CMSC 476"
     assert course_info["section"] == "01"
     assert course_info["faculty"] == "Zoppetti"
@@ -170,7 +174,9 @@ def test_build_calendar_grid_by_faculty():
     assert "Zoppetti" in calendar_data
     assert "Yang" in calendar_data
 
-    course_info = calendar_data["Zoppetti"]["MON"]["MON 10:00-11:30"][0]
+    # Keys are now hourly slots; "MON 10:00-11:30" maps to "10:00-11:00" and "11:00-12:00"
+    assert "10:00-11:00" in calendar_data["Zoppetti"]["MON"]
+    course_info = calendar_data["Zoppetti"]["MON"]["10:00-11:00"][0]
     assert course_info["course"] == "CMSC 476"
     assert course_info["location"] == "Roddy 136"
     assert course_info["type"] == "Room"
@@ -226,13 +232,13 @@ def test_room_lab_separation():
     assert "Roddy 136" in calendar_data
     assert "Linux Lab" in calendar_data
 
-    # Room should have lecture time
-    assert "MON 10:00-11:30" in calendar_data["Roddy 136"]["MON"]
-    assert calendar_data["Roddy 136"]["MON"]["MON 10:00-11:30"][0]["type"] == "Lecture"
+    # Room should have lecture time — "MON 10:00-11:30" spans "10:00-11:00" and "11:00-12:00"
+    assert "10:00-11:00" in calendar_data["Roddy 136"]["MON"]
+    assert calendar_data["Roddy 136"]["MON"]["10:00-11:00"][0]["type"] == "Lecture"
 
-    # Lab should have lab time
-    assert "MON 14:00-15:30" in calendar_data["Linux Lab"]["MON"]
-    assert calendar_data["Linux Lab"]["MON"]["MON 14:00-15:30"][0]["type"] == "Lab"
+    # Lab should have lab time — "MON 14:00-15:30" spans "14:00-15:00" and "15:00-16:00"
+    assert "14:00-15:00" in calendar_data["Linux Lab"]["MON"]
+    assert calendar_data["Linux Lab"]["MON"]["14:00-15:00"][0]["type"] == "Lab"
 
     print("[PASS] test_room_lab_separation passed")
 

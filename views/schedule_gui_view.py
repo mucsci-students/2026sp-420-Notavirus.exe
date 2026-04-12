@@ -12,7 +12,7 @@ Sprint 3 additions:
   - SchedulerFacade (Facade design pattern) replaces the raw model call
 
 Sprint 4 additions:
-  - Clickable course blocks on both calendar views open a detail dialog
+  - Course blocks show full info inline: course, professor, time, room/lab
 """
 
 import asyncio
@@ -281,10 +281,28 @@ def _sort_time_slots(time_slots: set[str] | list[str]) -> list[str]:
     """Sort time slots chronologically by their start time."""
 
     def get_sort_key(time_str: str) -> tuple[int, int]:
-        parsed = _parse_time_string("DAY " + time_str)
+        parsed = _parse_time_string(time_str)
         return parsed if parsed else (23, 59)
 
     return sorted(time_slots, key=get_sort_key)
+
+
+def _format_time_range_short(time_str: str) -> str:
+    """Format 'MON 09:00-10:50' to '9:00 - 10:50'."""
+    try:
+        parts = time_str.strip().split(maxsplit=1)
+        if len(parts) < 2:
+            return time_str
+        time_part = parts[1]
+        start_str, end_str = time_part.split("-")
+
+        def fmt(t: str) -> str:
+            h, m = map(int, t.strip().split(":"))
+            return f"{h}:{m:02d}"
+
+        return f"{fmt(start_str)} - {fmt(end_str)}"
+    except Exception:
+        return time_str
 
 
 def _get_full_course_info(schedule: list, course_str: str, faculty: str) -> dict:
@@ -407,6 +425,9 @@ def _build_calendar_grid_by_room(
                     "faculty": ci.faculty,
                     "type": "Lecture",
                     "full_course_str": ci.course_str,
+                    "time_str": time_str,
+                    "room": ci.room or "",
+                    "lab": ci.lab or "",
                 }
 
                 for hour_slot in hourly_slots:
@@ -443,6 +464,9 @@ def _build_calendar_grid_by_room(
                 "faculty": ci.faculty,
                 "type": "Lab",
                 "full_course_str": ci.course_str,
+                "time_str": time_str,
+                "room": ci.room or "",
+                "lab": ci.lab or "",
             }
 
             for hour_slot in hourly_slots:
@@ -493,6 +517,9 @@ def _build_calendar_grid_by_faculty(
                 "location": location or "TBA",
                 "type": location_type,
                 "full_course_str": ci.course_str,
+                "time_str": time_str,
+                "room": ci.room or "",
+                "lab": ci.lab or "",
             }
 
             for hour_slot in hourly_slots:
@@ -951,48 +978,6 @@ class ScheduleGUIView:
                         "color=black text-color=white rounded no-caps"
                     ).on("click", do_export)
 
-        # ----------------------------------------------------------------
-        # Course detail dialog — shared by both calendar views
-        # ----------------------------------------------------------------
-        detail_dialog = ui.dialog()
-
-        def _show_course_detail(info: dict):
-            detail_dialog.clear()
-            with (
-                detail_dialog,
-                ui.card().classes("w-[380px] rounded-2xl shadow-xl p-6 gap-3"),
-            ):
-                with ui.row().classes("w-full justify-between items-center"):
-                    ui.label(
-                        f"{info.get('course', '')}  ·  Section {info.get('section', '')}"
-                    ).classes("text-xl font-bold")
-                    ui.button(icon="close", on_click=detail_dialog.close).props(
-                        "flat round dense"
-                    )
-                ui.separator()
-                with ui.column().classes("gap-2 w-full"):
-                    with ui.row().classes("gap-2 items-center"):
-                        ui.icon("person").classes("text-gray-500")
-                        ui.label(info.get("faculty", "—")).classes("text-sm")
-                    with ui.row().classes("gap-2 items-center"):
-                        ui.icon("meeting_room").classes("text-gray-500")
-                        ui.label(f"Room: {info.get('room', '—')}").classes("text-sm")
-                    with ui.row().classes("gap-2 items-center"):
-                        ui.icon("science").classes("text-gray-500")
-                        ui.label(f"Lab: {info.get('lab', '—')}").classes("text-sm")
-                    ui.separator()
-                    ui.label("Lecture Times").classes(
-                        "text-xs font-semibold text-gray-500 uppercase tracking-wide"
-                    )
-                    for t in info.get("lecture_times", []):
-                        ui.label(t).classes("text-sm ml-2")
-                    if info.get("lab_time"):
-                        ui.label("Lab Time").classes(
-                            "text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1"
-                        )
-                        ui.label(info["lab_time"]).classes("text-sm ml-2")
-            detail_dialog.open()
-
         if not _state.schedules:
             with ui.column().classes("gap-4 items-center w-full pt-20"):
                 ui.label("No schedules available.").classes(
@@ -1170,7 +1155,8 @@ class ScheduleGUIView:
             ).on("click", upload_dialog.open)
 
         def _render_room_calendar(location_filter: str | None = None):
-            """Render calendar like Google Calendar with actual course durations."""
+            """Render room calendar. Each block shows: course+section, professor,
+            start-end time. Room/lab is omitted since it's the calendar header."""
             calendar_room_container.clear()
             calendar_data = _build_calendar_grid_by_room(
                 _state.schedules[_state.current_index], location_filter=location_filter
@@ -1282,101 +1268,76 @@ class ScheduleGUIView:
                                         course_id,
                                         faculty,
                                     ), course_info in all_courses_for_day.items():
-                                        course_time_str = None
-                                        for ci in _state.schedules[
-                                            _state.current_index
-                                        ]:
-                                            if (
-                                                ci.course_str == course_id
-                                                and ci.faculty == faculty
-                                            ):
-                                                for t_idx, time_instance in enumerate(
-                                                    ci.times
-                                                ):
-                                                    t_str = str(time_instance).strip()
-                                                    if _extract_day(t_str) == day:
-                                                        course_time_str = t_str
-                                                        break
-                                                if course_time_str:
-                                                    break
+                                        time_str = course_info.get("time_str", "")
+                                        if not time_str:
+                                            continue
 
-                                        if course_time_str:
-                                            time_range = _extract_time_range(
-                                                course_time_str
+                                        time_range = _extract_time_range(time_str)
+                                        if not time_range:
+                                            continue
+
+                                        start_time, end_time = time_range
+                                        start_hour, start_min = start_time
+
+                                        duration_minutes = (
+                                            _calculate_course_duration_minutes(time_str)
+                                        )
+                                        top_offset = (
+                                            (start_hour - min_hour) * hour_height
+                                        ) + (start_min * pixels_per_minute)
+                                        block_height = max(
+                                            20,
+                                            int(duration_minutes * pixels_per_minute),
+                                        )
+
+                                        color_tuple = faculty_color_map.get(
+                                            faculty, COURSE_COLORS[0]
+                                        )
+                                        color_class = _get_color_classes(color_tuple)
+
+                                        # Line 3: "9:00 - 10:50"
+                                        time_display = _format_time_range_short(
+                                            time_str
+                                        )
+
+                                        # Line 4: room if lecture, lab if lab
+                                        # (room is implied by calendar header, but
+                                        # show the other location if it exists)
+
+                                        block = (
+                                            ui.card()
+                                            .classes(
+                                                f"{color_class} p-1 text-xs shadow-sm absolute"
                                             )
-                                            if time_range:
-                                                start_time, end_time = time_range
-                                                start_hour, start_min = start_time
-
-                                                duration_minutes = (
-                                                    _calculate_course_duration_minutes(
-                                                        course_time_str
-                                                    )
+                                            .style(
+                                                f"top: {top_offset}px; left: 1px; right: 1px; "
+                                                f"height: {block_height}px; overflow: visible; "
+                                                f"border-radius: 3px; z-index: 10; "
+                                                f"box-sizing: border-box;"
+                                            )
+                                        )
+                                        with block:
+                                            with (
+                                                ui.row()
+                                                .classes("gap-0 w-full")
+                                                .style(
+                                                    "flex-wrap: wrap; line-height: 1.1;"
                                                 )
-                                                top_offset = (
-                                                    (start_hour - min_hour)
-                                                    * hour_height
-                                                ) + (start_min * pixels_per_minute)
-                                                block_height = max(
-                                                    20,
-                                                    int(
-                                                        duration_minutes
-                                                        * pixels_per_minute
-                                                    ),
+                                            ):
+                                                ui.label(
+                                                    f"{course_info['course']}.{course_info['section']}"
+                                                ).classes("font-bold text-xs w-1/2")
+                                                ui.label(time_display).classes(
+                                                    "text-xs w-1/2 text-right"
                                                 )
-
-                                                color_tuple = faculty_color_map.get(
-                                                    faculty, COURSE_COLORS[0]
-                                                )
-                                                color_class = _get_color_classes(
-                                                    color_tuple
-                                                )
-
-                                                block = (
-                                                    ui.card()
-                                                    .classes(
-                                                        f"{color_class} p-1 text-xs shadow-sm absolute"
-                                                    )
-                                                    .style(
-                                                        f"top: {top_offset}px; left: 1px; right: 1px; "
-                                                        f"height: {block_height}px; overflow: hidden; "
-                                                        f"border-radius: 3px; z-index: 10; "
-                                                        f"box-sizing: border-box; cursor: pointer;"
-                                                    )
-                                                )
-                                                with block:
-                                                    ui.label(
-                                                        course_info["course"]
-                                                    ).classes(
-                                                        "font-bold text-xs leading-tight"
-                                                    )
-                                                    ui.label(
-                                                        f"Sec: {course_info['section']}"
-                                                    ).classes("text-xs leading-tight")
-
-                                                # Factory to capture loop variables
-                                                def _make_room_handler(cid, fac):
-                                                    def _handler():
-                                                        info = _get_full_course_info(
-                                                            _state.schedules[
-                                                                _state.current_index
-                                                            ],
-                                                            cid,
-                                                            fac,
-                                                        )
-                                                        _show_course_detail(info)
-
-                                                    return _handler
-
-                                                block.on(
-                                                    "click",
-                                                    _make_room_handler(
-                                                        course_id, faculty
-                                                    ),
+                                                ui.label(faculty).classes(
+                                                    "text-xs w-1/2"
                                                 )
 
         def _render_faculty_calendar(faculty_filter: str | None = None):
-            """Render calendar like Google Calendar with actual course durations."""
+            """Render faculty calendar. Each block shows: course+section, time,
+            room (and lab if exists). Professor is omitted since it's the
+            calendar section header."""
             calendar_faculty_container.clear()
             calendar_data = _build_calendar_grid_by_faculty(
                 _state.schedules[_state.current_index], faculty_filter=faculty_filter
@@ -1490,99 +1451,71 @@ class ScheduleGUIView:
                                         course_id,
                                         course_info,
                                     ) in all_courses_for_day.items():
-                                        course_time_str = None
-                                        for ci in _state.schedules[
-                                            _state.current_index
-                                        ]:
-                                            if (
-                                                ci.course_str == course_id
-                                                and ci.faculty == faculty
-                                            ):
-                                                for t_idx, time_instance in enumerate(
-                                                    ci.times
-                                                ):
-                                                    t_str = str(time_instance).strip()
-                                                    if _extract_day(t_str) == day:
-                                                        course_time_str = t_str
-                                                        break
-                                                if course_time_str:
-                                                    break
+                                        time_str = course_info.get("time_str", "")
+                                        if not time_str:
+                                            continue
 
-                                        if course_time_str:
-                                            time_range = _extract_time_range(
-                                                course_time_str
+                                        time_range = _extract_time_range(time_str)
+                                        if not time_range:
+                                            continue
+
+                                        start_time, end_time = time_range
+                                        start_hour, start_min = start_time
+
+                                        duration_minutes = (
+                                            _calculate_course_duration_minutes(time_str)
+                                        )
+                                        top_offset = (
+                                            (start_hour - min_hour) * hour_height
+                                        ) + (start_min * pixels_per_minute)
+                                        block_height = max(
+                                            20,
+                                            int(duration_minutes * pixels_per_minute),
+                                        )
+
+                                        color_tuple = course_color_map.get(
+                                            course_info["course"], COURSE_COLORS[0]
+                                        )
+                                        color_class = _get_color_classes(color_tuple)
+
+                                        # Line 3: "9:00 - 10:50"
+                                        time_display = _format_time_range_short(
+                                            time_str
+                                        )
+
+                                        # Line 4: room, and lab if it exists
+                                        loc_display = course_info.get("location", "")
+
+                                        block = (
+                                            ui.card()
+                                            .classes(
+                                                f"{color_class} p-1 text-xs shadow-sm absolute"
                                             )
-                                            if time_range:
-                                                start_time, end_time = time_range
-                                                start_hour, start_min = start_time
-
-                                                duration_minutes = (
-                                                    _calculate_course_duration_minutes(
-                                                        course_time_str
+                                            .style(
+                                                f"top: {top_offset}px; left: 1px; right: 1px; "
+                                                f"height: {block_height}px; overflow: visible; "
+                                                f"border-radius: 3px; z-index: 10; "
+                                                f"box-sizing: border-box;"
+                                            )
+                                        )
+                                        with block:
+                                            with (
+                                                ui.row()
+                                                .classes("gap-0 w-full")
+                                                .style(
+                                                    "flex-wrap: wrap; line-height: 1.1;"
+                                                )
+                                            ):
+                                                ui.label(
+                                                    f"{course_info['course']}.{course_info['section']}"
+                                                ).classes("font-bold text-xs w-1/2")
+                                                ui.label(time_display).classes(
+                                                    "text-xs w-1/2 text-right"
+                                                )
+                                                if loc_display:
+                                                    ui.label(loc_display).classes(
+                                                        "text-xs w-full"
                                                     )
-                                                )
-                                                top_offset = (
-                                                    (start_hour - min_hour)
-                                                    * hour_height
-                                                ) + (start_min * pixels_per_minute)
-                                                block_height = max(
-                                                    20,
-                                                    int(
-                                                        duration_minutes
-                                                        * pixels_per_minute
-                                                    ),
-                                                )
-
-                                                color_tuple = course_color_map.get(
-                                                    course_info["course"],
-                                                    COURSE_COLORS[0],
-                                                )
-                                                color_class = _get_color_classes(
-                                                    color_tuple
-                                                )
-
-                                                block = (
-                                                    ui.card()
-                                                    .classes(
-                                                        f"{color_class} p-1 text-xs shadow-sm absolute"
-                                                    )
-                                                    .style(
-                                                        f"top: {top_offset}px; left: 1px; right: 1px; "
-                                                        f"height: {block_height}px; overflow: hidden; "
-                                                        f"border-radius: 3px; z-index: 10; "
-                                                        f"box-sizing: border-box; cursor: pointer;"
-                                                    )
-                                                )
-                                                with block:
-                                                    ui.label(
-                                                        course_info["course"]
-                                                    ).classes(
-                                                        "font-bold text-xs leading-tight"
-                                                    )
-                                                    ui.label(
-                                                        f"Sec: {course_info['section']}"
-                                                    ).classes("text-xs leading-tight")
-
-                                                # Factory to capture loop variables
-                                                def _make_faculty_handler(cid, fac):
-                                                    def _handler():
-                                                        info = _get_full_course_info(
-                                                            _state.schedules[
-                                                                _state.current_index
-                                                            ],
-                                                            cid,
-                                                            fac,
-                                                        )
-                                                        _show_course_detail(info)
-
-                                                    return _handler
-
-                                                block.on(
-                                                    "click",
-                                                    _make_faculty_handler(
-                                                        course_id, faculty
-                                                    ),
-                                                )
 
         def on_room_filter(e):
             val = e.value if e.value != "All" else None

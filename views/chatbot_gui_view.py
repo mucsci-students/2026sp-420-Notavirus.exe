@@ -113,9 +113,8 @@ class ChatbotGUIView:
             ui.left_drawer(
                 value=False, bordered=True, top_corner=True, bottom_corner=True
             )
-            .style(
-                "width: 25vw; min-width: 340px; padding: 0; display: flex; flex-direction: column;"
-            )
+            .props("width=340")
+            .style("padding: 0; display: flex; flex-direction: column;")
             .classes("ai-drawer") as drawer
         ):
             # Header

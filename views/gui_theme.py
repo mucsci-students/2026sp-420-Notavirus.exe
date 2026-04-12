@@ -23,6 +23,22 @@ class GUITheme:
             "flat round"
         ).classes("absolute top-4 right-4 z-50 !text-black dark:!text-white")
 
+        app.storage.user.setdefault("flash_message", None)
+
+        def _show_flash():
+            flash = app.storage.user.get("flash_message")
+            if flash:
+                ui.notify(
+                    flash,
+                    type="info",
+                    position="bottom",
+                    close_button=True,
+                    timeout=3000,
+                )
+                app.storage.user["flash_message"] = None
+
+        ui.timer(0.1, _show_flash, once=True)
+
         # Dark mode toggle button — pinned to the top-right corner of every page
         ui.button(icon="brightness_4", on_click=dark.toggle).props(
             "flat round"
@@ -40,16 +56,66 @@ class GUITheme:
             drawer.show()
             app.storage.user["chat_open"] = True
 
-        with ui.element("div").classes("fixed bottom-6 left-6 z-50"):
-            # Round button styled black in light mode, white in dark mode
+        def _undo():
+            from views.gui_view import GUIView
+
+            if GUIView.controller and hasattr(GUIView.controller, "perform_undo"):
+                GUIView.controller.perform_undo()
+
+        def _redo():
+            from views.gui_view import GUIView
+
+            if GUIView.controller and hasattr(GUIView.controller, "perform_redo"):
+                GUIView.controller.perform_redo()
+
+        def get_undo_disable():
+            from views.gui_view import GUIView
+
+            c = GUIView.controller
+            return not (
+                c
+                and hasattr(c, "undo_redo_controller")
+                and c.undo_redo_controller.can_undo()
+            )
+
+        def get_redo_disable():
+            from views.gui_view import GUIView
+
+            c = GUIView.controller
+            return not (
+                c
+                and hasattr(c, "undo_redo_controller")
+                and c.undo_redo_controller.can_redo()
+            )
+
+        # Bind the pill to 'pill_row' so we can modify its CSS position.
+        # "left-6" is removed and replaced with inline style "left: 24px" so we can dynamically slide it.
+        with (
+            ui.row()
+            .classes(
+                "fixed bottom-6 z-50 !bg-black dark:!bg-white rounded-full shadow-lg items-center px-3 py-1 gap-2"
+            )
+            .style(
+                "left: 24px; transition: left 0.22s cubic-bezier(0.4, 0, 0.2, 1);"
+            ) as pill_row
+        ):
+            undo_btn = (
+                ui.button(icon="undo", on_click=_undo)
+                .props("flat round dense")
+                .classes("!text-white dark:!text-black transition-opacity duration-200")
+                .tooltip("Undo")
+            )
+
+            ui.element("div").classes("w-px h-6 bg-gray-600 dark:bg-gray-400")
+
             with (
                 ui.button(on_click=_open_chat)
-                .props("round")
-                .classes("w-14 h-14 !bg-black dark:!bg-white")
+                .props("flat round")
+                .classes(
+                    "w-12 h-12 flex justify-center items-center hover:bg-gray-800 dark:hover:bg-gray-200"
+                )
+                .tooltip("AI Assistant")
             ):
-                # Tabler Icons "robot-2" SVG drawn inline
-                # stroke="currentColor" means the icon inherits the button's text color
-                # so it is white on black in light mode and black on white in dark mode
                 ui.html(
                     sanitize=False,
                     content="""
@@ -66,6 +132,47 @@ class GUITheme:
                     </svg>
                 """,
                 )
+
+            ui.element("div").classes("w-px h-6 bg-gray-600 dark:bg-gray-400")
+
+            redo_btn = (
+                ui.button(icon="redo", on_click=_redo)
+                .props("flat round dense")
+                .classes("!text-white dark:!text-black transition-opacity duration-200")
+                .tooltip("Redo")
+            )
+
+            # Perfectly sync the pill's slide animation with the AI drawer opening/closing (340px + 24px = 364px)
+            drawer.on_value_change(
+                lambda e: pill_row.style(f"left: {'364px' if e.value else '24px'};")
+            )
+
+            def _update_btn_states():
+                try:
+                    if (
+                        undo_btn.is_deleted
+                        or redo_btn.is_deleted
+                        or pill_row.is_deleted
+                    ):
+                        return
+
+                    if get_undo_disable():
+                        undo_btn.disable()
+                        undo_btn.classes("opacity-30", remove="opacity-100")
+                    else:
+                        undo_btn.enable()
+                        undo_btn.classes("opacity-100", remove="opacity-30")
+
+                    if get_redo_disable():
+                        redo_btn.disable()
+                        redo_btn.classes("opacity-30", remove="opacity-100")
+                    else:
+                        redo_btn.enable()
+                        redo_btn.classes("opacity-100", remove="opacity-30")
+                except Exception:
+                    pass
+
+            ui.timer(0.5, _update_btn_states)
 
         # Inject global CSS styles that apply to every page
         # These fix Quasar component colors in both light and dark mode

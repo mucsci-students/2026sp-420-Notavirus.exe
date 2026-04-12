@@ -203,6 +203,7 @@ class ChatbotController:
     def _trigger_save(self, success: bool) -> bool:
         if success:
             from views.gui_view import GUIView
+
             if GUIView.controller:
                 GUIView.controller.temp_save()
         return success
@@ -350,7 +351,9 @@ class ChatbotController:
                 update = {"credits": int(value)}
             else:
                 update = {field: [v.strip() for v in value.split(",") if v.strip()]}
-            ok = self._trigger_save(self.course_model.modify_course(course_id, **update))
+            ok = self._trigger_save(
+                self.course_model.modify_course(course_id, **update)
+            )
             if ok:
                 return f"Course '{course_id}' field '{field}' updated."
             return f"Failed to modify course '{course_id}' (not found)."
@@ -491,7 +494,9 @@ class ChatbotController:
         updated = []
 
         if is_full_time is not None:
-            ok = self._trigger_save(self.faculty_model.set_position_type(name, is_full_time))
+            ok = self._trigger_save(
+                self.faculty_model.set_position_type(name, is_full_time)
+            )
             if ok:
                 updated.append("full time" if is_full_time else "adjunct")
 
@@ -499,22 +504,30 @@ class ChatbotController:
             times_dict = self._parse_times(times)
             if not times_dict:
                 return "Failed: times string is invalid. Use format 'MON:08:00-17:00,WED:09:00-18:00'."
-            self._trigger_save(self.faculty_model.modify_faculty(name, "times", times_dict))
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "times", times_dict)
+            )
             updated.append("availability times")
 
         if course_preferences is not None:
             prefs = self._parse_preferences(course_preferences)
-            self._trigger_save(self.faculty_model.modify_faculty(name, "course_preferences", prefs))
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "course_preferences", prefs)
+            )
             updated.append("course preferences")
 
         if room_preferences is not None:
             prefs = self._parse_preferences(room_preferences)
-            self._trigger_save(self.faculty_model.modify_faculty(name, "room_preferences", prefs))
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "room_preferences", prefs)
+            )
             updated.append("room preferences")
 
         if lab_preferences is not None:
             prefs = self._parse_preferences(lab_preferences)
-            self._trigger_save(self.faculty_model.modify_faculty(name, "lab_preferences", prefs))
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "lab_preferences", prefs)
+            )
             updated.append("lab preferences")
 
         if not updated:
@@ -545,7 +558,9 @@ class ChatbotController:
 
     @requires_config
     def _add_conflict(self, course_id_1: str, course_id_2: str) -> str:
-        ok = self._trigger_save(self.conflict_model.add_conflict(course_id_1, course_id_2))
+        ok = self._trigger_save(
+            self.conflict_model.add_conflict(course_id_1, course_id_2)
+        )
         if ok:
             return f"Conflict added between '{course_id_1}' and '{course_id_2}'."
         return (
@@ -554,7 +569,9 @@ class ChatbotController:
 
     @requires_config
     def _delete_conflict(self, course_id_1: str, course_id_2: str) -> str:
-        ok = self._trigger_save(self.conflict_model.delete_conflict(course_id_1, course_id_2))
+        ok = self._trigger_save(
+            self.conflict_model.delete_conflict(course_id_1, course_id_2)
+        )
         if ok:
             return f"Conflict removed between '{course_id_1}' and '{course_id_2}'."
         return "Failed to remove conflict (may not exist)."
@@ -567,9 +584,11 @@ class ChatbotController:
         new_course_id_1: str,
         new_course_id_2: str,
     ) -> str:
-        ok = self._trigger_save(self.conflict_model.modify_conflict_by_ids(
-            old_course_id_1, old_course_id_2, new_course_id_1, new_course_id_2
-        ))
+        ok = self._trigger_save(
+            self.conflict_model.modify_conflict_by_ids(
+                old_course_id_1, old_course_id_2, new_course_id_1, new_course_id_2
+            )
+        )
         if ok:
             return f"Conflict updated: '{new_course_id_1}' <-> '{new_course_id_2}'."
         return (

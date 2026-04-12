@@ -166,10 +166,14 @@ class SchedulerController:
 
         GUIView.controller = self
 
-        if not hasattr(self, "undo_redo_controller") or self.undo_redo_controller is None:
+        if (
+            not hasattr(self, "undo_redo_controller")
+            or self.undo_redo_controller is None
+        ):
             self.undo_redo_controller = UndoRedoController()
-            
+
         import os
+
         temp_path = config_path + ".temp"
         initial_state = ""
         if os.path.exists(temp_path):
@@ -178,7 +182,7 @@ class SchedulerController:
         elif os.path.exists(config_path):
             with open(config_path, "r") as f:
                 initial_state = f.read()
-                
+
         if self.undo_redo_controller.last_known_state is None and initial_state:
             self.undo_redo_controller.set_initial_state(initial_state)
 
@@ -230,21 +234,26 @@ class SchedulerController:
         """
         if self.config_model is None:
             return False
-            
+
         success = self.config_model.save_feature("temp", feature)
-        if success and hasattr(self, "undo_redo_controller") and self.undo_redo_controller is not None:
+        if (
+            success
+            and hasattr(self, "undo_redo_controller")
+            and self.undo_redo_controller is not None
+        ):
             import os
+
             temp_path = ""
             if getattr(self.config_model, "config_path", None):
                 temp_path = self.config_model.config_path + ".temp"
             elif self.config_path:
                 temp_path = self.config_path + ".temp"
-                
+
             if temp_path and os.path.exists(temp_path):
                 with open(temp_path, "r") as f:
                     current_state = f.read()
                     self.undo_redo_controller.record_state(current_state)
-                    
+
         return success
 
     def save_to_config(self, feature: str = "all") -> bool:
@@ -262,27 +271,28 @@ class SchedulerController:
         if self.config_model is None:
             return False
         return self.config_model.save_feature("config", feature)
-        
+
     def _get_action_description(self, state1_str: str, state2_str: str) -> str:
         if not state1_str or not state2_str:
             return "Configuration"
         try:
             from scheduler import CombinedConfig
+
             s1_cfg = CombinedConfig.model_validate_json(state1_str)
             s2_cfg = CombinedConfig.model_validate_json(state2_str)
             s1 = s1_cfg.model_dump()
             s2 = s2_cfg.model_dump()
-            
+
             c1 = s1.get("config", {})
             c2 = s2.get("config", {})
-            
+
             categories = [
                 ("faculty", "Faculty", "Faculty"),
                 ("courses", "Course", "Course"),
                 ("rooms", "Room", "Room"),
-                ("labs", "Lab", "Lab")
+                ("labs", "Lab", "Lab"),
             ]
-            
+
             # Pass 1: Additions and Deletions take priority
             for key, single_name, plural_name in categories:
                 l1 = c1.get(key, [])
@@ -291,7 +301,7 @@ class SchedulerController:
                     return f"Add {single_name}"
                 if len(l1) > len(l2):
                     return f"Delete {single_name}"
-                
+
             # Pass 2: Modifications check
             for key, single_name, plural_name in categories:
                 l1 = c1.get(key, [])
@@ -300,12 +310,18 @@ class SchedulerController:
                     if key == "courses":
                         for i in range(min(len(l1), len(l2))):
                             if l1[i] != l2[i]:
-                                old_no_conf = {k:v for k,v in l1[i].items() if k != "conflicts"}
-                                new_no_conf = {k:v for k,v in l2[i].items() if k != "conflicts"}
-                                if old_no_conf == new_no_conf and l1[i].get("conflicts", []) != l2[i].get("conflicts", []):
+                                old_no_conf = {
+                                    k: v for k, v in l1[i].items() if k != "conflicts"
+                                }
+                                new_no_conf = {
+                                    k: v for k, v in l2[i].items() if k != "conflicts"
+                                }
+                                if old_no_conf == new_no_conf and l1[i].get(
+                                    "conflicts", []
+                                ) != l2[i].get("conflicts", []):
                                     return "Modify Conflict"
                     return f"Modify {single_name}"
-            
+
             if s1.get("time_slot_config") != s2.get("time_slot_config"):
                 return "Modify Time Slots"
             if s1.get("limit") != s2.get("limit"):
@@ -319,8 +335,9 @@ class SchedulerController:
     def perform_undo(self):
         if self.config_model is None or not self.undo_redo_controller.can_undo():
             return
-            
+
         import os
+
         temp_path = self.config_model.config_path + ".temp"
         current_state = ""
         if os.path.exists(temp_path):
@@ -329,19 +346,21 @@ class SchedulerController:
         elif os.path.exists(self.config_model.config_path):
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
-                
+
         previous_state = self.undo_redo_controller.undo(current_state)
         if previous_state:
             action = self._get_action_description(previous_state, current_state)
             from nicegui import app
+
             app.storage.user["flash_message"] = f"Undid: {action}"
             self._apply_state(previous_state)
 
     def perform_redo(self):
         if self.config_model is None or not self.undo_redo_controller.can_redo():
             return
-            
+
         import os
+
         temp_path = self.config_model.config_path + ".temp"
         current_state = ""
         if os.path.exists(temp_path):
@@ -350,11 +369,12 @@ class SchedulerController:
         elif os.path.exists(self.config_model.config_path):
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
-                
+
         next_state = self.undo_redo_controller.redo(current_state)
         if next_state:
             action = self._get_action_description(current_state, next_state)
             from nicegui import app
+
             app.storage.user["flash_message"] = f"Redid: {action}"
             self._apply_state(next_state)
 
@@ -362,30 +382,31 @@ class SchedulerController:
         if not self.config_path:
             return
         import os
+
         # 1. Overwrite the .temp file so save_configuration sees it
         temp_path = self.config_path + ".temp"
         with open(temp_path, "w") as f:
             f.write(state_json)
-            
+
         # 2. Write to a dummy config to initialize models from
         dummy_path = self.config_path + ".undo"
         with open(dummy_path, "w") as f:
             f.write(state_json)
-            
+
         # 3. Reload models pointing to dummy_path
         original = self.config_path
         self._initialize_from_path(dummy_path)
-        
+
         # 4. Restore the config paths
         self.config_path = original
         if self.config_model:
             self.config_model.config_path = original
         GUIView.config_path = original
-        
+
         # 5. Clean up dummy file
         if os.path.exists(dummy_path):
             os.remove(dummy_path)
-            
+
         # 6. Reload page
         ui.run_javascript("window.location.reload()")
 

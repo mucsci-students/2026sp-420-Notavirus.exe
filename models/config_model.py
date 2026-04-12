@@ -30,14 +30,15 @@ class ConfigModel:
             None
         """
         self.config_path = config_path
-        
+
         # Priority initialization: if a .temp file exists, it contains the most recent uncommitted
-        # changes. We must initialize our memory from it so that the state stays in sync with 
+        # changes. We must initialize our memory from it so that the state stays in sync with
         # the undo/redo stack!
         import os
+
         temp_path = config_path + ".temp"
         load_path = temp_path if os.path.exists(temp_path) else config_path
-        
+
         try:
             self.config = load_config_from_file(CombinedConfig, load_path)
         except Exception:
@@ -70,19 +71,24 @@ class ConfigModel:
             bool: True if save successful, False otherwise
         """
         success = save_configuration(self.config, self.config_path, save_type, feature)
-        
+
         if success and save_type == "temp":
             try:
                 from views.gui_view import GUIView
                 import os
-                if getattr(GUIView, "controller", None) and hasattr(GUIView.controller, "undo_redo_controller"):
+
+                if getattr(GUIView, "controller", None) and hasattr(
+                    GUIView.controller, "undo_redo_controller"
+                ):
                     temp_path = self.config_path + ".temp"
                     if os.path.exists(temp_path):
                         with open(temp_path, "r") as f:
-                            GUIView.controller.undo_redo_controller.record_state(f.read())
+                            GUIView.controller.undo_redo_controller.record_state(
+                                f.read()
+                            )
             except Exception:
                 pass
-                
+
         return success
 
     def reload(self):

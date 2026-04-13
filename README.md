@@ -285,11 +285,11 @@ and time slots.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (327 tests total)
+# Run all tests (328 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
-# Run only model tests (160 tests)
+# Run only model tests (162 tests)
 pytest tests/test_models/ -v
 
 # Run only controller tests (117 tests)
@@ -322,9 +322,9 @@ pytest tests/ --cov=models --cov=controllers --cov=views --cov=safe_save --cov=s
 ```
 Test Coverage:
 
-✅ 160 model tests - Data operations and business logic
+✅ 162 model tests - Data operations and business logic
 ✅ 117 controller tests - Integration and workflow
-✅ 12 view tests - Calendar view of generated schedules
+✅ 11 view tests - Calendar view of generated schedules
 ✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
 ✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
 ✅ 1 safe_save test - The save feature used by save and save to config 

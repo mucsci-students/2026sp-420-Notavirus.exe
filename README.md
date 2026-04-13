@@ -281,39 +281,15 @@ and time slots.
 ---
 
 
-## GUI Navigation 
-
-The main GUI presents a menu with buttons for each feature:
-┌─────────────────────────────┐
-│                [Light/Dark] │
-│         Scheduler           │
-├─────────────────────────────┤
-│    Faculty   │    Room      │
-│    Course    │  Conflict    │
-│             Lab             │
-├─────────────────────────────┤
-│         Print Config        │
-│         Run Scheduler       │
-│       Display Schedules     │
-├─────────────────────────────┤
-│ [AI]                        │
-└─────────────────────────────┘
-Click any button to access that feature's interface. Each feature page includes forms for input and displays results in a user-friendly format. There is a light/dark toggle mode
-in the top right corner and an AI tool to use in the bottom
-left corner. 
-
----
-
-
 ## Testing
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (303 tests total)
+# Run all tests (328 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
-# Run only model tests (137 tests)
+# Run only model tests (162 tests)
 pytest tests/test_models/ -v
 
 # Run only controller tests (117 tests)
@@ -331,20 +307,26 @@ pytest tests/test_data_class.py -v
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
-# Run only chatbot/integration tests (1 tests)
+# Run only chatbot/integration tests (1 test)
 # These tests will NOT pass unless you have an API key entered
 #    Follow the instructions to adding an API key found in the Setup section
 pytest tests/test_integration/ -v 
 
-# Run with coverage (need to first install pytest-cov if not already installed)
+# Run with coverage on MVC (need to first install pytest-cov if not already installed)
 #   Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
-pytest tests/ --cov=models --cov=controllers
+pytest tests/ --cov=models --cov=controllers --cov=views
+
+# Run with coverage on all source files
+pytest tests/ --cov=models --cov=controllers --cov=views --cov=safe_save --cov=scheduler_facade --cov=time_config_data_class
+
 ```
 Test Coverage:
 
-✅ 137 model tests - Data operations and business logic
+✅ 162 model tests - Data operations and business logic
 ✅ 117 controller tests - Integration and workflow
 ✅ 11 view tests - Calendar view of generated schedules
+✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
+✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
 ✅ 1 safe_save test - The save feature used by save and save to config 
 ✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 

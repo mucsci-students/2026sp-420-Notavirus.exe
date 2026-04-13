@@ -111,7 +111,10 @@ class ChatbotGUIView:
 
         with (
             ui.left_drawer(
-                value=False, bordered=True, top_corner=True, bottom_corner=True
+                value=app.storage.user.get("chat_open", False),
+                bordered=True,
+                top_corner=True,
+                bottom_corner=True,
             )
             .style(
                 "width: 25vw; min-width: 340px; padding: 0; display: flex; flex-direction: column;"
@@ -156,6 +159,9 @@ class ChatbotGUIView:
             with scroll:
                 chat_column = ui.column().classes("w-full gap-3 p-4")
                 history = app.storage.user.get("chat_history", [])
+                # Track how many messages are currently rendered so the sync
+                # timer can append only the ones that arrived after page load.
+                rendered_count = [len(history)]
                 if not history:
                     with chat_column:
                         ui.html(
@@ -180,6 +186,7 @@ class ChatbotGUIView:
                                     f'<div class="ai-name">AI Assistant</div>'
                                     f'<div class="bubble-row-ai"><div class="ai-bubble">{msg["content"]}</div></div>',
                                 )
+                    ui.timer(0.05, lambda: scroll.scroll_to(percent=1), once=True)
 
             # Typing indicator
             with ui.row().classes("px-4").style("min-height: 26px; flex-shrink: 0;"):
@@ -200,6 +207,45 @@ class ChatbotGUIView:
                     .style("flex-shrink: 0;")
                 )
 
+                # If we navigated away while waiting for an AI reply, restore the
+                # pending state so the user sees the thinking indicator again.
+                if history and history[-1]["role"] == "user":
+                    typing.set_content(
+                        '<span style="color:#aaa;font-size:0.78rem;margin-right:4px;">thinking</span>'
+                        '<span class="typing-dot"></span>'
+                        '<span class="typing-dot"></span>'
+                        '<span class="typing-dot"></span>'
+                    )
+                    send_btn.disable()
+
+                def _sync_messages():
+                    """Append any messages saved to storage after this page loaded."""
+                    current = app.storage.user.get("chat_history", [])
+                    added = 0
+                    while rendered_count[0] < len(current):
+                        msg = current[rendered_count[0]]
+                        with chat_column:
+                            if msg["role"] == "user":
+                                ui.html(
+                                    sanitize=False,
+                                    content=f'<div class="bubble-row-user"><div class="user-bubble">{msg["content"]}</div></div>',
+                                ).classes("w-full")
+                            else:
+                                ui.html(
+                                    sanitize=False,
+                                    content=f'<div class="ai-name">AI Assistant</div>'
+                                    f'<div class="bubble-row-ai"><div class="ai-bubble">{msg["content"]}</div></div>',
+                                )
+                        rendered_count[0] += 1
+                        added += 1
+                    if added:
+                        if current and current[-1]["role"] == "ai":
+                            typing.set_content("")
+                            send_btn.enable()
+                        scroll.scroll_to(percent=1)
+
+                ui.timer(0.3, _sync_messages)
+
                 async def send():
                     query = query_input.value.strip()
                     if not query:
@@ -211,6 +257,7 @@ class ChatbotGUIView:
                     history = app.storage.user.setdefault("chat_history", [])
                     is_first_message = len(history) == 0
                     history.append({"role": "user", "content": query})
+                    rendered_count[0] += 1
                     with chat_column:
                         ui.html(
                             sanitize=False,
@@ -236,19 +283,24 @@ class ChatbotGUIView:
                         response = await ctrl.chat(query, history=prior)
                     except Exception as e:
                         response = f"Error: {e}"
-                    finally:
+                    history.append({"role": "ai", "content": response})
+                    try:
                         typing.set_content("")
                         send_btn.enable()
-                    history.append({"role": "ai", "content": response})
-                    with chat_column:
-                        ui.html(
-                            sanitize=False,
-                            content=f"<!-- AI response bubble appended after reply arrives -->"
-                            f'<div class="ai-name">AI Assistant</div>'
-                            f'<div class="bubble-row-ai"><div class="ai-bubble">{response}</div></div>',
-                        )
-                    await asyncio.sleep(0.05)
-                    scroll.scroll_to(percent=1)
+                        rendered_count[0] += 1
+                        with chat_column:
+                            ui.html(
+                                sanitize=False,
+                                content=f"<!-- AI response bubble appended after reply arrives -->"
+                                f'<div class="ai-name">AI Assistant</div>'
+                                f'<div class="bubble-row-ai"><div class="ai-bubble">{response}</div></div>',
+                            )
+                        await asyncio.sleep(0.05)
+                        scroll.scroll_to(percent=1)
+                    except RuntimeError:
+                        # User navigated away — response is saved to storage and
+                        # will be picked up by _sync_messages on the new page.
+                        pass
 
                 send_btn.on("click", send)
                 query_input.on("keyup.enter", send)

@@ -35,13 +35,17 @@ You can:
 - List all labs, rooms, courses, faculty, and conflicts
 
 Rules:
-- Always use a tool to fulfill a request. Do not make up results.
+- For greetings or casual conversation (e.g. "hello", "hey", "how are you"), respond naturally in one sentence without calling any tools.
+- Always use a tool to fulfill a data request. Do not make up results.
 - Always relay the tool's exact output to the user — never paraphrase or summarize it.
 - Be brief outside of tool output. Confirm success in one sentence or explain failure simply.
-- Any request to list or show faculty must call the get_faculty tool, which shows names only and asks if the user wants details.
-- Only call get_faculty_details when the user explicitly asks for more info about a specific faculty member.
-- Any request to list or show courses must call the get_courses tool, which shows course IDs only and asks if the user wants details.
-- Only call get_course_details when the user explicitly asks for more info about a specific course.
+- Never ask the user for permission before calling a read-only tool. Just call it.
+- Call any combination of get_* tools silently whenever needed to answer a question — including get_faculty_details and get_course_details.
+- Any request to list, show, or view labs must call get_labs.
+- Any request to list, show, or view rooms must call get_rooms.
+- Any request to list, show, or view faculty must call get_faculty first, then get_faculty_details for each member if more detail is needed.
+- Any request to list, show, or view courses must call get_courses first, then get_course_details for each course if more detail is needed.
+- Any request to list, show, or view conflicts must call get_conflicts.
 - When adding a course, ask the user for: course ID, credits, acceptable rooms (comma-separated), acceptable labs (comma-separated, can be empty), and faculty (comma-separated, can be empty).
 - When adding faculty, ask for: name, position (full time or adjunct), max days (default 5), and availability times in the format "MON:08:00-17:00,WED:08:00-17:00".
 - When modifying faculty, ask for their name, then ask which fields to change: position (full time or adjunct), availability times (format 'MON:08:00-17:00'), course preferences (comma-separated course IDs with optional weights like 'CMSC 161:8'), room preferences (comma-separated room names with optional weights), or lab preferences (comma-separated lab names with optional weights). Only pass the fields the user wants to change.
@@ -356,9 +360,7 @@ class ChatbotController:
         if not courses:
             return "No courses configured."
         ids = ", ".join(dict.fromkeys(c.course_id for c in courses))
-        return (
-            f"Courses: {ids}\n\nWould you like detailed information about any of them?"
-        )
+        return f"Courses: {ids}"
 
     @requires_config
     def _get_course_details(self, course_id: str) -> str:

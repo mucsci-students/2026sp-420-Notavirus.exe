@@ -19,9 +19,6 @@ class GUITheme:
             None
         """
         dark = ui.dark_mode().bind_value(app.storage.user, "dark_mode")
-        ui.button(icon="brightness_4", on_click=dark.toggle).props(
-            "flat round"
-        ).classes("absolute top-4 right-4 z-50 !text-black dark:!text-white")
 
         # Dark mode toggle button — pinned to the top-right corner of every page
         ui.button(icon="brightness_4", on_click=dark.toggle).props(
@@ -117,7 +114,6 @@ class GUITheme:
         </style>
         """)
 
-        # Define the app's color palette used by Quasar components throughout the UI
         # Define the app's color palette used by Quasar components throughout the UI
         ui.colors(
             primary="#FFFFFF",

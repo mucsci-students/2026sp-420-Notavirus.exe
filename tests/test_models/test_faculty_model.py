@@ -46,13 +46,8 @@ def test_config():
     Yields:
         str: Path to test configuration file
     """
-    # Copy example.json to test_copy.json
     shutil.copy(TESTING_CONFIG, TEST_COPY_CONFIG)
-
-    # Provide path to tests
     yield TEST_COPY_CONFIG
-
-    # Cleanup after test
     Path(TEST_COPY_CONFIG).unlink(missing_ok=True)
 
 
@@ -82,8 +77,6 @@ def build_faculty_config(
     """
     Build a FacultyConfig object from test parameters.
 
-    This replaces the old addFaculty_config function.
-
     Parameters:
         name (str): Faculty name
         isFullTime (str): 'y' for full-time, 'n' for adjunct
@@ -93,10 +86,8 @@ def build_faculty_config(
     Returns:
         FacultyConfig: Configured faculty object
     """
-    # Determine position type
     is_full_time = isFullTime.lower() == "y"
 
-    # Set credits and limits based on position
     if is_full_time:
         max_credits = FULL_TIME_MAX_CREDITS
         unique_limit = FULL_TIME_UNIQUE_COURSE_LIMIT
@@ -104,7 +95,6 @@ def build_faculty_config(
         max_credits = ADJUNCT_MAX_CREDITS
         unique_limit = ADJUNCT_UNIQUE_COURSE_LIMIT
 
-    # Convert date abbreviations to full day names and TimeRanges
     day_map = {"M": "MON", "T": "TUE", "W": "WED", "R": "THU", "F": "FRI"}
 
     times = {}
@@ -187,57 +177,36 @@ def test_addFaculty_config():
 def test_faculty_check_duplicate_name(faculty_model):
     """
     Test that adding a faculty with duplicate name is detected.
-
     Should return True (faculty already exists).
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Create faculty with name that exists in example.json ("Hardy")
     build_faculty_config(
         name="Hardy", isFullTime="y", dates=["M", "W", "F"], courses={"CMSC example": 0}
     )
-
-    # Test - faculty_exists should return True for duplicate
     assert faculty_model.faculty_exists("Hardy")
 
 
 def test_faculty_check_duplicate_datesPref(faculty_model):
     """
     Test that adding a faculty with unique name but duplicate dates/prefs is allowed.
-
     Should return False (faculty doesn't exist - name is unique).
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Create faculty with distinct name
     build_faculty_config(
         name="distinctName", isFullTime="y", dates=["M", "W", "F"], courses={}
     )
-
-    # Test - faculty_exists should return False for new name
     assert not faculty_model.faculty_exists("distinctName")
 
 
 def test_faculty_check_distinct(faculty_model):
     """
     Test that adding a completely distinct faculty is allowed.
-
     Should return False (faculty doesn't exist).
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Create completely distinct faculty
     build_faculty_config(
         name="distinctName",
         isFullTime="y",
         dates=["M", "W", "F"],
         courses={"distinctCourse": 0},
     )
-
-    # Test - faculty_exists should return False
     assert not faculty_model.faculty_exists("distinctName")
 
 
@@ -249,22 +218,14 @@ def test_faculty_check_distinct(faculty_model):
 def test_add_faculty_success(faculty_model):
     """
     Test successfully adding a new faculty to the model.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Create new faculty
     faculty = build_faculty_config(
         name="New Test Faculty",
         isFullTime="y",
         dates=["M", "W", "F"],
         courses={"CMSC 161": 5},
     )
-
-    # Add faculty
     result = faculty_model.add_faculty(faculty)
-
-    # Assert
     assert result
     assert faculty_model.faculty_exists("New Test Faculty")
 
@@ -272,39 +233,23 @@ def test_add_faculty_success(faculty_model):
 def test_add_faculty_duplicate(faculty_model):
     """
     Test that adding a duplicate faculty fails.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Try to add faculty that already exists (Hardy from example.json)
     faculty = build_faculty_config(
         name="Hardy", isFullTime="y", dates=["M", "W", "F"], courses={}
     )
-
-    # Attempt to add
     result = faculty_model.add_faculty(faculty)
-
-    # Assert - should fail (return False)
     assert not result
 
 
 def test_delete_faculty_success(faculty_model):
     """
     Test successfully deleting a faculty.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # First add a test faculty
     faculty = build_faculty_config(
         name="Temp Faculty", isFullTime="y", dates=["M", "W"], courses={}
     )
     faculty_model.add_faculty(faculty)
-
-    # Delete the faculty
     result = faculty_model.delete_faculty("Temp Faculty")
-
-    # Assert
     assert result
     assert not faculty_model.faculty_exists("Temp Faculty")
 
@@ -312,37 +257,21 @@ def test_delete_faculty_success(faculty_model):
 def test_delete_faculty_not_found(faculty_model):
     """
     Test deleting a non-existent faculty fails.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Try to delete non-existent faculty
     result = faculty_model.delete_faculty("NonExistent Faculty")
-
-    # Assert - should fail
     assert not result
 
 
 def test_modify_faculty_success(faculty_model):
     """
     Test successfully modifying a faculty's field.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Add test faculty
     faculty = build_faculty_config(
         name="Modifiable Faculty", isFullTime="y", dates=["M", "W", "F"], courses={}
     )
     faculty_model.add_faculty(faculty)
-
-    # Modify maximum_credits
     result = faculty_model.modify_faculty("Modifiable Faculty", "maximum_credits", 15)
-
-    # Assert
     assert result
-
-    # Verify change
     modified_faculty = faculty_model.get_faculty_by_name("Modifiable Faculty")
     assert modified_faculty.maximum_credits == 15
 
@@ -350,14 +279,8 @@ def test_modify_faculty_success(faculty_model):
 def test_get_faculty_by_name(faculty_model):
     """
     Test retrieving a faculty by name.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Get existing faculty (Hardy from example.json)
     faculty = faculty_model.get_faculty_by_name("Hardy")
-
-    # Assert
     assert faculty is not None
     assert faculty.name == "Hardy"
 
@@ -365,16 +288,10 @@ def test_get_faculty_by_name(faculty_model):
 def test_get_all_faculty(faculty_model):
     """
     Test retrieving all faculty.
-
-    Parameters:
-        faculty_model (FacultyModel): Faculty model fixture with test config
     """
-    # Get all faculty
     all_faculty = faculty_model.get_all_faculty()
-
-    # Assert
     assert isinstance(all_faculty, list)
-    assert len(all_faculty) > 0  # example.json should have faculty
+    assert len(all_faculty) > 0
 
 
 # ================================================================
@@ -388,7 +305,6 @@ def test_validate_faculty_references(faculty_model):
     """
     from scheduler import CourseConfig
 
-    # Add a mock course with one valid and one invalid faculty reference
     test_course = CourseConfig(
         course_id="TEST_REF_101",
         credits=3,
@@ -399,16 +315,13 @@ def test_validate_faculty_references(faculty_model):
     )
     faculty_model.config_model.config.config.courses.append(test_course)
 
-    # Add the valid faculty to the model so it gets recognized
     valid_fac = build_faculty_config(
         name="Valid Faculty", isFullTime="y", dates=["M"], courses={}
     )
     faculty_model.add_faculty(valid_fac)
 
-    # Run validation
     removed_count = faculty_model.validate_faculty_references()
 
-    # The invalid faculty should have been removed
     assert removed_count >= 1
     assert "Invalid Faculty Name" not in test_course.faculty
     assert "Valid Faculty" in test_course.faculty
@@ -429,7 +342,6 @@ def test_validate_faculty_references_all_valid(faculty_model):
         conflicts=[],
     )
 
-    # Clear courses to ensure we only test what we add and no other invalid refs exist in example.json
     courses = faculty_model.config_model.config.config.courses
     courses.clear()
     courses.append(test_course)
@@ -446,83 +358,220 @@ def test_validate_faculty_references_all_valid(faculty_model):
 
 
 # ================================================================
-# TESTS: set_position_type, set_maximum_credits, build_faculty_config
+# TESTS: delete_faculty removes faculty references from courses
+# ================================================================
+
+
+def test_delete_faculty_removes_course_references(faculty_model):
+    """
+    Test that deleting a faculty also removes their name from any courses
+    that reference them.
+    """
+    from scheduler import CourseConfig
+
+    faculty = build_faculty_config(
+        name="ToDelete Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
+
+    test_course = CourseConfig(
+        course_id="TEST_DEL_101",
+        credits=3,
+        faculty=["ToDelete Faculty"],
+        room=[],
+        lab=[],
+        conflicts=[],
+    )
+    faculty_model.config_model.config.config.courses.append(test_course)
+
+    result = faculty_model.delete_faculty("ToDelete Faculty")
+
+    assert result
+    assert not faculty_model.faculty_exists("ToDelete Faculty")
+    assert "ToDelete Faculty" not in test_course.faculty
+
+
+# ================================================================
+# TESTS: get_faculty_by_name returns None for missing faculty
+# ================================================================
+
+
+def test_get_faculty_by_name_not_found(faculty_model):
+    """
+    Test that get_faculty_by_name returns None when faculty does not exist.
+    """
+    result = faculty_model.get_faculty_by_name("Nonexistent Person")
+    assert result is None
+
+
+# ================================================================
+# TESTS: set_position_type
 # ================================================================
 
 
 def test_set_position_type_fulltime(faculty_model):
-    """Test setting a faculty to fulltime."""
-    fac = build_faculty_config(name="Pos Fac", isFullTime="n", dates=["M"], courses={})
-    faculty_model.add_faculty(fac)
+    """
+    Test setting a faculty to full-time updates credits and course limit.
+    """
+    faculty = build_faculty_config(
+        name="Position Faculty", isFullTime="n", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
 
-    # Set min_credits high to test clamping
-    faculty_model.modify_faculty("Pos Fac", "maximum_credits", 15)
-    faculty_model.modify_faculty("Pos Fac", "minimum_credits", 15)
+    result = faculty_model.set_position_type("Position Faculty", is_fulltime=True)
 
-    result = faculty_model.set_position_type("Pos Fac", True)
-    assert result is True
-
-    updated = faculty_model.get_faculty_by_name("Pos Fac")
-    assert updated.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
+    updated = faculty_model.get_faculty_by_name("Position Faculty")
+    assert result
     assert updated.maximum_credits == FULL_TIME_MAX_CREDITS
-    assert updated.minimum_credits <= FULL_TIME_MAX_CREDITS
+    assert updated.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
 
 
 def test_set_position_type_adjunct(faculty_model):
-    """Test setting a faculty to adjunct."""
-    fac = build_faculty_config(name="Pos Fac2", isFullTime="y", dates=["M"], courses={})
-    faculty_model.add_faculty(fac)
+    """
+    Test setting a faculty to adjunct updates credits and course limit.
+    """
+    faculty = build_faculty_config(
+        name="Adjunct Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
 
-    # Set min_credits high to test clamping
-    faculty_model.modify_faculty("Pos Fac2", "maximum_credits", 10)
-    faculty_model.modify_faculty("Pos Fac2", "minimum_credits", 10)
+    result = faculty_model.set_position_type("Adjunct Faculty", is_fulltime=False)
 
-    result = faculty_model.set_position_type("Pos Fac2", False)
-    assert result is True
-
-    updated = faculty_model.get_faculty_by_name("Pos Fac2")
-    assert updated.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
+    updated = faculty_model.get_faculty_by_name("Adjunct Faculty")
+    assert result
     assert updated.maximum_credits == ADJUNCT_MAX_CREDITS
+    assert updated.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
+
+
+def test_set_position_type_adjunct_clamps_min_credits(faculty_model):
+    """
+    Test that switching to adjunct clamps minimum_credits when it exceeds ADJUNCT_MAX_CREDITS.
+    """
+    faculty = build_faculty_config(
+        name="AdjClamp Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
+    faculty_model.modify_faculty("AdjClamp Faculty", "minimum_credits", 10)
+
+    result = faculty_model.set_position_type("AdjClamp Faculty", is_fulltime=False)
+
+    updated = faculty_model.get_faculty_by_name("AdjClamp Faculty")
+    assert result
     assert updated.minimum_credits <= ADJUNCT_MAX_CREDITS
 
 
 def test_set_position_type_not_found(faculty_model):
-    """Test set_position_type on non-existent faculty."""
-    assert faculty_model.set_position_type("Nobody", True) is False
+    """
+    Test set_position_type returns False when faculty does not exist.
+    """
+    result = faculty_model.set_position_type("Ghost Faculty", is_fulltime=True)
+    assert not result
 
 
-def test_set_maximum_credits(faculty_model):
-    """Test setting maximum credits and cascading effects."""
-    fac = build_faculty_config(name="Cred Fac", isFullTime="y", dates=["M"], courses={})
-    faculty_model.add_faculty(fac)
+# ================================================================
+# TESTS: set_maximum_credits
+# ================================================================
 
-    faculty_model.modify_faculty("Cred Fac", "minimum_credits", 10)
 
-    # Test setting to low value (<= ADJUNCT_MAX_CREDITS)
-    result = faculty_model.set_maximum_credits("Cred Fac", ADJUNCT_MAX_CREDITS)
-    assert result is True
+def test_set_maximum_credits_success(faculty_model):
+    """
+    Test setting maximum credits updates the faculty.
+    """
+    faculty = build_faculty_config(
+        name="MaxCred Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
 
-    updated = faculty_model.get_faculty_by_name("Cred Fac")
-    assert updated.maximum_credits == ADJUNCT_MAX_CREDITS
-    assert updated.minimum_credits <= ADJUNCT_MAX_CREDITS
+    result = faculty_model.set_maximum_credits("MaxCred Faculty", 10)
+
+    updated = faculty_model.get_faculty_by_name("MaxCred Faculty")
+    assert result
+    assert updated.maximum_credits == 10
+
+
+def test_set_maximum_credits_clamps_minimum(faculty_model):
+    """
+    Test that lowering max below current minimum clamps minimum_credits.
+    """
+    faculty = build_faculty_config(
+        name="ClampMin Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
+    faculty_model.modify_faculty("ClampMin Faculty", "minimum_credits", 8)
+
+    result = faculty_model.set_maximum_credits("ClampMin Faculty", 5)
+
+    updated = faculty_model.get_faculty_by_name("ClampMin Faculty")
+    assert result
+    assert updated.minimum_credits <= 5
+
+
+def test_set_maximum_credits_adjunct_limit(faculty_model):
+    """
+    Test that setting max <= ADJUNCT_MAX_CREDITS sets adjunct course limit.
+    """
+    faculty = build_faculty_config(
+        name="AdjMax Faculty", isFullTime="y", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
+
+    result = faculty_model.set_maximum_credits("AdjMax Faculty", ADJUNCT_MAX_CREDITS)
+
+    updated = faculty_model.get_faculty_by_name("AdjMax Faculty")
+    assert result
     assert updated.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
 
-    # Test setting to high value
-    result = faculty_model.set_maximum_credits("Cred Fac", FULL_TIME_MAX_CREDITS)
-    assert result is True
 
-    updated2 = faculty_model.get_faculty_by_name("Cred Fac")
-    assert updated2.maximum_credits == FULL_TIME_MAX_CREDITS
-    assert updated2.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
+def test_set_maximum_credits_fulltime_limit(faculty_model):
+    """
+    Test that setting max above ADJUNCT_MAX_CREDITS upgrades course limit to full-time.
+    """
+    faculty = build_faculty_config(
+        name="FTMax Faculty", isFullTime="n", dates=["M"], courses={}
+    )
+    faculty_model.add_faculty(faculty)
+
+    result = faculty_model.set_maximum_credits("FTMax Faculty", 10)
+
+    updated = faculty_model.get_faculty_by_name("FTMax Faculty")
+    assert result
+    assert updated.unique_course_limit == FULL_TIME_UNIQUE_COURSE_LIMIT
 
 
 def test_set_maximum_credits_not_found(faculty_model):
-    """Test set_maximum_credits on non-existent faculty."""
-    assert faculty_model.set_maximum_credits("Nobody", 5) is False
+    """
+    Test set_maximum_credits returns False when faculty does not exist.
+    """
+    result = faculty_model.set_maximum_credits("Ghost Faculty", 10)
+    assert not result
+
+
+# ================================================================
+# TESTS: build_faculty_config branches
+# ================================================================
+
+
+def test_build_faculty_config_adjunct(faculty_model):
+    """
+    Test build_faculty_config sets adjunct defaults when is_full_time is False.
+    """
+    data = {
+        "name": "Adjunct Builder",
+        "is_full_time": False,
+        "times": {
+            "Monday": [{"start": "09:00", "end": "12:00"}],
+        },
+        "course_preferences": {},
+        "lab_preferences": {},
+    }
+    result = faculty_model.build_faculty_config(data)
+
+    assert result.maximum_credits == ADJUNCT_MAX_CREDITS
+    assert result.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
 
 
 def test_build_faculty_config_fulltime(faculty_model):
-    """Test build_faculty_config for fulltime with times."""
+    """Test build_faculty_config for fulltime with times, lab_preferences, and unknown day."""
     data = {
         "name": "Jane Doe",
         "is_full_time": True,
@@ -542,6 +591,26 @@ def test_build_faculty_config_fulltime(faculty_model):
     assert config.lab_preferences == {"CS101L": 2}
 
 
+def test_build_faculty_config_days_branch(faculty_model):
+    """
+    Test build_faculty_config using the 'days' key (else branch).
+    """
+    data = {
+        "name": "Days Builder",
+        "is_full_time": True,
+        "days": ["M", "W", "F"],
+        "course_preferences": {},
+        "lab_preferences": {},
+    }
+    result = faculty_model.build_faculty_config(data)
+
+    assert "MON" in result.times
+    assert "WED" in result.times
+    assert "FRI" in result.times
+    assert result.times["MON"][0].start == "08:00"
+    assert result.times["MON"][0].end == "20:00"
+
+
 def test_build_faculty_config_adjunct_days_else(faculty_model):
     """Test build_faculty_config for adjunct using the days else branch."""
     data = {
@@ -553,7 +622,6 @@ def test_build_faculty_config_adjunct_days_else(faculty_model):
     assert config.name == "John Adjunct"
     assert config.maximum_credits == ADJUNCT_MAX_CREDITS
     assert config.unique_course_limit == ADJUNCT_UNIQUE_COURSE_LIMIT
-    # The else branch sets 08:00 to 20:00
     assert "MON" in config.times
     assert config.times["MON"][0].start == "08:00"
     assert config.times["MON"][0].end == "20:00"

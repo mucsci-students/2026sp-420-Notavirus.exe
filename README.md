@@ -295,7 +295,7 @@ pytest tests/test_models/ -v
 # Run only controller tests (117 tests)
 pytest tests/test_controllers/ -v
 
-# Run only views tests (12 tests)
+# Run only views tests (11 tests)
 pytest tests/test_views/ -v 
 
 # Run only safe_save.py test (1 test)

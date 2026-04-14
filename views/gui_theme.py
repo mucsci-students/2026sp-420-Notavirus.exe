@@ -85,26 +85,10 @@ class GUITheme:
                 and c.undo_redo_controller.can_redo()
             )
 
-        # Bind the pill to 'pill_row' so we can modify its CSS position.
-        # "left-6" is removed and replaced with inline style "left: 24px" so we can dynamically slide it.
-        with (
-            ui.row()
-            .classes(
-                "fixed bottom-6 z-50 !bg-black dark:!bg-white rounded-full shadow-lg items-center px-3 py-1 gap-2"
-            )
-            .style(
-                "left: 24px; transition: left 0.22s cubic-bezier(0.4, 0, 0.2, 1);"
-            ) as pill_row
+        # AI assistant button - pinned to bottom left
+        with ui.row().classes(
+            "fixed bottom-6 left-6 z-50 !bg-black dark:!bg-white rounded-full shadow-lg items-center px-1 py-1"
         ):
-            undo_btn = (
-                ui.button(icon="undo", on_click=_undo)
-                .props("flat round dense")
-                .classes("!text-white dark:!text-black transition-opacity duration-200")
-                .tooltip("Undo")
-            )
-
-            ui.element("div").classes("w-px h-6 bg-gray-600 dark:bg-gray-400")
-
             with (
                 ui.button(on_click=_open_chat)
                 .props("flat round")
@@ -130,6 +114,17 @@ class GUITheme:
                 """,
                 )
 
+        # Undo/Redo pill - pinned to bottom right
+        with ui.row().classes(
+            "fixed bottom-6 right-6 z-50 !bg-black dark:!bg-white rounded-full shadow-lg items-center px-3 py-1 gap-2"
+        ) as undo_redo_row:
+            undo_btn = (
+                ui.button(icon="undo", on_click=_undo)
+                .props("flat round dense")
+                .classes("!text-white dark:!text-black transition-opacity duration-200")
+                .tooltip("Undo")
+            )
+
             ui.element("div").classes("w-px h-6 bg-gray-600 dark:bg-gray-400")
 
             redo_btn = (
@@ -139,17 +134,12 @@ class GUITheme:
                 .tooltip("Redo")
             )
 
-            # Perfectly sync the pill's slide animation with the AI drawer opening/closing (340px + 24px = 364px)
-            drawer.on_value_change(
-                lambda e: pill_row.style(f"left: {'364px' if e.value else '24px'};")
-            )
-
             def _update_btn_states():
                 try:
                     if (
                         undo_btn.is_deleted
                         or redo_btn.is_deleted
-                        or pill_row.is_deleted
+                        or undo_redo_row.is_deleted
                     ):
                         return
 

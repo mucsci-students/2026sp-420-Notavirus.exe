@@ -13,17 +13,6 @@ from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config
-from views.schedule_gui_view import (
-    _extract_calendar_metadata,
-    _build_calendar_grid_by_room,
-    _sort_time_slots,
-    _extract_time_portion,
-    _build_color_map,
-    _get_color_classes,
-    _extract_day,
-    _calculate_course_span,
-    COURSE_COLORS,
-)
 #    Views should never import Controller classes directly.
 
 

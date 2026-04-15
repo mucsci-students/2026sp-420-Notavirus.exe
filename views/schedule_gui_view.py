@@ -960,6 +960,20 @@ class ScheduleGUIView:
                     options=["csv", "json", "pdf"], value="csv", label="Export format"
                 ).classes("w-full")
 
+                pdf_view_row = ui.row().classes("w-full")
+                with pdf_view_row:
+                    pdf_view_select = ui.select(
+                        options={"room": "Room / Lab", "faculty": "Faculty"},
+                        value="room",
+                        label="PDF view by",
+                    ).classes("w-full")
+                pdf_view_row.set_visibility(False)
+
+                def on_format_change(e):
+                    pdf_view_row.set_visibility(e.value == "pdf")
+
+                format_select.on_value_change(on_format_change)
+
                 def do_export():
                     if not schedule_select.value:
                         ui.notify("Please select at least one schedule", type="warning")
@@ -973,9 +987,9 @@ class ScheduleGUIView:
                     fmt = format_select.value
                     try:
                         if fmt == "pdf":
-                            from views.pdf_export import generate_pdf
+                            from views.pdf_export_view import generate_pdf
 
-                            data = generate_pdf(schedules_to_export)
+                            data = generate_pdf(schedules_to_export, view_by=pdf_view_select.value)
                         else:
                             if GUIView.controller is None:
                                 return

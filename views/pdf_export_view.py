@@ -10,11 +10,13 @@ duplicating data-extraction logic.  The lazy import of schedule_gui_view
 import io
 
 
-def generate_pdf(schedules: list[list]) -> bytes:
+def generate_pdf(schedules: list[list], view_by: str = "room") -> bytes:
     """
     Render *schedules* as a black-and-white PDF calendar grid.
 
-    One page per location (room / lab) per schedule.
+    view_by: "room"    → one page per room/lab per schedule (default)
+             "faculty" → one page per faculty member per schedule
+
     Returns bytes suitable for a browser download.
     """
     try:
@@ -30,6 +32,7 @@ def generate_pdf(schedules: list[list]) -> bytes:
     # from here; we import from it only at call time).
     from views.schedule_gui_view import (
         _build_calendar_grid_by_room,
+        _build_calendar_grid_by_faculty,
         _extract_calendar_metadata,
         _extract_time_range,
     )
@@ -45,7 +48,11 @@ def generate_pdf(schedules: list[list]) -> bytes:
     c = pdf_canvas.Canvas(buffer, pagesize=landscape(letter))
 
     for sched_idx, schedule in enumerate(schedules):
-        calendar_data = _build_calendar_grid_by_room(schedule)
+        if view_by == "faculty":
+            calendar_data = _build_calendar_grid_by_faculty(schedule)
+        else:
+            calendar_data = _build_calendar_grid_by_room(schedule)
+
         sorted_days, hourly_slots = _extract_calendar_metadata(schedule)
 
         if not calendar_data or not sorted_days:
@@ -69,7 +76,7 @@ def generate_pdf(schedules: list[list]) -> bytes:
         hour_h = min(60.0, max(28.0, grid_h / num_hours))
         day_col_w = (avail_w - TIME_COL_W) / n_days
 
-        for location in sorted(calendar_data.keys()):
+        for entity in sorted(calendar_data.keys()):
 
             def rl_y(top_offset: float) -> float:
                 """Top-relative offset → ReportLab y (origin = bottom-left)."""
@@ -78,7 +85,7 @@ def generate_pdf(schedules: list[list]) -> bytes:
             # ── Title ─────────────────────────────────────────────────────────
             c.setFont("Helvetica-Bold", 13)
             c.setFillColor(black)
-            c.drawString(MARGIN, rl_y(TITLE_H - 6), location)
+            c.drawString(MARGIN, rl_y(TITLE_H - 6), entity)
             if len(schedules) > 1:
                 c.setFont("Helvetica", 9)
                 c.drawString(
@@ -125,7 +132,7 @@ def generate_pdf(schedules: list[list]) -> bytes:
 
             # ── Course blocks ─────────────────────────────────────────────────
             min_hour_min = min_hour * 60
-            location_data = calendar_data.get(location, {})
+            entity_data = calendar_data.get(entity, {})
 
             for day_idx, day in enumerate(sorted_days):
                 day_x = MARGIN + TIME_COL_W + day_idx * day_col_w
@@ -134,8 +141,8 @@ def generate_pdf(schedules: list[list]) -> bytes:
                 seen: set[tuple] = set()
                 courses_for_day = []
                 for hour_slot in hourly_slots:
-                    for course_info in location_data.get(day, {}).get(hour_slot, []):
-                        key = (course_info["full_course_str"], course_info["faculty"])
+                    for course_info in entity_data.get(day, {}).get(hour_slot, []):
+                        key = (course_info["full_course_str"], course_info.get("faculty", course_info.get("location", "")))
                         if key not in seen:
                             seen.add(key)
                             courses_for_day.append(course_info)
@@ -171,7 +178,7 @@ def generate_pdf(schedules: list[list]) -> bytes:
                         stroke=1,
                     )
 
-                    # Text: course.section (bold), faculty, time
+                    # Text: course.section (bold), then subtitle (faculty or location), time
                     c.setFillColor(black)
                     font_size = 7
                     line_h = font_size + 2
@@ -184,9 +191,9 @@ def generate_pdf(schedules: list[list]) -> bytes:
 
                     c.setFont("Helvetica", font_size)
                     if height_px >= 2 * line_h:
-                        c.drawString(
-                            day_x + 3, text_top - 2 * line_h, course_info["faculty"]
-                        )
+                        # Room view shows faculty; faculty view shows location
+                        subtitle = course_info.get("faculty") or course_info.get("location", "")
+                        c.drawString(day_x + 3, text_top - 2 * line_h, subtitle)
                     if height_px >= 3 * line_h:
                         time_disp = f"{sh}:{sm:02d} - {eh}:{em:02d}"
                         c.drawString(day_x + 3, text_top - 3 * line_h, time_disp)

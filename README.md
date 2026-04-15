@@ -57,8 +57,8 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 ├── scheduler/               # Core scheduling engine
 │   └── config.py            # Configuration data models
 └── tests/                   # Test suite
-    ├── test_models/         # 114 model tests
-    ├── test_controllers/    # 22 controller tests
+    ├── test_models/         # Model tests
+    ├── test_controllers/    # Controller tests
     └── test_safe_save.py    # 1 safe_save test
 ```
 
@@ -250,7 +250,6 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 #### Scheduler Config Editor
 - **Save Configuration** — Save the current configuration to a JSON file from within the GUI.
 - **Load Configuration** — Load a JSON configuration file from within the GUI without restarting.
-- Sometimes you may see changes in sections that you did not make because of the JSON reloading after modifications.
 
 #### Schedule Generator
 - **Limit Override** — Input field to override the schedule generation limit from the configuration file.
@@ -269,6 +268,45 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 - **uv tooling** — Full `uv` support for dependency management and virtual environments.
 - **pytest** — Test suite runs via `pytest` with coverage reporting.
 
+### Sprint 3
+#### AI Chat Tool
+- **Config Management** - AI can be used to add, modify, delete, and view any rooms, labs, courses, conflicts, or faculty
+- **Secret Key** - AI requires an API key added to a .env file
+#### Time Slot Config Editor
+-**Time Slots** - Add/remove/modify start time, end time, and spacing of different time slots
+-**Class Meeting Patterns** - Add/remove/modify the credits, days, duration, and start times of class meeting patterns, be able to disable meeting patterns
+
+#### Progress Bar
+- **View Progress of Generations as Percentage** - During schedule generation a progress bar will appear
+
+### Sprint 4
+#### Undo and Redo Support
+-**Traditional undo/redo Stacks** - Supported across entire gui as a back and forward arrow
+
+#### Export Schedules to PDF/HTML
+-**By room/lab** - Export the schedules to be posted outside of rooms
+-**By faculty** - Export the schedules to be posted outside of faculty's offices
+
+## Design Patterns
+MVC Design Pattern
+Implemented throughout all files in the views, models, and controllers folders
+
+Decorator Design Pattern
+Found in controllers/chatbot_controller.py and uses a function `requires_config` that wraps around other functions
+
+Facade Design Pattern
+Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
+
+Design Pattern #4
+...
+
+Design Pattern #5
+...
+
+Design Pattern #6
+...
+
+
 ---
 
 
@@ -285,7 +323,7 @@ and time slots.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (328 tests total)
+# Run all tests (333 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
@@ -295,7 +333,7 @@ pytest tests/test_models/ -v
 # Run only controller tests (117 tests)
 pytest tests/test_controllers/ -v
 
-# Run only views tests (11 tests)
+# Run only views tests (13 tests)
 pytest tests/test_views/ -v 
 
 # Run only safe_save.py test (1 test)
@@ -307,8 +345,8 @@ pytest tests/test_data_class.py -v
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
-# Run only chatbot/integration tests (1 test)
-# These tests will NOT pass unless you have an API key entered
+# Run only chatbot/integration tests (4 test)
+# One test will NOT pass unless you have an API key entered
 #    Follow the instructions to adding an API key found in the Setup section
 pytest tests/test_integration/ -v 
 

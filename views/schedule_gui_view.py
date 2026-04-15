@@ -989,7 +989,9 @@ class ScheduleGUIView:
                         if fmt == "pdf":
                             from views.pdf_export_view import generate_pdf
 
-                            data = generate_pdf(schedules_to_export, view_by=pdf_view_select.value)
+                            data = generate_pdf(
+                                schedules_to_export, view_by=pdf_view_select.value
+                            )
                         else:
                             if GUIView.controller is None:
                                 return

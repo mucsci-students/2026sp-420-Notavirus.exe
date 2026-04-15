@@ -142,7 +142,10 @@ def generate_pdf(schedules: list[list], view_by: str = "room") -> bytes:
                 courses_for_day = []
                 for hour_slot in hourly_slots:
                     for course_info in entity_data.get(day, {}).get(hour_slot, []):
-                        key = (course_info["full_course_str"], course_info.get("faculty", course_info.get("location", "")))
+                        key = (
+                            course_info["full_course_str"],
+                            course_info.get("faculty", course_info.get("location", "")),
+                        )
                         if key not in seen:
                             seen.add(key)
                             courses_for_day.append(course_info)
@@ -192,7 +195,9 @@ def generate_pdf(schedules: list[list], view_by: str = "room") -> bytes:
                     c.setFont("Helvetica", font_size)
                     if height_px >= 2 * line_h:
                         # Room view shows faculty; faculty view shows location
-                        subtitle = course_info.get("faculty") or course_info.get("location", "")
+                        subtitle = course_info.get("faculty") or course_info.get(
+                            "location", ""
+                        )
                         c.drawString(day_x + 3, text_top - 2 * line_h, subtitle)
                     if height_px >= 3 * line_h:
                         time_disp = f"{sh}:{sm:02d} - {eh}:{em:02d}"

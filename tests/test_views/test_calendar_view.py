@@ -321,7 +321,7 @@ def test_get_color_classes():
 
 def test_generate_pdf_returns_bytes():
     """generate_pdf should return non-empty bytes that start with the PDF magic number."""
-    from views.pdf_export import generate_pdf
+    from views.pdf_export_view import generate_pdf
 
     schedule = [
         MockCourseInstance(
@@ -343,11 +343,13 @@ def test_generate_pdf_returns_bytes():
 
 def test_generate_pdf_empty_schedule():
     """generate_pdf with an empty schedule list should still return valid PDF bytes."""
-    from views.pdf_export import generate_pdf
+    from views.pdf_export_view import generate_pdf
 
     result = generate_pdf([[]])
 
-    assert isinstance(result, bytes), "generate_pdf should return bytes even for empty input"
+    assert isinstance(result, bytes), (
+        "generate_pdf should return bytes even for empty input"
+    )
     assert result[:4] == b"%PDF", "Output should still be a valid PDF"
 
     print("[PASS] test_generate_pdf_empty_schedule passed")

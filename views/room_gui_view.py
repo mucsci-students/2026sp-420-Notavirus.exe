@@ -144,9 +144,9 @@ class RoomGUIView:
                     None
                 """
 
-                success = RoomGUIView.room_controller.model.add_room(room_input.value)
+                success, message = controller.add_room(room_input.value)
+                result_label.set_text(message)
                 if success:
-                    result_label.set_text("Room added.")
                     refresh_rooms()
 
     @ui.page("/room/modify")

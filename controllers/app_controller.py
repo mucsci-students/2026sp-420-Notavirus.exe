@@ -287,10 +287,10 @@ class SchedulerController:
             c2 = s2.get("config", {})
 
             categories = [
-                ("faculty", "Faculty", "Faculty"),
-                ("courses", "Course", "Course"),
                 ("rooms", "Room", "Room"),
                 ("labs", "Lab", "Lab"),
+                ("courses", "Course", "Course"),
+                ("faculty", "Faculty", "Faculty"),
             ]
 
             # Pass 1: Additions and Deletions take priority

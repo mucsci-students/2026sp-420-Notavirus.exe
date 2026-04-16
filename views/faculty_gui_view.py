@@ -547,7 +547,7 @@ class FacultyGUIView:
                                 ).on(
                                     "click",
                                     lambda: [
-                                        controller.gui_set_position(
+                                        controller.set_position(
                                             (
                                                 selected_faculty["value"].name
                                                 if selected_faculty["value"]
@@ -569,7 +569,7 @@ class FacultyGUIView:
                                 ).on(
                                     "click",
                                     lambda: [
-                                        controller.gui_set_position(
+                                        controller.set_position(
                                             (
                                                 selected_faculty["value"].name
                                                 if selected_faculty["value"]

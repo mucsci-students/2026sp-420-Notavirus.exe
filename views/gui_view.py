@@ -613,14 +613,12 @@ class GUIView:
                         "italic text-gray-500 dark:!text-gray-400"
                     )
                     return
-
-                for i, b in enumerate(blocks, start=1):
-                    # Each time block is its own expansion
-                    with ui.expansion(f"Time Slot {i}").classes(
-                        "w-full !text-black dark:!text-white time-config-expansion"
-                    ):
+                with ui.row().classes("w-full flex-wrap gap-4"):
+                    for i, b in enumerate(blocks, start=1):
+                    
+                    
                         with ui.card().classes(
-                            "w-full p-4 bg-gray-100 dark:bg-gray-800"
+                            "p-4 bg-gray-100 dark:bg-gray-800"
                         ):
                             s_input = time_picker("Start Time", b.start)
                             e_input = time_picker("End Time", b.end)
@@ -663,86 +661,79 @@ class GUIView:
                         ui.label("No class patterns available").classes(
                             "italic text-gray-500 dark:!text-gray-400"
                         )
+                    with ui.row().classes("w-full flex-wrap gap-4"):
+                            for idx, cls in enumerate(classes, start=1):
 
-                    for idx, cls in enumerate(classes, start=1):
-                        # Each individual pattern expandable
-                        with ui.expansion(f"Pattern {idx}").classes(
-                            "w-full !text-black dark:!text-white time-config-expansion"
-                        ):
-                            with ui.card().classes(
-                                "w-full p-4 bg-gray-100 dark:bg-gray-800"
-                            ):
-                                # Editable pattern fields
-                                credits_input = number_input("Credits", cls.credits)
-                                disabled_input = checkbox("Disabled", cls.disabled)
-                                start_input = time_picker("Start Time", cls.start_time)
+                               with ui.card().classes("p-4 bg-gray-100 dark:bg-gray-800"):
 
-                                with ui.row().classes("gap-2 mt-2"):
-                                    ui.button(
-                                        "Save",
-                                        on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
-                                            save_class_pattern(c, cr, dis, st)
-                                        ),
-                                    ).classes(
-                                        "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
-                                    )
-                                    ui.button(
-                                        icon="delete",
-                                        on_click=lambda i=idx - 1: delete_class_pattern(
-                                            i
-                                        ),
-                                    ).props("flat color=red")
+                                    with ui.row().classes("w-full flex-nowrap gap-4 items-start"):
 
-                                # Meetings expansion under the pattern
-                                with ui.expansion("Meetings").classes(
-                                    "w-full !text-black dark:!text-white mt-2 time-config-expansion"
-                                ):
-                                    # Add Meeting button
-                                    ui.button("Add Meeting", icon="add").props(
-                                        "flat round"
-                                    ).classes("!text-black dark:!text-white mb-2").on(
-                                        "click", lambda c=cls: add_meeting(c)
-                                    )
-
-                                    for i, m in enumerate(cls.meetings):
+                                        # =========================
+                                        # LEFT: Pattern Info (NEW CARD)
+                                        # =========================
                                         with ui.card().classes(
-                                            "w-full p-4 bg-gray-200 dark:bg-gray-700"
+                                            "p-4 bg-gray-200 dark:bg-gray-700 w-72 shrink-0"
                                         ):
-                                            day_input = ui.select(
-                                                options=time_config.get_days(),
-                                                value=m.day,
-                                                label="Day",
-                                            ).classes(
-                                                "w-full mb-2 !text-black dark:!text-white"
-                                            )
-                                            start_input = time_picker(
-                                                "Start Time", m.start_time
-                                            )
-                                            dur_input = number_input(
-                                                "Duration", m.duration, 1
-                                            )
-                                            lab_input = checkbox("Lab Meeting", m.lab)
+                                            credits_input = number_input("Credits", cls.credits)
+                                            disabled_input = checkbox("Disabled", cls.disabled)
+                                            start_input = time_picker("Start Time", cls.start_time)
 
                                             with ui.row().classes("gap-2 mt-2"):
                                                 ui.button(
                                                     "Save",
-                                                    on_click=lambda cls=cls, idx=i, di=day_input, st=start_input, dur=dur_input, lab=lab_input: (
-                                                        save_meeting(
-                                                            cls, idx, di, st, dur, lab
-                                                        )
+                                                    on_click=lambda c=cls, cr=credits_input, dis=disabled_input, st=start_input: (
+                                                        save_class_pattern(c, cr, dis, st)
                                                     ),
                                                 ).classes(
                                                     "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
                                                 )
 
-                                                # Only show delete button if more than one meeting
-                                                if len(cls.meetings) > 1:
-                                                    ui.button(
-                                                        icon="delete",
-                                                        on_click=lambda cls=cls, idx=i: (
-                                                            delete_meeting(cls, idx)
-                                                        ),
-                                                    ).props("flat color=red")
+                                                ui.button(
+                                                    icon="delete",
+                                                    on_click=lambda i=idx - 1: delete_class_pattern(i),
+                                                ).props("flat color=red")
+
+                                            
+                                            ui.button("Add Meeting", icon="add").props("flat").classes(
+                                                "!text-black dark:!text-white mt-2"
+                                            ).on("click", lambda c=cls: add_meeting(c))
+
+                                        # =========================
+                                        # RIGHT: Meetings (scrollable)
+                                        # =========================
+                                        with ui.row().classes(
+                                            "flex-1 flex-nowrap overflow-x-auto gap-4"
+                                        ):
+                                            for i, m in enumerate(cls.meetings):
+
+                                                with ui.card().classes(
+                                                    "p-4 bg-gray-300 dark:bg-gray-600 min-w-[250px] shrink-0"
+                                                ):
+                                                    day_input = ui.select(
+                                                        options=time_config.get_days(),
+                                                        value=m.day,
+                                                        label="Day",
+                                                    ).classes("mb-2 !text-black dark:!text-white")
+
+                                                    start_input = time_picker("Start Time", m.start_time)
+                                                    dur_input = number_input("Duration", m.duration, 1)
+                                                    lab_input = checkbox("Lab Meeting", m.lab)
+
+                                                    with ui.row().classes("gap-2 mt-2"):
+                                                        ui.button(
+                                                            "Save",
+                                                            on_click=lambda cls=cls, idx=i, di=day_input, st=start_input, dur=dur_input, lab=lab_input: (
+                                                                save_meeting(cls, idx, di, st, dur, lab)
+                                                            ),
+                                                        ).classes(
+                                                            "!bg-gray-300 !text-black dark:!bg-gray-600 dark:!text-white"
+                                                        )
+
+                                                        if len(cls.meetings) > 1:
+                                                            ui.button(
+                                                                icon="delete",
+                                                                on_click=lambda cls=cls, idx=i: delete_meeting(cls, idx),
+                                                            ).props("flat color=red")
 
         # -----------------------------
         # Add Class Pattern Dialog (with one meeting)

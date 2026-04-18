@@ -343,6 +343,36 @@ class SchedulerController:
                     return f"Modify {single_name}"
 
             if s1.get("time_slot_config") != s2.get("time_slot_config"):
+                t1 = s1.get("time_slot_config") or {}
+                t2 = s2.get("time_slot_config") or {}
+
+                c1 = t1.get("classes") or []
+                c2 = t2.get("classes") or []
+                if len(c1) < len(c2):
+                    return "Add Class Pattern"
+                elif len(c1) > len(c2):
+                    return "Delete Class Pattern"
+                elif c1 != c2:
+                    return "Modify Class Pattern"
+
+                times1 = t1.get("times") or {}
+                times2 = t2.get("times") or {}
+                b1 = sum(
+                    len(blocks)
+                    for blocks in (times1.values() if isinstance(times1, dict) else [])
+                )
+                b2 = sum(
+                    len(blocks)
+                    for blocks in (times2.values() if isinstance(times2, dict) else [])
+                )
+
+                if b1 < b2:
+                    return "Add Time Block"
+                elif b1 > b2:
+                    return "Delete Time Block"
+                elif times1 != times2:
+                    return "Modify Time Block"
+
                 return "Modify Time Slots"
             if s1.get("limit") != s2.get("limit"):
                 return "Modify Schedule Limit"
@@ -367,13 +397,18 @@ class SchedulerController:
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
 
-        previous_state = self.undo_redo_controller.undo(current_state)
-        if previous_state:
-            action = self._get_action_description(previous_state, current_state)
-            from nicegui import app
+        try:
+            previous_state = self.undo_redo_controller.undo(current_state)
+            if previous_state:
+                action = self._get_action_description(previous_state, current_state)
+                from nicegui import app
 
-            app.storage.user["flash_message"] = f"Undid: {action}"
-            self._apply_state(previous_state)
+                app.storage.user["flash_message"] = f"Undid: {action}"
+                self._apply_state(previous_state)
+        except Exception as e:
+            from nicegui import ui
+
+            ui.notify(f"Undo failed: {e}", color="red")
 
     def perform_redo(self):
         if self.config_model is None or not self.undo_redo_controller.can_redo():
@@ -390,13 +425,18 @@ class SchedulerController:
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
 
-        next_state = self.undo_redo_controller.redo(current_state)
-        if next_state:
-            action = self._get_action_description(current_state, next_state)
-            from nicegui import app
+        try:
+            next_state = self.undo_redo_controller.redo(current_state)
+            if next_state:
+                action = self._get_action_description(current_state, next_state)
+                from nicegui import app
 
-            app.storage.user["flash_message"] = f"Redid: {action}"
-            self._apply_state(next_state)
+                app.storage.user["flash_message"] = f"Redid: {action}"
+                self._apply_state(next_state)
+        except Exception as e:
+            from nicegui import ui
+
+            ui.notify(f"Redo failed: {e}", color="red")
 
     def _apply_state(self, state_json: str):
         if not self.config_path:

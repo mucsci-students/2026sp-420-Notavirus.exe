@@ -855,6 +855,8 @@ class GUIView:
                     ],
                 )
                 time_config.add_class(new_pattern)
+                if cm:
+                    cm.save_feature("temp", "time_slot_config")
             except Exception as ex:
                 ui.notify(f"Error adding class pattern: {ex}", color="red")
                 return
@@ -959,7 +961,17 @@ class GUIView:
 
             # Only close dialog if everything is valid
             dialog.close()
-            render_day_blocks(day_val)
+            if cm:
+                if not cm.save_feature("temp", "time_slot_config"):
+                    from nicegui import app
+
+                    app.storage.user["flash_message"] = (
+                        "Invalid configuration. Reverting..."
+                    )
+                    cm.reload()
+                    ui.navigate.reload()
+                    return
+            refresh_days()
 
         def save_time_block(day, idx, s_input, e_input, sp_input):
             start_val = format_time(s_input.value)
@@ -990,20 +1002,42 @@ class GUIView:
                     idx,
                     TimeBlock(start=start_val, end=end_val, spacing=spacing_val),
                 )
+                if cm:
+                    if not cm.save_feature("temp", "time_slot_config"):
+                        from nicegui import app
+
+                        app.storage.user["flash_message"] = (
+                            "Invalid time block. Reverting..."
+                        )
+                        cm.reload()
+                        ui.navigate.reload()
+                        return
             except Exception as ex:
                 ui.notify(f"Error saving time block: {ex}", color="red")
                 return
 
-            render_day_blocks(day)
+            refresh_days()
 
         def delete_time_block(day, idx):
             time_config.remove_time_block(day, idx)
-            render_day_blocks(day)
+            if cm:
+                if not cm.save_feature("temp", "time_slot_config"):
+                    from nicegui import app
+
+                    app.storage.user["flash_message"] = (
+                        "Cannot delete. Each day needs at least one block."
+                    )
+                    cm.reload()
+                    ui.navigate.reload()
+                    return
+            refresh_days()
 
         def save_class_pattern(cls, cr_input, dis_input, st_input):
             cls.credits = cr_input.value
             cls.disabled = dis_input.value
             cls.start_time = st_input.value or None
+            if cm:
+                cm.save_feature("temp", "time_slot_config")
             refresh_patterns()
 
         def add_meeting(cls):
@@ -1048,14 +1082,20 @@ class GUIView:
                 ),
             )
             dialog.close()
+            if cm:
+                cm.save_feature("temp", "time_slot_config")
             refresh_patterns()
 
         def delete_class_pattern(idx):
             time_config.remove_class(idx)
+            if cm:
+                cm.save_feature("temp", "time_slot_config")
             refresh_patterns()
 
         def delete_meeting(cls, idx):
             time_config.remove_meeting(cls, idx)
+            if cm:
+                cm.save_feature("temp", "time_slot_config")
             refresh_patterns()
 
         def save_meeting(cls, idx, day_input, start_input, dur_input, lab_input):
@@ -1065,6 +1105,8 @@ class GUIView:
                 meeting.start_time = start_input.value
                 meeting.duration = dur_input.value
                 meeting.lab = lab_input.value
+                if cm:
+                    cm.save_feature("temp", "time_slot_config")
                 refresh_patterns()
             except Exception as ex:
                 ui.notify(f"Error saving meeting: {ex}", color="red")

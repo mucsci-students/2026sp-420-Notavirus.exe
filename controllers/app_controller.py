@@ -276,12 +276,10 @@ class SchedulerController:
         if not state1_str or not state2_str:
             return "Configuration"
         try:
-            from scheduler import CombinedConfig
+            import json
 
-            s1_cfg = CombinedConfig.model_validate_json(state1_str)
-            s2_cfg = CombinedConfig.model_validate_json(state2_str)
-            s1 = s1_cfg.model_dump()
-            s2 = s2_cfg.model_dump()
+            s1 = json.loads(state1_str)
+            s2 = json.loads(state2_str)
 
             c1 = s1.get("config", {})
             c2 = s2.get("config", {})
@@ -308,7 +306,8 @@ class SchedulerController:
                 l2 = c2.get(key, [])
                 if l1 != l2:
                     if key == "courses":
-                        for i in range(min(len(l1), len(l2))):
+                        is_only_conflict_change = True
+                        for i in range(len(l1)):
                             if l1[i] != l2[i]:
                                 old_no_conf = {
                                     k: v for k, v in l1[i].items() if k != "conflicts"
@@ -316,10 +315,31 @@ class SchedulerController:
                                 new_no_conf = {
                                     k: v for k, v in l2[i].items() if k != "conflicts"
                                 }
-                                if old_no_conf == new_no_conf and l1[i].get(
-                                    "conflicts", []
-                                ) != l2[i].get("conflicts", []):
-                                    return "Modify Conflict"
+                                if old_no_conf != new_no_conf:
+                                    is_only_conflict_change = False
+                                    break
+                        if is_only_conflict_change:
+
+                            def get_pairs(c_list):
+                                idx_map = {}
+                                for idx, c_obj in enumerate(c_list):
+                                    cid = c_obj.get("course_id")
+                                    if cid:
+                                        idx_map.setdefault(cid, []).append(idx)
+                                pairs = set()
+                                for idx, c_obj in enumerate(c_list):
+                                    for conf_id in c_obj.get("conflicts", []):
+                                        for j in idx_map.get(conf_id, []):
+                                            pairs.add((min(idx, j), max(idx, j)))
+                                return pairs
+
+                            c_old = get_pairs(l1)
+                            c_new = get_pairs(l2)
+                            if c_old < c_new:
+                                return "Add Conflict"
+                            elif c_old > c_new:
+                                return "Delete Conflict"
+                            return "Modify Conflict"
                     return f"Modify {single_name}"
 
             if s1.get("time_slot_config") != s2.get("time_slot_config"):

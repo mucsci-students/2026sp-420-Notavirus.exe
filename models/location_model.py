@@ -95,11 +95,7 @@ class LocationModel:
         return self._items
 
     def _get_affected_courses(self, name: str) -> list:
-        return [
-            c for c in self._cfg.courses if name in getattr(c, self._course_attr)
-        ]
+        return [c for c in self._cfg.courses if name in getattr(c, self._course_attr)]
 
     def _get_affected_faculty(self, name: str) -> list:
-        return [
-            f for f in self._cfg.faculty if name in getattr(f, self._pref_attr)
-        ]
+        return [f for f in self._cfg.faculty if name in getattr(f, self._pref_attr)]

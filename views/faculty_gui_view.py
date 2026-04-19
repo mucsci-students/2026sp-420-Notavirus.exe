@@ -13,7 +13,87 @@ FacultyGUIView - Graphical-user interface for faculty interactions
 from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_utils import require_config
+from views.gui_utils import require_config, hub_page_buttons
+
+
+def _build_pref_section(
+    title: str,
+    pref_attr: str,
+    current_prefs: dict,
+    options,
+    input_label: str,
+    selected_faculty_ref: dict,
+    apply_fn,
+) -> None:
+    """Render one Add/Remove preference section (course, room, or lab) for a faculty member."""
+    entity = title.replace(" Preferences", "").lower()
+    use_text = options is None
+
+    with ui.column().classes("w-full gap-2"):
+        ui.label(title).classes("!text-black dark:!text-white font-bold text-lg")
+        if current_prefs:
+            for name, weight in current_prefs.items():
+                ui.label(f"  {name}: {weight}").classes("!text-black dark:!text-white text-sm")
+        else:
+            ui.label("  None").classes("!text-black dark:!text-white text-sm")
+
+        if not use_text and not options:
+            ui.label(f"No {entity}s available in configuration.").classes(
+                "!text-black dark:!text-white text-sm"
+            )
+            return
+
+        ui.label(f"Add/Update a {entity} preference:").classes(
+            "!text-black dark:!text-white mt-2"
+        )
+        feedback = ui.label("").classes("text-md !text-black dark:!text-white")
+
+        with ui.row().classes("gap-4 items-center flex-wrap"):
+            if use_text:
+                item_widget = ui.input(label=input_label).classes("w-48")
+            else:
+                item_widget = ui.select(options=options, label=input_label).classes("w-48")
+            weight_widget = ui.number(label="Weight (0-10)", min=0, max=10, value=5).classes("w-32")
+
+            def save_pref(
+                iw=item_widget, ww=weight_widget, fb=feedback,
+                attr=pref_attr, sfr=selected_faculty_ref, afn=apply_fn, txt=use_text,
+            ):
+                raw = iw.value
+                val_str = raw.strip() if (txt and raw) else raw
+                if not val_str:
+                    verb = "enter a" if txt else "select a"
+                    fb.set_text(f"Please {verb} {entity}.")
+                    fb.classes(replace="text-md text-red-600")
+                    return
+                fac = sfr["value"]
+                if not fac:
+                    return
+                new_prefs = dict(getattr(fac, attr))
+                new_prefs[val_str] = int(ww.value)
+                afn(attr, new_prefs, fb)
+
+            ui.button("Save").props("rounded color=black text-color=white no-caps").on("click", save_pref)
+
+        if current_prefs:
+            ui.label(f"Remove a {entity} preference:").classes("!text-black dark:!text-white mt-2")
+            with ui.row().classes("gap-4 items-center"):
+                remove_sel = ui.select(
+                    options=list(current_prefs.keys()),
+                    label=f"{title.split()[0]} to Remove",
+                ).classes("w-48")
+
+                def remove_pref(rs=remove_sel, fb=feedback, attr=pref_attr, sfr=selected_faculty_ref, afn=apply_fn):
+                    if not rs.value:
+                        return
+                    fac = sfr["value"]
+                    if not fac:
+                        return
+                    new_prefs = dict(getattr(fac, attr))
+                    new_prefs.pop(rs.value, None)
+                    afn(attr, new_prefs, fb)
+
+                ui.button("Remove").props("rounded color=red text-color=white no-caps").on("click", remove_pref)
 
 
 class _FacultyCalendarState:
@@ -48,32 +128,7 @@ class FacultyGUIView:
             return
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
             ui.label("Faculty").classes("text-4xl mb-10 !text-black dark:!text-white")
-            ui.button("Add Faculty").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/faculty/add"))
-            ui.button("Modify Faculty").props(
-                "rounded text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl").style(
-                "background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/faculty/modify"))
-            ui.button("Delete Faculty").props(
-                "rounded text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl").style(
-                "background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/faculty/delete"))
-            ui.button("View Faculty").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-facultyBegin), var(--q-facultyEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/faculty/view"))
-            ui.space()
-            ui.button("Back").props(
-                "rounded color=backbtn text-color=white no-caps"
-            ).classes(
-                "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            hub_page_buttons("Faculty", "faculty", "/faculty")
 
     @ui.page("/faculty/add")
     @staticmethod
@@ -767,274 +822,23 @@ class FacultyGUIView:
                             ).on("click", clear_day)
 
                         ui.separator()
-
-                        # --- Course Preferences ---
-                        with ui.column().classes("w-full gap-2"):
-                            ui.label("Course Preferences").classes(
-                                "!text-black dark:!text-white font-bold text-lg"
-                            )
-                            if f.course_preferences:
-                                for course, weight in f.course_preferences.items():
-                                    ui.label(f"  {course}: {weight}").classes(
-                                        "!text-black dark:!text-white text-sm"
-                                    )
-                            else:
-                                ui.label("  None").classes(
-                                    "!text-black dark:!text-white text-sm"
-                                )
-
-                            ui.label("Add/Update a course preference:").classes(
-                                "!text-black dark:!text-white mt-2"
-                            )
-                            course_pref_feedback = ui.label("").classes(
-                                "text-md !text-black dark:!text-white"
-                            )
-                            with ui.row().classes("gap-4 items-center flex-wrap"):
-                                course_input = ui.input(
-                                    label="Course ID (e.g. CMSC 161)"
-                                ).classes("w-48")
-                                weight_input = ui.number(
-                                    label="Weight (0-10)", min=0, max=10, value=5
-                                ).classes("w-32")
-
-                                def save_course_pref():
-                                    course = course_input.value.strip()
-                                    if not course:
-                                        course_pref_feedback.set_text(
-                                            "Please enter a course ID."
-                                        )
-                                        course_pref_feedback.classes(
-                                            replace="text-md text-red-600"
-                                        )
-                                        return
-                                    val = selected_faculty["value"]
-                                    if not val:
-                                        return
-                                    new_prefs = dict(val.course_preferences)
-                                    new_prefs[course] = int(weight_input.value)
-                                    apply(
-                                        "course_preferences",
-                                        new_prefs,
-                                        course_pref_feedback,
-                                    )
-
-                                ui.button("Save").props(
-                                    "rounded color=black text-color=white no-caps"
-                                ).on("click", save_course_pref)
-
-                            if f.course_preferences:
-                                ui.label("Remove a course preference:").classes(
-                                    "!text-black dark:!text-white mt-2"
-                                )
-                                with ui.row().classes("gap-4 items-center"):
-                                    remove_course_select = ui.select(
-                                        options=list(f.course_preferences.keys()),
-                                        label="Course to Remove",
-                                    ).classes("w-48")
-
-                                    def remove_course_pref():
-                                        if not remove_course_select.value:
-                                            return
-                                        val = selected_faculty["value"]
-                                        if not val:
-                                            return
-                                        new_prefs = dict(val.course_preferences)
-                                        new_prefs.pop(remove_course_select.value, None)
-                                        apply(
-                                            "course_preferences",
-                                            new_prefs,
-                                            course_pref_feedback,
-                                        )
-
-                                    ui.button("Remove").props(
-                                        "rounded color=red text-color=white no-caps"
-                                    ).on("click", remove_course_pref)
-
+                        _build_pref_section(
+                            "Course Preferences", "course_preferences",
+                            f.course_preferences, None,
+                            "Course ID (e.g. CMSC 161)", selected_faculty, apply,
+                        )
                         ui.separator()
-
-                        # --- Room Preferences ---
-                        with ui.column().classes("w-full gap-2"):
-                            ui.label("Room Preferences").classes(
-                                "!text-black dark:!text-white font-bold text-lg"
-                            )
-                            if f.room_preferences:
-                                for room, weight in f.room_preferences.items():
-                                    ui.label(f"  {room}: {weight}").classes(
-                                        "!text-black dark:!text-white text-sm"
-                                    )
-                            else:
-                                ui.label("  None").classes(
-                                    "!text-black dark:!text-white text-sm"
-                                )
-
-                            ui.label("Add/Update a room preference:").classes(
-                                "!text-black dark:!text-white mt-2"
-                            )
-                            room_pref_feedback = ui.label("").classes(
-                                "text-md !text-black dark:!text-white"
-                            )
-
-                            available_rooms = controller.get_available_rooms()
-                            if available_rooms:
-                                with ui.row().classes("gap-4 items-center flex-wrap"):
-                                    room_select = ui.select(
-                                        options=available_rooms, label="Room"
-                                    ).classes("w-48")
-                                    room_weight_input = ui.number(
-                                        label="Weight (0-10)", min=0, max=10, value=5
-                                    ).classes("w-32")
-
-                                    def save_room_pref():
-                                        if not room_select.value:
-                                            room_pref_feedback.set_text(
-                                                "Please select a room."
-                                            )
-                                            room_pref_feedback.classes(
-                                                replace="text-md text-red-600"
-                                            )
-                                            return
-                                        val = selected_faculty["value"]
-                                        if not val:
-                                            return
-                                        new_prefs = dict(val.room_preferences)
-                                        new_prefs[room_select.value] = int(
-                                            room_weight_input.value
-                                        )
-                                        apply(
-                                            "room_preferences",
-                                            new_prefs,
-                                            room_pref_feedback,
-                                        )
-
-                                    ui.button("Save").props(
-                                        "rounded color=black text-color=white no-caps"
-                                    ).on("click", save_room_pref)
-
-                                if f.room_preferences:
-                                    ui.label("Remove a room preference:").classes(
-                                        "!text-black dark:!text-white mt-2"
-                                    )
-                                    with ui.row().classes("gap-4 items-center"):
-                                        remove_room_select = ui.select(
-                                            options=list(f.room_preferences.keys()),
-                                            label="Room to Remove",
-                                        ).classes("w-48")
-
-                                        def remove_room_pref():
-                                            if not remove_room_select.value:
-                                                return
-                                            val = selected_faculty["value"]
-                                            if not val:
-                                                return
-                                            new_prefs = dict(val.room_preferences)
-                                            new_prefs.pop(
-                                                remove_room_select.value, None
-                                            )
-                                            apply(
-                                                "room_preferences",
-                                                new_prefs,
-                                                room_pref_feedback,
-                                            )
-
-                                        ui.button("Remove").props(
-                                            "rounded color=red text-color=white no-caps"
-                                        ).on("click", remove_room_pref)
-                            else:
-                                ui.label(
-                                    "No rooms available in configuration."
-                                ).classes("!text-black dark:!text-white text-sm")
-
+                        _build_pref_section(
+                            "Room Preferences", "room_preferences",
+                            f.room_preferences, controller.get_available_rooms(),
+                            "Room", selected_faculty, apply,
+                        )
                         ui.separator()
-
-                        # --- Lab Preferences ---
-                        with ui.column().classes("w-full gap-2"):
-                            ui.label("Lab Preferences").classes(
-                                "!text-black dark:!text-white font-bold text-lg"
-                            )
-                            if f.lab_preferences:
-                                for lab, weight in f.lab_preferences.items():
-                                    ui.label(f"  {lab}: {weight}").classes(
-                                        "!text-black dark:!text-white text-sm"
-                                    )
-                            else:
-                                ui.label("  None").classes(
-                                    "!text-black dark:!text-white text-sm"
-                                )
-
-                            ui.label("Add/Update a lab preference:").classes(
-                                "!text-black dark:!text-white mt-2"
-                            )
-                            lab_pref_feedback = ui.label("").classes(
-                                "text-md !text-black dark:!text-white"
-                            )
-
-                            available_labs = controller.get_available_labs()
-                            if available_labs:
-                                with ui.row().classes("gap-4 items-center flex-wrap"):
-                                    lab_select = ui.select(
-                                        options=available_labs, label="Lab"
-                                    ).classes("w-48")
-                                    lab_weight_input = ui.number(
-                                        label="Weight (0-10)", min=0, max=10, value=5
-                                    ).classes("w-32")
-
-                                    def save_lab_pref():
-                                        if not lab_select.value:
-                                            lab_pref_feedback.set_text(
-                                                "Please select a lab."
-                                            )
-                                            lab_pref_feedback.classes(
-                                                replace="text-md text-red-600"
-                                            )
-                                            return
-                                        val = selected_faculty["value"]
-                                        if not val:
-                                            return
-                                        new_prefs = dict(val.lab_preferences)
-                                        new_prefs[lab_select.value] = int(
-                                            lab_weight_input.value
-                                        )
-                                        apply(
-                                            "lab_preferences",
-                                            new_prefs,
-                                            lab_pref_feedback,
-                                        )
-
-                                    ui.button("Save").props(
-                                        "rounded color=black text-color=white no-caps"
-                                    ).on("click", save_lab_pref)
-
-                                if f.lab_preferences:
-                                    ui.label("Remove a lab preference:").classes(
-                                        "!text-black dark:!text-white mt-2"
-                                    )
-                                    with ui.row().classes("gap-4 items-center"):
-                                        remove_lab_select = ui.select(
-                                            options=list(f.lab_preferences.keys()),
-                                            label="Lab to Remove",
-                                        ).classes("w-48")
-
-                                        def remove_lab_pref():
-                                            if not remove_lab_select.value:
-                                                return
-                                            val = selected_faculty["value"]
-                                            if not val:
-                                                return
-                                            new_prefs = dict(val.lab_preferences)
-                                            new_prefs.pop(remove_lab_select.value, None)
-                                            apply(
-                                                "lab_preferences",
-                                                new_prefs,
-                                                lab_pref_feedback,
-                                            )
-
-                                        ui.button("Remove").props(
-                                            "rounded color=red text-color=white no-caps"
-                                        ).on("click", remove_lab_pref)
-                            else:
-                                ui.label("No labs available in configuration.").classes(
-                                    "!text-black dark:!text-white text-sm"
-                                )
+                        _build_pref_section(
+                            "Lab Preferences", "lab_preferences",
+                            f.lab_preferences, controller.get_available_labs(),
+                            "Lab", selected_faculty, apply,
+                        )
 
             def on_select(e):
                 if not e.value or e.value not in faculty_options:

@@ -25,8 +25,3 @@ class LabModel(LocationModel):
     def get_all_labs(self) -> list[str]:
         return self._get_all()
 
-    def get_affected_courses(self, lab_name: str) -> list:
-        return self._get_affected_courses(lab_name)
-
-    def get_affected_faculty(self, lab_name: str) -> list:
-        return self._get_affected_faculty(lab_name)

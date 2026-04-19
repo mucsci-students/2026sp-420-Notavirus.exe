@@ -147,3 +147,26 @@ def require_config(back_url: str = "/") -> bool:
             )
 
     return False
+
+
+def hub_page_buttons(entity: str, color_var: str, base_url: str) -> None:
+    """Render the standard Add/Modify/Delete/View + Back buttons for a hub page."""
+    for action in ("Add", "Modify", "Delete", "View"):
+        (
+            ui.button(f"{action} {entity}")
+            .props("rounded text-color=white no-caps")
+            .classes("w-80 h-16 text-xl")
+            .style(
+                f"background: linear-gradient(135deg, var(--q-{color_var}Begin), var(--q-{color_var}End)) !important;"
+            )
+            .on("click", lambda a=action: ui.navigate.to(f"{base_url}/{a.lower()}"))
+        )
+    ui.space()
+    (
+        ui.button("Back")
+        .props("rounded color=backbtn text-color=white no-caps")
+        .classes(
+            "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
+        )
+        .on("click", lambda: ui.navigate.to("/"))
+    )

@@ -212,6 +212,31 @@ class ChatbotController:
                 GUIView.controller.temp_save()
         return success
 
+    # ── Shared location (lab/room) CRUD helpers ──────────────────────────────
+
+    def _location_add(self, add_fn, entity: str, name: str) -> str:
+        return (
+            f"{entity.capitalize()} '{name}' added."
+            if self._trigger_save(add_fn(name))
+            else f"Failed to add {entity} '{name}' (may already exist)."
+        )
+
+    def _location_delete(self, delete_fn, entity: str, name: str, fail_suffix: str = "") -> str:
+        if self._trigger_save(delete_fn(name)):
+            return f"{entity.capitalize()} '{name}' deleted."
+        return f"Failed to delete {entity} '{name}'.{fail_suffix}"
+
+    def _location_rename(self, modify_fn, entity: str, old: str, new: str, fail_suffix: str = "") -> str:
+        return (
+            f"{entity.capitalize()} renamed from '{old}' to '{new}'."
+            if self._trigger_save(modify_fn(old, new))
+            else f"Failed to rename {entity} '{old}'.{fail_suffix}"
+        )
+
+    def _location_get_all(self, get_all_fn, entity: str) -> str:
+        items = get_all_fn()
+        return (f"{entity.capitalize()}s: " + ", ".join(items)) if items else f"No {entity}s configured."
+
     def save_config(self) -> bool:
         """Persist all in-memory changes to the config file on disk."""
         try:
@@ -224,33 +249,19 @@ class ChatbotController:
 
     @requires_config
     def _add_lab(self, name: str) -> str:
-        result = (
-            f"Lab '{name}' added."
-            if self._trigger_save(self.lab_model.add_lab(name))
-            else f"Failed to add lab '{name}' (may already exist)."
-        )
-        return result
+        return self._location_add(self.lab_model.add_lab, "lab", name)
 
     @requires_config
     def _delete_lab(self, name: str) -> str:
-        return (
-            f"Lab '{name}' deleted."
-            if self._trigger_save(self.lab_model.delete_lab(name))
-            else f"Failed to delete lab '{name}'."
-        )
+        return self._location_delete(self.lab_model.delete_lab, "lab", name)
 
     @requires_config
     def _rename_lab(self, old_name: str, new_name: str) -> str:
-        return (
-            f"Lab renamed from '{old_name}' to '{new_name}'."
-            if self._trigger_save(self.lab_model.modify_lab(old_name, new_name))
-            else f"Failed to rename lab '{old_name}'."
-        )
+        return self._location_rename(self.lab_model.modify_lab, "lab", old_name, new_name)
 
     @requires_config
     def _get_labs(self) -> str:
-        labs = self.lab_model.get_all_labs()
-        return ("Labs: " + ", ".join(labs)) if labs else "No labs configured."
+        return self._location_get_all(self.lab_model.get_all_labs, "lab")
 
     # ── Room tools ───────────────────────────────────────────────────────────
 
@@ -264,11 +275,7 @@ class ChatbotController:
 
     @requires_config
     def _add_room(self, name: str) -> str:
-        return (
-            f"Room '{name}' added."
-            if self._trigger_save(self.room_model.add_room(name))
-            else f"Failed to add room '{name}' (may already exist)."
-        )
+        return self._location_add(self.room_model.add_room, "room", name)
 
     @requires_config
     def _delete_room(self, name: str) -> str:
@@ -278,16 +285,13 @@ class ChatbotController:
 
     @requires_config
     def _rename_room(self, old_name: str, new_name: str) -> str:
-        return (
-            f"Room renamed from '{old_name}' to '{new_name}'."
-            if self._trigger_save(self.room_model.modify_room(old_name, new_name))
-            else f"Failed to rename room '{old_name}' (not found).{self._suggest_room(old_name)}."
-        )
+        if self._trigger_save(self.room_model.modify_room(old_name, new_name)):
+            return f"Room renamed from '{old_name}' to '{new_name}'."
+        return f"Failed to rename room '{old_name}' (not found).{self._suggest_room(old_name)}."
 
     @requires_config
     def _get_rooms(self) -> str:
-        rooms = self.room_model.get_all_rooms()
-        return ("Rooms: " + ", ".join(rooms)) if rooms else "No rooms configured."
+        return self._location_get_all(self.room_model.get_all_rooms, "room")
 
     # ── Course tools ─────────────────────────────────────────────────────────
 

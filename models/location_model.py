@@ -48,6 +48,8 @@ class LocationModel:
         return name in self._items
 
     def _add(self, name: str) -> bool:
+        if not name or not name.strip():
+            return False
         if self._exists(name):
             return False
         self._items.append(name)
@@ -74,6 +76,8 @@ class LocationModel:
         return True
 
     def _modify(self, old_name: str, new_name: str) -> bool:
+        if not new_name or not new_name.strip():
+            return False
         if not self._exists(old_name) or self._exists(new_name):
             return False
         items = self._items
@@ -99,3 +103,13 @@ class LocationModel:
 
     def _get_affected_faculty(self, name: str) -> list:
         return [f for f in self._cfg.faculty if name in getattr(f, self._pref_attr)]
+
+    # ------------------------------------------------------------------
+    # Public API shared by all subclasses
+    # ------------------------------------------------------------------
+
+    def get_affected_courses(self, name: str) -> list:
+        return self._get_affected_courses(name)
+
+    def get_affected_faculty(self, name: str) -> list:
+        return self._get_affected_faculty(name)

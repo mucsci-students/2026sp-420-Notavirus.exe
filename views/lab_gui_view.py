@@ -12,7 +12,7 @@ LabGUIView - Graphical-user interface for lab interactions
 from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_utils import require_config
+from views.gui_utils import require_config, hub_page_buttons
 
 
 class LabGUIView:
@@ -37,32 +37,7 @@ class LabGUIView:
             return
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
             ui.label("Lab").classes("text-4xl mb-10 !text-black dark:!text-white")
-            ui.button("Add Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/add"))
-            ui.button("Modify Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/modify"))
-            ui.button("Delete Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/delete"))
-            ui.button("View Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/view"))
-            ui.space()
-            ui.button("Back").props(
-                "rounded color=backbtn text-color=white no-caps"
-            ).classes(
-                "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            hub_page_buttons("Lab", "lab", "/lab")
 
     @ui.page("/lab/add")
     @staticmethod

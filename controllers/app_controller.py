@@ -276,21 +276,19 @@ class SchedulerController:
         if not state1_str or not state2_str:
             return "Configuration"
         try:
-            from scheduler import CombinedConfig
+            import json
 
-            s1_cfg = CombinedConfig.model_validate_json(state1_str)
-            s2_cfg = CombinedConfig.model_validate_json(state2_str)
-            s1 = s1_cfg.model_dump()
-            s2 = s2_cfg.model_dump()
+            s1 = json.loads(state1_str)
+            s2 = json.loads(state2_str)
 
             c1 = s1.get("config", {})
             c2 = s2.get("config", {})
 
             categories = [
-                ("faculty", "Faculty", "Faculty"),
-                ("courses", "Course", "Course"),
                 ("rooms", "Room", "Room"),
                 ("labs", "Lab", "Lab"),
+                ("courses", "Course", "Course"),
+                ("faculty", "Faculty", "Faculty"),
             ]
 
             # Pass 1: Additions and Deletions take priority
@@ -308,7 +306,8 @@ class SchedulerController:
                 l2 = c2.get(key, [])
                 if l1 != l2:
                     if key == "courses":
-                        for i in range(min(len(l1), len(l2))):
+                        is_only_conflict_change = True
+                        for i in range(len(l1)):
                             if l1[i] != l2[i]:
                                 old_no_conf = {
                                     k: v for k, v in l1[i].items() if k != "conflicts"
@@ -316,13 +315,64 @@ class SchedulerController:
                                 new_no_conf = {
                                     k: v for k, v in l2[i].items() if k != "conflicts"
                                 }
-                                if old_no_conf == new_no_conf and l1[i].get(
-                                    "conflicts", []
-                                ) != l2[i].get("conflicts", []):
-                                    return "Modify Conflict"
+                                if old_no_conf != new_no_conf:
+                                    is_only_conflict_change = False
+                                    break
+                        if is_only_conflict_change:
+
+                            def get_pairs(c_list):
+                                idx_map = {}
+                                for idx, c_obj in enumerate(c_list):
+                                    cid = c_obj.get("course_id")
+                                    if cid:
+                                        idx_map.setdefault(cid, []).append(idx)
+                                pairs = set()
+                                for idx, c_obj in enumerate(c_list):
+                                    for conf_id in c_obj.get("conflicts", []):
+                                        for j in idx_map.get(conf_id, []):
+                                            pairs.add((min(idx, j), max(idx, j)))
+                                return pairs
+
+                            c_old = get_pairs(l1)
+                            c_new = get_pairs(l2)
+                            if c_old < c_new:
+                                return "Add Conflict"
+                            elif c_old > c_new:
+                                return "Delete Conflict"
+                            return "Modify Conflict"
                     return f"Modify {single_name}"
 
             if s1.get("time_slot_config") != s2.get("time_slot_config"):
+                t1 = s1.get("time_slot_config") or {}
+                t2 = s2.get("time_slot_config") or {}
+
+                c1 = t1.get("classes") or []
+                c2 = t2.get("classes") or []
+                if len(c1) < len(c2):
+                    return "Add Class Pattern"
+                elif len(c1) > len(c2):
+                    return "Delete Class Pattern"
+                elif c1 != c2:
+                    return "Modify Class Pattern"
+
+                times1 = t1.get("times") or {}
+                times2 = t2.get("times") or {}
+                b1 = sum(
+                    len(blocks)
+                    for blocks in (times1.values() if isinstance(times1, dict) else [])
+                )
+                b2 = sum(
+                    len(blocks)
+                    for blocks in (times2.values() if isinstance(times2, dict) else [])
+                )
+
+                if b1 < b2:
+                    return "Add Time Block"
+                elif b1 > b2:
+                    return "Delete Time Block"
+                elif times1 != times2:
+                    return "Modify Time Block"
+
                 return "Modify Time Slots"
             if s1.get("limit") != s2.get("limit"):
                 return "Modify Schedule Limit"
@@ -347,13 +397,18 @@ class SchedulerController:
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
 
-        previous_state = self.undo_redo_controller.undo(current_state)
-        if previous_state:
-            action = self._get_action_description(previous_state, current_state)
-            from nicegui import app
+        try:
+            previous_state = self.undo_redo_controller.undo(current_state)
+            if previous_state:
+                action = self._get_action_description(previous_state, current_state)
+                from nicegui import app
 
-            app.storage.user["flash_message"] = f"Undid: {action}"
-            self._apply_state(previous_state)
+                app.storage.user["flash_message"] = f"Undid: {action}"
+                self._apply_state(previous_state)
+        except Exception as e:
+            from nicegui import ui
+
+            ui.notify(f"Undo failed: {e}", color="red")
 
     def perform_redo(self):
         if self.config_model is None or not self.undo_redo_controller.can_redo():
@@ -370,13 +425,18 @@ class SchedulerController:
             with open(self.config_model.config_path, "r") as f:
                 current_state = f.read()
 
-        next_state = self.undo_redo_controller.redo(current_state)
-        if next_state:
-            action = self._get_action_description(current_state, next_state)
-            from nicegui import app
+        try:
+            next_state = self.undo_redo_controller.redo(current_state)
+            if next_state:
+                action = self._get_action_description(current_state, next_state)
+                from nicegui import app
 
-            app.storage.user["flash_message"] = f"Redid: {action}"
-            self._apply_state(next_state)
+                app.storage.user["flash_message"] = f"Redid: {action}"
+                self._apply_state(next_state)
+        except Exception as e:
+            from nicegui import ui
+
+            ui.notify(f"Redo failed: {e}", color="red")
 
     def _apply_state(self, state_json: str):
         if not self.config_path:

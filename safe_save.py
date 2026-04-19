@@ -109,6 +109,29 @@ def save_configuration(
         else:
             update_feature(feature)
 
+        # BEFORE WRITING: Validate the merged data against the model
+        # Every save must be valid CombinedConfig
+        try:
+            from scheduler import CombinedConfig
+
+            CombinedConfig(**target_data)
+        except Exception as val_err:
+            try:
+                # Try to get error count if it's Pydantic
+                from pydantic import ValidationError
+
+                if isinstance(val_err, ValidationError):
+                    print(
+                        f"Validation Error: {len(val_err.errors())} error(s) found. Save blocked."
+                    )
+                else:
+                    print(
+                        f"Validation Error: {str(val_err).split('\n')[0]} Save blocked."
+                    )
+            except Exception:
+                print("Validation Error: Save blocked.")
+            return False
+
         dir_name = os.path.dirname(os.path.abspath(config_path))
 
         # Write to a proper safe temporary file first

@@ -24,4 +24,3 @@ class LabModel(LocationModel):
 
     def get_all_labs(self) -> list[str]:
         return self._get_all()
-

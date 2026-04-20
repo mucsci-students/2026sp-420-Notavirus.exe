@@ -221,12 +221,16 @@ class ChatbotController:
             else f"Failed to add {entity} '{name}' (may already exist)."
         )
 
-    def _location_delete(self, delete_fn, entity: str, name: str, fail_suffix: str = "") -> str:
+    def _location_delete(
+        self, delete_fn, entity: str, name: str, fail_suffix: str = ""
+    ) -> str:
         if self._trigger_save(delete_fn(name)):
             return f"{entity.capitalize()} '{name}' deleted."
         return f"Failed to delete {entity} '{name}'.{fail_suffix}"
 
-    def _location_rename(self, modify_fn, entity: str, old: str, new: str, fail_suffix: str = "") -> str:
+    def _location_rename(
+        self, modify_fn, entity: str, old: str, new: str, fail_suffix: str = ""
+    ) -> str:
         return (
             f"{entity.capitalize()} renamed from '{old}' to '{new}'."
             if self._trigger_save(modify_fn(old, new))
@@ -235,7 +239,11 @@ class ChatbotController:
 
     def _location_get_all(self, get_all_fn, entity: str) -> str:
         items = get_all_fn()
-        return (f"{entity.capitalize()}s: " + ", ".join(items)) if items else f"No {entity}s configured."
+        return (
+            (f"{entity.capitalize()}s: " + ", ".join(items))
+            if items
+            else f"No {entity}s configured."
+        )
 
     def save_config(self) -> bool:
         """Persist all in-memory changes to the config file on disk."""
@@ -257,7 +265,9 @@ class ChatbotController:
 
     @requires_config
     def _rename_lab(self, old_name: str, new_name: str) -> str:
-        return self._location_rename(self.lab_model.modify_lab, "lab", old_name, new_name)
+        return self._location_rename(
+            self.lab_model.modify_lab, "lab", old_name, new_name
+        )
 
     @requires_config
     def _get_labs(self) -> str:

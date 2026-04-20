@@ -33,7 +33,9 @@ def _build_pref_section(
         ui.label(title).classes("!text-black dark:!text-white font-bold text-lg")
         if current_prefs:
             for name, weight in current_prefs.items():
-                ui.label(f"  {name}: {weight}").classes("!text-black dark:!text-white text-sm")
+                ui.label(f"  {name}: {weight}").classes(
+                    "!text-black dark:!text-white text-sm"
+                )
         else:
             ui.label("  None").classes("!text-black dark:!text-white text-sm")
 
@@ -52,12 +54,21 @@ def _build_pref_section(
             if use_text:
                 item_widget = ui.input(label=input_label).classes("w-48")
             else:
-                item_widget = ui.select(options=options, label=input_label).classes("w-48")
-            weight_widget = ui.number(label="Weight (0-10)", min=0, max=10, value=5).classes("w-32")
+                item_widget = ui.select(options=options, label=input_label).classes(
+                    "w-48"
+                )
+            weight_widget = ui.number(
+                label="Weight (0-10)", min=0, max=10, value=5
+            ).classes("w-32")
 
             def save_pref(
-                iw=item_widget, ww=weight_widget, fb=feedback,
-                attr=pref_attr, sfr=selected_faculty_ref, afn=apply_fn, txt=use_text,
+                iw=item_widget,
+                ww=weight_widget,
+                fb=feedback,
+                attr=pref_attr,
+                sfr=selected_faculty_ref,
+                afn=apply_fn,
+                txt=use_text,
             ):
                 raw = iw.value
                 val_str = raw.strip() if (txt and raw) else raw
@@ -73,17 +84,27 @@ def _build_pref_section(
                 new_prefs[val_str] = int(ww.value)
                 afn(attr, new_prefs, fb)
 
-            ui.button("Save").props("rounded color=black text-color=white no-caps").on("click", save_pref)
+            ui.button("Save").props("rounded color=black text-color=white no-caps").on(
+                "click", save_pref
+            )
 
         if current_prefs:
-            ui.label(f"Remove a {entity} preference:").classes("!text-black dark:!text-white mt-2")
+            ui.label(f"Remove a {entity} preference:").classes(
+                "!text-black dark:!text-white mt-2"
+            )
             with ui.row().classes("gap-4 items-center"):
                 remove_sel = ui.select(
                     options=list(current_prefs.keys()),
                     label=f"{title.split()[0]} to Remove",
                 ).classes("w-48")
 
-                def remove_pref(rs=remove_sel, fb=feedback, attr=pref_attr, sfr=selected_faculty_ref, afn=apply_fn):
+                def remove_pref(
+                    rs=remove_sel,
+                    fb=feedback,
+                    attr=pref_attr,
+                    sfr=selected_faculty_ref,
+                    afn=apply_fn,
+                ):
                     if not rs.value:
                         return
                     fac = sfr["value"]
@@ -93,7 +114,9 @@ def _build_pref_section(
                     new_prefs.pop(rs.value, None)
                     afn(attr, new_prefs, fb)
 
-                ui.button("Remove").props("rounded color=red text-color=white no-caps").on("click", remove_pref)
+                ui.button("Remove").props(
+                    "rounded color=red text-color=white no-caps"
+                ).on("click", remove_pref)
 
 
 class _FacultyCalendarState:
@@ -823,21 +846,33 @@ class FacultyGUIView:
 
                         ui.separator()
                         _build_pref_section(
-                            "Course Preferences", "course_preferences",
-                            f.course_preferences, None,
-                            "Course ID (e.g. CMSC 161)", selected_faculty, apply,
+                            "Course Preferences",
+                            "course_preferences",
+                            f.course_preferences,
+                            None,
+                            "Course ID (e.g. CMSC 161)",
+                            selected_faculty,
+                            apply,
                         )
                         ui.separator()
                         _build_pref_section(
-                            "Room Preferences", "room_preferences",
-                            f.room_preferences, controller.get_available_rooms(),
-                            "Room", selected_faculty, apply,
+                            "Room Preferences",
+                            "room_preferences",
+                            f.room_preferences,
+                            controller.get_available_rooms(),
+                            "Room",
+                            selected_faculty,
+                            apply,
                         )
                         ui.separator()
                         _build_pref_section(
-                            "Lab Preferences", "lab_preferences",
-                            f.lab_preferences, controller.get_available_labs(),
-                            "Lab", selected_faculty, apply,
+                            "Lab Preferences",
+                            "lab_preferences",
+                            f.lab_preferences,
+                            controller.get_available_labs(),
+                            "Lab",
+                            selected_faculty,
+                            apply,
                         )
 
             def on_select(e):

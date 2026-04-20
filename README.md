@@ -450,6 +450,9 @@ When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-t
 AI Assistant / Chatbot Tests Not Working
 Both require a valid OpenAI API key. See **Setup step 4** for instructions on adding your key to `.env`. Without it, the AI Assistant panel will be non-functional and `tests/test_integration/` tests will fail.
 
+Receiving erros from runnig uv commands
+Delete virtual environment and follow steps found above in setup section to reactivate your environment.
+
 ---
 
 # Acknowledgements

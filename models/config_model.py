@@ -94,19 +94,29 @@ class ConfigModel:
     def reload(self):
         """
         Reload configuration from file.
-
-        Use this after saving to ensure in-memory config matches file.
-
-        Parameters:
-            None
-
-        Returns:
-            None
+        Checks for .temp file first to ensure consistency.
         """
+        import os
+
+        temp_path = self.config_path + ".temp"
+        load_path = temp_path if os.path.exists(temp_path) else self.config_path
+
         try:
-            self.config = load_config_from_file(CombinedConfig, self.config_path)
+            from scheduler import CombinedConfig
+
+            self.config = load_config_from_file(CombinedConfig, load_path)
+            print(f"Config reloaded from: {load_path}")
         except Exception as e:
-            print(f"WARNING: reload skipped due to validation error: {e}")
+            # Fallback to base if temp failed
+            if load_path == temp_path:
+                try:
+                    self.config = load_config_from_file(
+                        CombinedConfig, self.config_path
+                    )
+                except Exception as e2:
+                    print(f"CRITICAL: Base config also invalid: {e2}")
+            else:
+                print(f"WARNING: Reload failed: {e}")
 
     def get_all_courses(self):
         """

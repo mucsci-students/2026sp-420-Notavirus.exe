@@ -957,8 +957,22 @@ class ScheduleGUIView:
                     label="File name", value=default_name
                 ).classes("w-full")
                 format_select = ui.select(
-                    options=["csv", "json"], value="csv", label="Export format"
+                    options=["csv", "json", "pdf"], value="csv", label="Export format"
                 ).classes("w-full")
+
+                pdf_view_row = ui.row().classes("w-full")
+                with pdf_view_row:
+                    pdf_view_select = ui.select(
+                        options={"room": "Room / Lab", "faculty": "Faculty"},
+                        value="room",
+                        label="PDF view by",
+                    ).classes("w-full")
+                pdf_view_row.set_visibility(False)
+
+                def on_format_change(e):
+                    pdf_view_row.set_visibility(e.value == "pdf")
+
+                format_select.on_value_change(on_format_change)
 
                 def do_export():
                     if not schedule_select.value:
@@ -970,12 +984,26 @@ class ScheduleGUIView:
                     ]
                     schedules_to_export = [_state.schedules[i] for i in indices]
                     filename = filename_input.value.strip() or "schedules"
-                    if GUIView.controller is None:
+                    fmt = format_select.value
+                    try:
+                        if fmt == "pdf":
+                            from views.pdf_export_view import generate_pdf
+
+                            data = generate_pdf(
+                                schedules_to_export, view_by=pdf_view_select.value
+                            )
+                        else:
+                            if GUIView.controller is None:
+                                return
+                            data = (
+                                GUIView.controller.schedule_controller.export_schedules(
+                                    fmt, schedules_to_export
+                                )
+                            )
+                    except ImportError as exc:
+                        ui.notify(str(exc), type="negative")
                         return
-                    data = GUIView.controller.schedule_controller.export_schedules(
-                        format_select.value, schedules_to_export
-                    )
-                    ui.download(data, filename=f"{filename}.{format_select.value}")
+                    ui.download(data, filename=f"{filename}.{fmt}")
                     export_dialog.close()
 
                 with ui.row().classes("w-full justify-end gap-3 pt-2"):
@@ -1721,9 +1749,15 @@ class ScheduleGUIView:
             if sched_ctrl is None:
                 return
             course_model = getattr(GUIView.controller, "course_model", None)
+            faculty_model = getattr(GUIView.controller, "faculty_model", None)
+            all_faculty = (
+                [f.name for f in faculty_model.get_all_faculty()]
+                if faculty_model is not None
+                else None
+            )
             schedule = _state.schedules[_state.current_index]
             names, values = sched_ctrl.get_faculty_chart_data(
-                schedule, faculty_metric[0], course_model
+                schedule, faculty_metric[0], course_model, all_faculty
             )
             color = _get_axis_color()
             faculty_chart.options["xAxis"]["data"] = names
@@ -1740,8 +1774,15 @@ class ScheduleGUIView:
             sched_ctrl = _get_sched_ctrl()
             if sched_ctrl is None:
                 return
+            room_model = getattr(GUIView.controller, "room_model", None)
+            lab_model = getattr(GUIView.controller, "lab_model", None)
+            all_locations = (
+                room_model.get_all_rooms() if room_model is not None else []
+            ) + (lab_model.get_all_labs() if lab_model is not None else [])
             schedule = _state.schedules[_state.current_index]
-            names, values = sched_ctrl.get_room_chart_data(schedule)
+            names, values = sched_ctrl.get_room_chart_data(
+                schedule, all_locations or None
+            )
             color = _get_axis_color()
             room_chart.options["xAxis"]["data"] = names
             room_chart.options["xAxis"]["axisLabel"]["color"] = color

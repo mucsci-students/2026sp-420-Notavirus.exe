@@ -13,7 +13,7 @@ This view class handles all GUI pages related to conflict management:
 from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_utils import require_config
+from views.gui_utils import require_config, hub_page_buttons
 
 
 class ConflictGUIView:
@@ -37,32 +37,7 @@ class ConflictGUIView:
             return
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
             ui.label("Conflict").classes("text-4xl mb-10 !text-black dark:!text-white")
-            ui.button("Add Conflict").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/conflict/add"))
-            ui.button("Modify Conflict").props(
-                "rounded text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl").style(
-                "background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/conflict/modify"))
-            ui.button("Delete Conflict").props(
-                "rounded text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl").style(
-                "background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/conflict/delete"))
-            ui.button("View Conflict").props(
-                "rounded text-color=white no-caps"
-            ).classes("w-80 h-16 text-xl").style(
-                "background: linear-gradient(135deg, var(--q-conflictBegin), var(--q-conflictEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/conflict/view"))
-            ui.space()
-            ui.button("Back").props(
-                "rounded color=backbtn text-color=white no-caps"
-            ).classes(
-                "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            hub_page_buttons("Conflict", "conflict", "/conflict")
 
     @ui.page("/conflict/add")
     @staticmethod

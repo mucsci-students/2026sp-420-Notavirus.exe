@@ -319,6 +319,42 @@ def test_get_color_classes():
     print("[PASS] test_get_color_classes passed")
 
 
+def test_generate_pdf_returns_bytes():
+    """generate_pdf should return non-empty bytes that start with the PDF magic number."""
+    from views.pdf_export_view import generate_pdf
+
+    schedule = [
+        MockCourseInstance(
+            "CMSC 476.01",
+            "Zoppetti",
+            room="Roddy 136",
+            times=["MON 10:00-11:30", "WED 10:00-11:30"],
+        ),
+    ]
+
+    result = generate_pdf([schedule])
+
+    assert isinstance(result, bytes), "generate_pdf should return bytes"
+    assert len(result) > 0, "PDF output should not be empty"
+    assert result[:4] == b"%PDF", "Output should begin with the PDF magic number"
+
+    print("[PASS] test_generate_pdf_returns_bytes passed")
+
+
+def test_generate_pdf_empty_schedule():
+    """generate_pdf with an empty schedule list should still return valid PDF bytes."""
+    from views.pdf_export_view import generate_pdf
+
+    result = generate_pdf([[]])
+
+    assert isinstance(result, bytes), (
+        "generate_pdf should return bytes even for empty input"
+    )
+    assert result[:4] == b"%PDF", "Output should still be a valid PDF"
+
+    print("[PASS] test_generate_pdf_empty_schedule passed")
+
+
 if __name__ == "__main__":
     test_parse_time_string()
     test_extract_calendar_metadata()
@@ -331,5 +367,7 @@ if __name__ == "__main__":
     test_get_color_for_key()
     test_color_map_consistency()
     test_get_color_classes()
+    test_generate_pdf_returns_bytes()
+    test_generate_pdf_empty_schedule()
 
     print("\n[PASS] All calendar view tests passed!")

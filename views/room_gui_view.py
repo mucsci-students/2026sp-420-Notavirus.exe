@@ -12,7 +12,7 @@ RoomGUIView - Graphical-user interface for room interactions
 from typing import Any
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_utils import require_config
+from views.gui_utils import require_config, hub_page_buttons
 #    Views should never import Controller classes directly.
 
 
@@ -48,32 +48,7 @@ class RoomGUIView:
             return
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
             ui.label("Room").classes("text-4xl mb-10 !text-black dark:!text-white")
-            ui.button("Add Room").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/room/add"))
-            ui.button("Modify Room").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/room/modify"))
-            ui.button("Delete Room").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/room/delete"))
-            ui.button("View Room").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-roomBegin), var(--q-roomEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/room/view"))
-            ui.space()
-            ui.button("Back").props(
-                "rounded color=backbtn text-color=white no-caps"
-            ).classes(
-                "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            hub_page_buttons("Room", "room", "/room")
 
     @ui.page("/room/add")
     @staticmethod

@@ -7,7 +7,22 @@ def test_safe_save_temp(tmp_path):
     # Setup initial config file
     config_file = tmp_path / "config.json"
     initial_data = {
-        "config": {"rooms": ["Room1"], "labs": ["Lab1"], "courses": [], "faculty": []}
+        "config": {"rooms": ["Room1"], "labs": ["Lab1"], "courses": [], "faculty": []},
+        "time_slot_config": {
+            "times": {
+                "MON": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                "TUE": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                "WED": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                "THU": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                "FRI": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+            },
+            "classes": [
+                {
+                    "credits": 3,
+                    "meetings": [{"day": "MON", "duration": 150, "lab": False}],
+                }
+            ],
+        },
     }
     with open(config_file, "w") as f:
         json.dump(initial_data, f)
@@ -30,7 +45,24 @@ def test_safe_save_temp(tmp_path):
                         "labs": ["Lab1"],
                         "courses": [],
                         "faculty": [],
-                    }
+                    },
+                    "time_slot_config": {
+                        "times": {
+                            "MON": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                            "TUE": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                            "WED": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                            "THU": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                            "FRI": [{"start": "10:00", "spacing": 60, "end": "12:00"}],
+                        },
+                        "classes": [
+                            {
+                                "credits": 3,
+                                "meetings": [
+                                    {"day": "MON", "duration": 150, "lab": False}
+                                ],
+                            }
+                        ],
+                    },
                 }
             )
 

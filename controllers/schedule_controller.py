@@ -53,7 +53,11 @@ class ScheduleController:
             return 0.0
 
     def get_faculty_chart_data(
-        self, schedule: list, metric: str, course_model=None
+        self,
+        schedule: list,
+        metric: str,
+        course_model=None,
+        all_faculty: list[str] | None = None,
     ) -> tuple[list[str], list[float]]:
         """
         Aggregate per-faculty values for the heat map bar chart.
@@ -62,10 +66,12 @@ class ScheduleController:
             schedule: List of CourseInfo objects from the generated schedule.
             metric: 'courses' | 'credits' | 'hours'
             course_model: Optional CourseModel used for credit lookup.
+            all_faculty: Optional full faculty name list so that faculty with
+                zero assignments still appear on the chart.
         Returns:
             (faculty_names, values) both sorted alphabetically by name.
         """
-        data: dict[str, float] = {}
+        data: dict[str, float] = {f: 0.0 for f in (all_faculty or [])}
         for ci in schedule:
             f = ci.faculty
             data.setdefault(f, 0.0)
@@ -82,16 +88,22 @@ class ScheduleController:
         names = sorted(data.keys())
         return names, [round(data[n], 2) for n in names]
 
-    def get_room_chart_data(self, schedule: list) -> tuple[list[str], list[int]]:
+    def get_room_chart_data(
+        self,
+        schedule: list,
+        all_locations: list[str] | None = None,
+    ) -> tuple[list[str], list[int]]:
         """
         Count how many courses are assigned to each room/lab.
 
         Parameters:
             schedule: List of CourseInfo objects from the generated schedule.
+            all_locations: Optional full rooms+labs list so that locations with
+                zero assignments still appear on the chart.
         Returns:
             (location_names, counts) both sorted alphabetically by name.
         """
-        data: dict[str, int] = {}
+        data: dict[str, int] = {loc: 0 for loc in (all_locations or [])}
         for ci in schedule:
             if ci.room:
                 data[ci.room] = data.get(ci.room, 0) + 1

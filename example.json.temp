@@ -325,7 +325,7 @@
           "CMSC 453"
         ],
         "faculty": [
-          "Max"
+          "Zoppetti"
         ]
       }
     ],
@@ -385,8 +385,8 @@
         "unique_course_limit": 2,
         "maximum_days": 4,
         "mandatory_days": [
-          "FRI",
           "WED",
+          "FRI",
           "MON"
         ],
         "times": {
@@ -748,50 +748,6 @@
           "Mac": 5,
           "Linux": 1
         }
-      },
-      {
-        "name": "Max",
-        "maximum_credits": 12,
-        "maximum_days": 5,
-        "minimum_credits": 0,
-        "unique_course_limit": 2,
-        "times": {
-          "MON": [
-            {
-              "start": "08:00",
-              "end": "20:00"
-            }
-          ],
-          "TUE": [
-            {
-              "start": "08:00",
-              "end": "20:00"
-            }
-          ],
-          "WED": [
-            {
-              "start": "08:00",
-              "end": "20:00"
-            }
-          ],
-          "THU": [
-            {
-              "start": "08:00",
-              "end": "20:00"
-            }
-          ],
-          "FRI": [
-            {
-              "start": "08:00",
-              "end": "20:00"
-            }
-          ]
-        },
-        "course_preferences": {
-          "CMSC 476": 10
-        },
-        "room_preferences": {},
-        "lab_preferences": {}
       }
     ]
   },

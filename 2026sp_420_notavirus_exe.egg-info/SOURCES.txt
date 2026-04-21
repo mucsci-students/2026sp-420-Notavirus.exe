@@ -20,6 +20,7 @@ controllers/faculty_controller.py
 controllers/lab_controller.py
 controllers/room_controller.py
 controllers/schedule_controller.py
+controllers/undoRedo_controller.py
 models/__init__.py
 models/config_model.py
 models/conflict_model.py

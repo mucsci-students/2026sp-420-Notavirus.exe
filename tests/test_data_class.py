@@ -103,7 +103,8 @@ def test_remove_last_time_block(data):
     data.add_time_block("Monday", "9AM")
     with pytest.raises(ValueError):
         data.remove_time_block("Monday", 0)
-    
+
+
 def test_remove_time_block_success(data):
     data.add_time_block("Monday", "9AM")
     data.add_time_block("Monday", "10AM")
@@ -112,7 +113,6 @@ def test_remove_time_block_success(data):
 
     # Ensure one block remains
     assert len(data.times["Monday"]) == 1
-
 
 
 # ----------------------

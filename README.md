@@ -300,8 +300,8 @@ Found in scheduler_facade.py and wraps all schedule generation methods into one 
 Design Pattern #4
 ...
 
-Design Pattern #5
-...
+Proxy Design Pattern
+Found in time_config_data_class and holds information to limit modification to the actual object
 
 Design Pattern #6
 ...

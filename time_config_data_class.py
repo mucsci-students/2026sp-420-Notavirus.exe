@@ -79,8 +79,10 @@ class time_config_data:
     def remove_time_block(self, day, index):
         if day in self.times:
             blocks = self.times[day]
-            if 0 <= index < len(blocks):
+            if 0 <= index < len(blocks) and len(blocks) > 1:
                 blocks.pop(index)
+            else:
+                raise ValueError("Cannot remove time block from days")
 
     # ----------------------
     # CLASS PATTERN GETTERS/SETTERS

@@ -554,13 +554,21 @@ class GUIView:
                         _bind_stage(
                             [s_inp, e_inp, sp_inp], ["blur", "blur", "blur"], stage
                         )
+                        
                         ui.button(
                             icon="delete",
                             on_click=lambda d=day, idx=i: (
-                                time_config.remove_time_block(d, idx),
-                                render_day_blocks(d),
+                                remove_last_block(d,idx)
                             ),
                         ).props("flat color=red").classes("mt-2")
+                        
+            def remove_last_block(d, idx):
+                try:
+                    time_config.remove_time_block(d, idx)
+                except ValueError as e:
+                    ui.notify(str(e), color="red")
+
+                render_day_blocks(d),
 
         # ── Patterns ──────────────────────────────
 
@@ -604,7 +612,9 @@ class GUIView:
                 ui.notify("Changes saved successfully", color="positive")
             except Exception as ex:
                 ui.notify(f"Error saving changes: {ex}", color="red")
-
+        def reset_on_back():
+            time_config.reset()
+            ui.navigate.to("/")
         refresh_days()
         refresh_patterns()
 
@@ -615,7 +625,7 @@ class GUIView:
                 "rounded color=backbtn text-color=white no-caps"
             ).classes(
                 "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            ).on("click", reset_on_back)
             ui.button("Save", icon="save").props(
                 "rounded color=positive text-color=white no-caps"
             ).classes("w-80 h-16 text-xl transition-colors duration-300").on(
@@ -818,6 +828,8 @@ def _submit_time_block(
         return ui.notify("End time must be after start time.", color="red")
     try:
         spacing = int(sp_inp.value)
+        if spacing <= 0:
+            return ui.notify("Spacing must be greater than 0", color= "red")
     except (ValueError, TypeError):
         return ui.notify("Spacing must be an integer.", color="red")
     time_config.add_time_block(day, TimeBlock(start=start, end=end, spacing=spacing))

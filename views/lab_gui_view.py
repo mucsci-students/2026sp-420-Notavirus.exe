@@ -7,7 +7,7 @@ LabGUIView - Graphical-user interface for lab interactions
     - No Model methods are called directly (.model. removed everywhere).
     - All data operations go through GUIView.controller.lab_controller.
     - Save orchestration is delegated to GUIView.controller methods.
-    
+
   Design pattern: Observer
     - LabChangeListener subscribes to lab configuration changes
     - Notified when labs are added, modified, or deleted
@@ -28,7 +28,7 @@ from views.gui_utils import require_config, hub_page_buttons
 
 class LabChangeListener(ConfigChangeListener):
     """Listener for lab configuration changes in the GUI."""
-    
+
     def on_config_change(self, change_type: str, affected_item: str, **kwargs):
         """Handle lab configuration changes."""
         if affected_item == "lab":

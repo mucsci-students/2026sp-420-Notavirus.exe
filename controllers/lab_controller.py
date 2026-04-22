@@ -6,7 +6,7 @@ LabController - Coordinates lab-related workflows
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - CLI methods are preserved unchanged for backward compatibility.
-    
+
    Design pattern: Observer
     - Notifies subscribed components when labs are added, modified, or deleted
     - Uses config_observer.get_config_observer() to broadcast changes
@@ -93,7 +93,9 @@ class LabController:
         if success:
             self.config_model.save_feature("temp", "all")
             # Notify observers of the change
-            get_config_observer().notify_change("modified", "lab", old_name=old_name, new_name=new_name)
+            get_config_observer().notify_change(
+                "modified", "lab", old_name=old_name, new_name=new_name
+            )
             return True, f"Lab '{old_name}' renamed to '{new_name}'."
         return False, f"Failed: '{new_name}' already exists."
 

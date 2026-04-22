@@ -297,8 +297,8 @@ Found in controllers/chatbot_controller.py and uses a function `requires_config`
 Facade Design Pattern
 Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
 
-Design Pattern #4
-...
+Observer Design Pattern
+Found in config_observer.py and implements a publish-subscribe mechanism where components can subscribe to configuration change events. When data is modified, all subscribers are automatically notified without tight coupling between the model and views.
 
 Design Pattern #5
 ...

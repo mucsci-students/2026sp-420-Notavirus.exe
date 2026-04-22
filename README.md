@@ -323,7 +323,7 @@ and time slots.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (333 tests total)
+# Run all tests (334 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 

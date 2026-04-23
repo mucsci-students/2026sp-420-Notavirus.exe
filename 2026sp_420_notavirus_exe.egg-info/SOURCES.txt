@@ -27,9 +27,11 @@ models/conflict_model.py
 models/course_model.py
 models/faculty_model.py
 models/lab_model.py
+models/location_model.py
 models/room_model.py
 models/scheduler_model.py
 tests/test_data_class.py
+tests/test_observer_pattern.py
 tests/test_safe_save.py
 tests/test_scheduler_facade.py
 views/chatbot_gui_view.py
@@ -40,5 +42,6 @@ views/gui_theme.py
 views/gui_utils.py
 views/gui_view.py
 views/lab_gui_view.py
+views/pdf_export_view.py
 views/room_gui_view.py
 views/schedule_gui_view.py

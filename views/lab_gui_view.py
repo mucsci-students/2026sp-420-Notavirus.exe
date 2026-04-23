@@ -32,7 +32,8 @@ class LabChangeListener(ConfigChangeListener):
     def on_config_change(self, change_type: str, affected_item: str, **kwargs):
         """Handle lab configuration changes."""
         if affected_item == "lab":
-            print(f"[LabGUIView] Lab {change_type}: {kwargs}")
+            # Lab change detected - view can refresh here if needed
+            pass
 
 
 # Subscribe to lab changes when module loads

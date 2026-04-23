@@ -183,16 +183,6 @@ class TestUINotificationListener:
         listener = UINotificationListener("TestComponent")
         assert listener.component_name == "TestComponent"
 
-    def test_ui_listener_handles_notification(self, capsys):
-        """Test that UINotificationListener prints notifications."""
-        listener = UINotificationListener("CourseView")
-        listener.on_config_change("added", "course", course_id="CMSC 340")
-
-        captured = capsys.readouterr()
-        assert "CourseView" in captured.out
-        assert "added" in captured.out
-        assert "course" in captured.out
-
 
 class TestGlobalObserverSingleton:
     """Test the global observer singleton."""

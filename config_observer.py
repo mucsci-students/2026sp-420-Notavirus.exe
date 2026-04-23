@@ -9,12 +9,6 @@ Design Pattern: Observer
   - Subject: ConfigObserver (manages observers and notifies them)
   - Observers: Any component implementing ConfigChangeListener interface
   - Notifications: Called when config is added, modified, or deleted
-
-Usage:
-    observer = ConfigObserver()
-    observer.subscribe(my_view)
-    observer.notify_change("course_added", "CMSC 340")
-    observer.unsubscribe(my_view)
 """
 
 from abc import ABC, abstractmethod
@@ -129,9 +123,9 @@ class ConfigObserver:
         for listener in self._listeners:
             try:
                 listener.on_config_change(change_type, affected_item, **kwargs)
-            except Exception as e:
-                # Log error but continue notifying other observers
-                print(f"Error notifying listener {listener}: {e}")
+            except Exception:
+                # Silently continue notifying other observers
+                pass
 
     def get_subscriber_count(self) -> int:
         """
@@ -220,38 +214,3 @@ class UINotificationListener(ConfigChangeListener):
         Returns:
             None
         """
-        print(
-            f"[{self.component_name}] Config change detected: {change_type} {affected_item}"
-        )
-        # UI component would refresh/update here
-        # Example: self.refresh_view()
-
-
-# Example usage and integration points:
-"""
-# In a controller:
-from config_observer import get_config_observer
-
-def add_course(self, course_id: str):
-    success, msg = self.course_model.add_course(course_id)
-    if success:
-        get_config_observer().notify_change('added', 'course', course_id=course_id)
-    return success, msg
-
-# In a view:
-from config_observer import get_config_observer, ConfigChangeListener
-
-class CourseGUIView(ConfigChangeListener):
-    def __init__(self):
-        get_config_observer().subscribe(self)
-    
-    def on_config_change(self, change_type: str, affected_item: str, **kwargs):
-        if affected_item == 'course':
-            self.refresh_course_list()
-    
-    def __del__(self):
-        try:
-            get_config_observer().unsubscribe(self)
-        except:
-            pass
-"""

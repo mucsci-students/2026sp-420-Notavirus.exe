@@ -9,7 +9,6 @@ import pytest
 from config_observer import (
     ConfigObserver,
     ConfigChangeListener,
-    UINotificationListener,
     get_config_observer,
 )
 
@@ -173,15 +172,6 @@ class TestConfigObserver:
 
         # Working listener should still get notification
         assert len(working_listener.notifications) == 1
-
-
-class TestUINotificationListener:
-    """Test the example UINotificationListener implementation."""
-
-    def test_ui_listener_creation(self):
-        """Test that UINotificationListener can be created."""
-        listener = UINotificationListener("TestComponent")
-        assert listener.component_name == "TestComponent"
 
 
 class TestGlobalObserverSingleton:

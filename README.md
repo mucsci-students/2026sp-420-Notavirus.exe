@@ -362,7 +362,7 @@ Test Coverage:
 ✅ 13 view tests - Calendar view of generated schedules and lab listener integration
 ✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
 ✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
-✅ 15 observer pattern tests - ConfigObserver (observer pattern) for publish-subscribe: subscriptions, notifications, change history, error handling, and integration scenarios
+✅ 14 observer pattern tests - ConfigObserver (observer pattern) for publish-subscribe: subscriptions, notifications, change history, error handling, and integration scenarios
 ✅ 1 safe_save test - The save feature used by save and save to config 
 ✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 

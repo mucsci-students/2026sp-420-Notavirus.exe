@@ -183,34 +183,3 @@ def get_config_observer() -> ConfigObserver:
         ConfigObserver: The global observer instance
     """
     return _global_observer
-
-
-class UINotificationListener(ConfigChangeListener):
-    """
-    Example implementation of ConfigChangeListener for UI updates.
-
-    This is a concrete implementation that demonstrates how to handle
-    configuration changes in the UI layer.
-    """
-
-    def __init__(self, component_name: str) -> None:
-        """
-        Initialize the UI notification listener.
-
-        Parameters:
-            component_name (str): Name of the UI component for logging
-        """
-        self.component_name = component_name
-
-    def on_config_change(self, change_type: str, affected_item: str, **kwargs) -> None:
-        """
-        Handle configuration changes for UI updates.
-
-        Parameters:
-            change_type (str): Type of change
-            affected_item (str): The item that changed
-            **kwargs: Additional context
-
-        Returns:
-            None
-        """

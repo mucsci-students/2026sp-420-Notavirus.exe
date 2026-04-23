@@ -303,8 +303,8 @@ Design Pattern #4
 Proxy Design Pattern
 Found in time_config_data_class and holds information to limit modification to the actual object
 
-Design Pattern #6
-...
+Memento Design Pattern
+Found in undoRedo_controller.py, Used by saving the state of the config for undo/redo capabilities
 
 
 ---

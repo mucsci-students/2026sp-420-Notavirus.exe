@@ -480,6 +480,48 @@ class GUIView:
         assert cm is not None
 
         time_config = time_config_data(cm.config.time_slot_config)
+        # ── Local undo/redo for the working copy ──────────────────────
+        _undo_stack: list[dict] = []
+        _redo_stack: list[dict] = []
+
+        def _record_snapshot():
+            """Called by time_config BEFORE each mutation — saves current state."""
+            _undo_stack.append(time_config._snapshot())
+            _redo_stack.clear()
+
+        def _perform_undo():
+            if not _undo_stack:
+                return
+            _redo_stack.append(time_config._snapshot())
+            time_config.restore_snapshot(_undo_stack.pop())
+            refresh_days()
+            refresh_patterns()
+
+        def _perform_redo():
+            if not _redo_stack:
+                return
+            _undo_stack.append(time_config._snapshot())
+            time_config.restore_snapshot(_redo_stack.pop())
+            refresh_days()
+            refresh_patterns()
+
+        time_config._on_change = _record_snapshot
+
+        ctrl = GUIView.controller
+        _orig_undo = getattr(ctrl, "perform_undo", None)
+        _orig_redo = getattr(ctrl, "perform_redo", None)
+        _orig_can_undo = ctrl.undo_redo_controller.can_undo
+        _orig_can_redo = ctrl.undo_redo_controller.can_redo
+
+        ctrl.perform_undo = _perform_undo
+        ctrl.perform_redo = _perform_redo
+        ctrl.undo_redo_controller.can_undo = lambda: (
+            len(_undo_stack) > 0
+        )  # ← local stack
+        ctrl.undo_redo_controller.can_redo = lambda: (
+            len(_redo_stack) > 0
+        )  # ← local stack
+
         _apply_css()
 
         ui.label("Time Slot Config").classes(
@@ -612,6 +654,11 @@ class GUIView:
                 ui.notify(f"Error saving changes: {ex}", color="red")
 
         def reset_on_back():
+            # Restore global undo/redo before navigating away
+            ctrl.perform_undo = _orig_undo
+            ctrl.perform_redo = _orig_redo
+            ctrl.undo_redo_controller.can_undo = _orig_can_undo
+            ctrl.undo_redo_controller.can_redo = _orig_can_redo
             time_config.reset()
             ui.navigate.to("/")
 

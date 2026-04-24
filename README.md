@@ -297,6 +297,12 @@ Found in controllers/chatbot_controller.py and uses a function `requires_config`
 Facade Design Pattern
 Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
 
+Proxy Design Pattern
+Found in time_config_data_class and holds information to limit modification to the actual object
+
+Memento Design Pattern
+Found in undoRedo_controller.py, Used by saving the state of the config for undo/redo capabilities
+
 Observer Design Pattern
 Found in config_observer.py and implements a publish-subscribe mechanism. Active integration in controllers/lab_controller.py (broadcasts changes) and views/lab_gui_view.py (subscribes to changes).
 
@@ -317,7 +323,7 @@ and time slots.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (333 tests total)
+# Run all tests (334 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 

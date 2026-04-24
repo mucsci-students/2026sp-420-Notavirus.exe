@@ -297,14 +297,14 @@ Found in controllers/chatbot_controller.py and uses a function `requires_config`
 Facade Design Pattern
 Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
 
-Design Pattern #4
-...
-
 Proxy Design Pattern
 Found in time_config_data_class and holds information to limit modification to the actual object
 
 Memento Design Pattern
 Found in undoRedo_controller.py, Used by saving the state of the config for undo/redo capabilities
+
+Observer Design Pattern
+Found in config_observer.py and implements a publish-subscribe mechanism. Active integration in controllers/lab_controller.py (broadcasts changes) and views/lab_gui_view.py (subscribes to changes).
 
 
 ---
@@ -345,6 +345,9 @@ pytest tests/test_data_class.py -v
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
+# Run only observer design pattern tests (16 tests)
+pytest tests/test_observer_pattern.py -v
+
 # Run only chatbot/integration tests (4 test)
 # One test will NOT pass unless you have an API key entered
 #    Follow the instructions to adding an API key found in the Setup section
@@ -355,16 +358,17 @@ pytest tests/test_integration/ -v
 pytest tests/ --cov=models --cov=controllers --cov=views
 
 # Run with coverage on all source files
-pytest tests/ --cov=models --cov=controllers --cov=views --cov=safe_save --cov=scheduler_facade --cov=time_config_data_class
+pytest tests/ --cov=models --cov=controllers --cov=views --cov=safe_save --cov=scheduler_facade --cov=config_observer --cov=time_config_data_class
 
 ```
 Test Coverage:
 
 ✅ 162 model tests - Data operations and business logic
 ✅ 117 controller tests - Integration and workflow
-✅ 11 view tests - Calendar view of generated schedules
+✅ 13 view tests - Calendar view of generated schedules and lab listener integration
 ✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
 ✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
+✅ 14 observer pattern tests - ConfigObserver (observer pattern) for publish-subscribe: subscriptions, notifications, change history, error handling, and integration scenarios
 ✅ 1 safe_save test - The save feature used by save and save to config 
 ✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 

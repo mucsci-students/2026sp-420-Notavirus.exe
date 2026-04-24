@@ -6,7 +6,18 @@ LabController - Coordinates lab-related workflows
     - All GUI-facing methods return (bool, str) tuples.
     - Temp-save after every in-memory write happens here, not in the View.
     - CLI methods are preserved unchanged for backward compatibility.
+
+   Design pattern: Observer
+    - Notifies subscribed components when labs are added, modified, or deleted
+    - Uses config_observer.get_config_observer() to broadcast changes
 """
+
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import config_observer from root
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import get_config_observer
 
 
 class LabController:
@@ -54,6 +65,8 @@ class LabController:
         success = self.model.add_lab(lab_name)
         if success:
             self.config_model.save_feature("temp", "all")
+            # Notify observers of the change
+            get_config_observer().notify_change("added", "lab", lab_name=lab_name)
             return True, f"Lab '{lab_name}' added successfully."
         return False, f"Failed: lab '{lab_name}' already exists."
 
@@ -79,6 +92,10 @@ class LabController:
         success = self.model.modify_lab(old_name, new_name)
         if success:
             self.config_model.save_feature("temp", "all")
+            # Notify observers of the change
+            get_config_observer().notify_change(
+                "modified", "lab", old_name=old_name, new_name=new_name
+            )
             return True, f"Lab '{old_name}' renamed to '{new_name}'."
         return False, f"Failed: '{new_name}' already exists."
 
@@ -100,6 +117,9 @@ class LabController:
         if failed:
             return False, f"Failed to delete: {', '.join(failed)}"
         self.config_model.save_feature("temp", "all")
+        # Notify observers of the changes
+        for lab in labs_to_delete:
+            get_config_observer().notify_change("deleted", "lab", lab_name=lab)
         return True, "✓ Deleted from memory."
 
     # ------------------------------------------------------------------

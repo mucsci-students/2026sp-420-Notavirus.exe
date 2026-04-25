@@ -273,9 +273,7 @@ class RoomGUIView:
                     )
                     result_label.set_text(message)
                     if success:
-                        updated_rooms = (
-                            RoomGUIView.room_controller.get_all_rooms()
-                        )
+                        updated_rooms = RoomGUIView.room_controller.get_all_rooms()
                         selected_room.set_options(updated_rooms)
                         selected_room.set_value(None)
                 except Exception as e:

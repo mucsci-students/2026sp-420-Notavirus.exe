@@ -18,7 +18,7 @@ class GUITheme:
         Returns:
             None
         """
-        dark = ui.dark_mode().bind_value(app.storage.user, "dark_mode")
+        ui.dark_mode().bind_value(app.storage.user, "dark_mode")
 
         app.storage.user.setdefault("flash_message", None)
 
@@ -35,7 +35,7 @@ class GUITheme:
                 app.storage.user["flash_message"] = None
 
         ui.timer(0.1, _show_flash, once=True)
-        
+
         # Build the chat drawer and get a reference to toggle it
         from views.chatbot_gui_view import ChatbotGUIView
 

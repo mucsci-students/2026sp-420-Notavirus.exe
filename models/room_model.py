@@ -25,9 +25,4 @@ class RoomModel(LocationModel):
     def get_all_rooms(self) -> list[str]:
         return self._get_all()
 
-    def _split_room_name(self, room_name: str) -> tuple[str, str]:
-        parts = room_name.partition(" ")
-        return (parts[0], parts[2])
 
-    def _build_room_name(self, building: str, number: str) -> str:
-        return f"{building.capitalize()} {number}"

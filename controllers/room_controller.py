@@ -96,9 +96,4 @@ class RoomController:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _split_room_name(self, room_name: str) -> tuple[str, str]:
-        parts = room_name.partition(" ")
-        return (parts[0], parts[2])
 
-    def _build_room_name(self, building: str, number: str) -> str:
-        return f"{building.capitalize()} {number}"

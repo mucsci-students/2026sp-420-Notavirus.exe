@@ -115,7 +115,6 @@ class ConfigModel:
                 except Exception:
                     pass
 
-
     def get_all_courses(self):
         """
         Get all courses from configuration.

@@ -247,7 +247,6 @@ class CourseGUIView:
             section_map = {label: (idx, course) for label, idx, course in sections}
             section_labels = [label for label, _, _ in sections]
             status = ui.label("").classes("text-sm !text-black dark:!text-white")
-            save_label = ui.label("").classes("text-lg")
 
             with ui.card().classes("w-full max-w-lg p-6 gap-4"):
                 selected_label = (
@@ -370,7 +369,6 @@ class CourseGUIView:
                 )
 
             status
-            save_label
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

@@ -619,7 +619,6 @@ FACULTY_COLUMNS = [
 class ScheduleGUIView:
     schedule_model: Any = None
     schedule_controller: Any = None
-    pass
 
     @ui.page("/run_scheduler")
     @staticmethod
@@ -1457,7 +1456,7 @@ class ScheduleGUIView:
                                         if not time_range:
                                             continue
 
-                                        start_time, end_time = time_range
+                                        start_time = time_range[0]
                                         start_hour, start_min = start_time
 
                                         duration_minutes = (
@@ -1640,7 +1639,7 @@ class ScheduleGUIView:
                                         if not time_range:
                                             continue
 
-                                        start_time, end_time = time_range
+                                        start_time = time_range[0]
                                         start_hour, start_min = start_time
 
                                         duration_minutes = (
@@ -1886,48 +1885,3 @@ class ScheduleGUIView:
 
         if _state.is_generating:
             asyncio.ensure_future(_poll_count())
-
-    @ui.page("/test_schedules")
-    @staticmethod
-    def test_schedules():
-        """Development test page — generates schedules from the CLI config path."""
-        import os
-        import sys
-
-        status = ui.label("Generating test schedules...").classes(
-            "text-gray-600 italic p-4"
-        )
-
-        async def _run():
-            try:
-                if len(sys.argv) < 2 or not os.path.exists(sys.argv[1]):
-                    status.set_text("Error: no valid config path in sys.argv[1]")
-                    return
-                from views.gui_view import GUIView
-
-                if GUIView.controller is None:
-                    return
-                if GUIView.controller.config_path != sys.argv[1]:
-                    ok, msg = GUIView.controller.load_config(sys.argv[1])
-                    if not ok:
-                        status.set_text(f"Config load failed: {msg}")
-                        return
-
-                def _generate():
-                    if GUIView.controller is None:
-                        return []
-                    return GUIView.controller.generate_schedules(limit=2)
-
-                loop = asyncio.get_event_loop()
-                with ThreadPoolExecutor() as pool:
-                    schedules = await loop.run_in_executor(pool, _generate)
-                if not schedules:
-                    status.set_text("No schedules generated - check your config.")
-                    return
-                _state.schedules = schedules
-                _state.current_index = 0
-                ui.navigate.to("/display_schedules")
-            except Exception as e:
-                status.set_text(f"Error: {e}")
-
-        ui.timer(0.1, _run, once=True)

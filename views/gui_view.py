@@ -252,9 +252,6 @@ class GUIView:
                         GUIView.config_path = file_path
                         GUIView.controller.config_path = file_path
 
-                        GUIView.config_path = file_path
-                        GUIView.controller.config_path = file_path
-
                         status_label.style("color: green !important;")
                         status_label.set_text(f"✓ Loaded: {e.file.name}")
                         ui.notify("Configuration loaded successfully!", type="positive")

@@ -313,27 +313,23 @@ class ScheduleController:
                         for course in model:
                             line = course.as_csv()
                             f.write(line + "\n")
-                            print(line)  # Also show in terminal
                         f.write("\n")
-                        print()  # Blank line between schedules
                 else:
                     # JSON format - save JSON, display CSV
                     import json
 
-                    scheduleList = []
-                    jsonSchedule = []
+                    schedule_list = []
+                    json_schedule = []
                     for model in schedules:
                         for course in model:
                             json_data = (
                                 course.model_dump()
                             )  # dict instead of JSON string
-                            jsonSchedule.append(json_data)
-                            print(course.as_csv())  # Always show CSV in terminal
-                        scheduleList.append(jsonSchedule)
-                        jsonSchedule = []
-                        print()  # Blank line between schedules
+                            json_schedule.append(json_data)
+                        schedule_list.append(json_schedule)
+                        json_schedule = []
                     # Write all schedules as structured JSON
-                    json.dump({"generatedSchedules": scheduleList}, f, indent=4)
+                    json.dump({"generatedSchedules": schedule_list}, f, indent=4)
 
             self.view.display_message(
                 f"Schedules successfully written to {output_file}"

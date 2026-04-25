@@ -18,7 +18,7 @@ class GUITheme:
         Returns:
             None
         """
-        dark = ui.dark_mode().bind_value(app.storage.user, "dark_mode")
+        ui.dark_mode().bind_value(app.storage.user, "dark_mode")
 
         app.storage.user.setdefault("flash_message", None)
 
@@ -35,11 +35,6 @@ class GUITheme:
                 app.storage.user["flash_message"] = None
 
         ui.timer(0.1, _show_flash, once=True)
-
-        # Dark mode toggle button — pinned to the top-right corner of every page
-        ui.button(icon="brightness_4", on_click=dark.toggle).props(
-            "flat round"
-        ).classes("absolute top-4 right-4 z-50 !text-black dark:!text-white")
 
         # Build the chat drawer and get a reference to toggle it
         from views.chatbot_gui_view import ChatbotGUIView

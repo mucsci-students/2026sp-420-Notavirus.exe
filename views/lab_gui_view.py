@@ -167,7 +167,7 @@ class LabGUIView:
         )
 
         labs = (
-            LabGUIView._lab_controller.model.get_all_labs()
+            LabGUIView._lab_controller.get_all_labs()
             if LabGUIView._lab_controller
             else []
         )
@@ -202,7 +202,7 @@ class LabGUIView:
                     result_label.set_text(message)
                     if success:
                         existing_lab.set_options(
-                            LabGUIView._lab_controller.model.get_all_labs()
+                            LabGUIView._lab_controller.get_all_labs()
                         )
                         modified_lab.set_value("")
                 except Exception as e:

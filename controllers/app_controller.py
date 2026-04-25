@@ -138,8 +138,6 @@ class SchedulerController:
             self.conflict_model,
         )
 
-        LabGUIView._lab_controller = self.lab_controller
-
         from views.schedule_gui_view import _state as _schedule_state
 
         FacultyGUIView.faculty_model = self.faculty_model

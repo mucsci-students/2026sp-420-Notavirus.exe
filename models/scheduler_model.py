@@ -172,8 +172,7 @@ class SchedulerModel:
 
             for idx, t in enumerate(time_strings):
                 # Check if this is the lab time
-                is_lab = t.endswith("^")
-                if is_lab:
+                if t.endswith("^"):
                     t = t.rstrip("^")
                     lab_index = idx  # mark the lab index
                 # Example format: "MON 09:00-09:50"

@@ -45,7 +45,7 @@ def main():
     except KeyboardInterrupt:
         print("\n\nScheduler interrupted by user. Goodbye!")
         sys.exit(0)
-    except Exception as e:
+    except Exception:
         sys.exit(1)
 
 

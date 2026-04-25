@@ -547,7 +547,7 @@ class FacultyGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.faculty_controller
-        all_faculty = controller.model.get_all_faculty()
+        all_faculty = controller.get_all_faculty()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans gap-6"):
             with ui.row().classes("w-full max-w-2xl justify-start"):

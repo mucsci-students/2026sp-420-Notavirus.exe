@@ -38,6 +38,8 @@ class CourseModel:
         Returns:
             bool: True if successful, False if course already exists
         """
+        if not self.config_model:
+            return False
         self.config_model.config.config.courses.append(course)
         return True
 

@@ -115,21 +115,7 @@ def save_configuration(
             from scheduler import CombinedConfig
 
             CombinedConfig(**target_data)
-        except Exception as val_err:
-            try:
-                # Try to get error count if it's Pydantic
-                from pydantic import ValidationError
-
-                if isinstance(val_err, ValidationError):
-                    print(
-                        f"Validation Error: {len(val_err.errors())} error(s) found. Save blocked."
-                    )
-                else:
-                    print(
-                        f"Validation Error: {str(val_err).split('\n')[0]} Save blocked."
-                    )
-            except Exception:
-                print("Validation Error: Save blocked.")
+        except Exception:
             return False
 
         dir_name = os.path.dirname(os.path.abspath(config_path))
@@ -145,7 +131,6 @@ def save_configuration(
             # Move our safe tmp file to the .temp accumulator file
             shutil.copy(safe_tmp_path, temp_path)
             os.remove(safe_tmp_path)
-            print(f"Temporary changes for '{feature}' saved successfully.")
 
         elif save_type == "config":
             # This is a master commit save.
@@ -157,12 +142,9 @@ def save_configuration(
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
-            print("Configuration committed successfully.")
-
         return True
 
-    except Exception as e:
-        print(f"Error during save: {e}")
+    except Exception:
         if "safe_tmp_path" in locals() and os.path.exists(safe_tmp_path):
             os.remove(safe_tmp_path)
         return False

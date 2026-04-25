@@ -36,13 +36,7 @@ def main():
     try:
         if config_path:
             if not Path(config_path).exists():
-                print(f"Error: Configuration file '{config_path}' not found.")
                 sys.exit(1)
-            print(f"Loading configuration from: {config_path}")
-        else:
-            print(
-                "No config file provided. Launching GUI — use Load Configuration to load a file."
-            )
 
         controller = SchedulerController(config_path)
         GUIView.controller = controller
@@ -52,10 +46,6 @@ def main():
         print("\n\nScheduler interrupted by user. Goodbye!")
         sys.exit(0)
     except Exception as e:
-        print(f"\nFatal error: {e}")
-        import traceback
-
-        traceback.print_exc()
         sys.exit(1)
 
 

@@ -105,18 +105,16 @@ class ConfigModel:
             from scheduler import CombinedConfig
 
             self.config = load_config_from_file(CombinedConfig, load_path)
-            print(f"Config reloaded from: {load_path}")
-        except Exception as e:
+        except Exception:
             # Fallback to base if temp failed
             if load_path == temp_path:
                 try:
                     self.config = load_config_from_file(
                         CombinedConfig, self.config_path
                     )
-                except Exception as e2:
-                    print(f"CRITICAL: Base config also invalid: {e2}")
-            else:
-                print(f"WARNING: Reload failed: {e}")
+                except Exception:
+                    pass
+
 
     def get_all_courses(self):
         """

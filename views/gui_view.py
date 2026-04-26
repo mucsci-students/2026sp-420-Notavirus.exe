@@ -526,7 +526,7 @@ class GUIView:
         )
 
         days_container = ui.column().classes("w-full gap-4")
-        patterns_container = ui.column().classes("w-full gap-4")
+        patterns_container = ui.column().classes("w-full gap-4 pb-24")
 
         def refresh_days():
             days_container.clear()

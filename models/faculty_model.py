@@ -172,11 +172,11 @@ class FacultyModel:
             self.modify_faculty(
                 faculty_name, "unique_course_limit", FULL_TIME_UNIQUE_COURSE_LIMIT
             )
-            self.modify_faculty(faculty_name, "maximum_credits", FULL_TIME_MAX_CREDITS)
             if faculty.minimum_credits > FULL_TIME_MAX_CREDITS:
                 self.modify_faculty(
                     faculty_name, "minimum_credits", FULL_TIME_MAX_CREDITS
                 )
+            self.modify_faculty(faculty_name, "maximum_credits", FULL_TIME_MAX_CREDITS)
         else:
             self.modify_faculty(
                 faculty_name, "unique_course_limit", ADJUNCT_UNIQUE_COURSE_LIMIT

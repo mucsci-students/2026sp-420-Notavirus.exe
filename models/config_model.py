@@ -30,7 +30,19 @@ class ConfigModel:
             None
         """
         self.config_path = config_path
-        self.config = load_config_from_file(CombinedConfig, config_path)
+
+        # Priority initialization: if a .temp file exists, it contains the most recent uncommitted
+        # changes. We must initialize our memory from it so that the state stays in sync with
+        # the undo/redo stack!
+        import os
+
+        temp_path = config_path + ".temp"
+        load_path = temp_path if os.path.exists(temp_path) else config_path
+
+        try:
+            self.config = load_config_from_file(CombinedConfig, load_path)
+        except Exception:
+            self.config = load_config_from_file(CombinedConfig, config_path)
 
     def safe_save(self) -> bool:
         """
@@ -58,24 +70,50 @@ class ConfigModel:
         Returns:
             bool: True if save successful, False otherwise
         """
-        return save_configuration(self.config, self.config_path, save_type, feature)
+        success = save_configuration(self.config, self.config_path, save_type, feature)
+
+        if success and save_type == "temp":
+            try:
+                from views.gui_view import GUIView
+                import os
+
+                if getattr(GUIView, "controller", None) and hasattr(
+                    GUIView.controller, "undo_redo_controller"
+                ):
+                    temp_path = self.config_path + ".temp"
+                    if os.path.exists(temp_path):
+                        with open(temp_path, "r") as f:
+                            GUIView.controller.undo_redo_controller.record_state(
+                                f.read()
+                            )
+            except Exception:
+                pass
+
+        return success
 
     def reload(self):
         """
         Reload configuration from file.
-
-        Use this after saving to ensure in-memory config matches file.
-
-        Parameters:
-            None
-
-        Returns:
-            None
+        Checks for .temp file first to ensure consistency.
         """
+        import os
+
+        temp_path = self.config_path + ".temp"
+        load_path = temp_path if os.path.exists(temp_path) else self.config_path
+
         try:
-            self.config = load_config_from_file(CombinedConfig, self.config_path)
-        except Exception as e:
-            print(f"WARNING: reload skipped due to validation error: {e}")
+            from scheduler import CombinedConfig
+
+            self.config = load_config_from_file(CombinedConfig, load_path)
+        except Exception:
+            # Fallback to base if temp failed
+            if load_path == temp_path:
+                try:
+                    self.config = load_config_from_file(
+                        CombinedConfig, self.config_path
+                    )
+                except Exception:
+                    pass
 
     def get_all_courses(self):
         """

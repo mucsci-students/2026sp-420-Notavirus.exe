@@ -38,6 +38,80 @@ class ScheduleController:
         self.model = scheduler_model
         self.view = view
 
+    # ── Chart data ───────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_duration_hours(time_str: str) -> float:
+        """Return the length of a 'DAY HH:MM-HH:MM' slot in hours."""
+        try:
+            time_part = time_str.strip().split(maxsplit=1)[1]
+            start_str, end_str = time_part.split("-")
+            sh, sm = map(int, start_str.strip().split(":"))
+            eh, em = map(int, end_str.strip().split(":"))
+            return round((eh * 60 + em - sh * 60 - sm) / 60.0, 2)
+        except Exception:
+            return 0.0
+
+    def get_faculty_chart_data(
+        self,
+        schedule: list,
+        metric: str,
+        course_model=None,
+        all_faculty: list[str] | None = None,
+    ) -> tuple[list[str], list[float]]:
+        """
+        Aggregate per-faculty values for the heat map bar chart.
+
+        Parameters:
+            schedule: List of CourseInfo objects from the generated schedule.
+            metric: 'courses' | 'credits' | 'hours'
+            course_model: Optional CourseModel used for credit lookup.
+            all_faculty: Optional full faculty name list so that faculty with
+                zero assignments still appear on the chart.
+        Returns:
+            (faculty_names, values) both sorted alphabetically by name.
+        """
+        data: dict[str, float] = {f: 0.0 for f in (all_faculty or [])}
+        for ci in schedule:
+            f = ci.faculty
+            data.setdefault(f, 0.0)
+            if metric == "courses":
+                data[f] += 1
+            elif metric == "hours":
+                for t in ci.times:
+                    data[f] += self._parse_duration_hours(str(t))
+            elif metric == "credits":
+                if course_model is not None:
+                    course_id = ci.course_str.rsplit(".", 1)[0]
+                    course = course_model.get_course_by_id(course_id)
+                    data[f] += course.credits if course else 0
+        names = sorted(data.keys())
+        return names, [round(data[n], 2) for n in names]
+
+    def get_room_chart_data(
+        self,
+        schedule: list,
+        all_locations: list[str] | None = None,
+    ) -> tuple[list[str], list[int]]:
+        """
+        Count how many courses are assigned to each room/lab.
+
+        Parameters:
+            schedule: List of CourseInfo objects from the generated schedule.
+            all_locations: Optional full rooms+labs list so that locations with
+                zero assignments still appear on the chart.
+        Returns:
+            (location_names, counts) both sorted alphabetically by name.
+        """
+        data: dict[str, int] = {loc: 0 for loc in (all_locations or [])}
+        for ci in schedule:
+            if ci.room:
+                data[ci.room] = data.get(ci.room, 0) + 1
+            if ci.lab:
+                data[ci.lab] = data.get(ci.lab, 0) + 1
+        names = sorted(data.keys())
+        return names, [data[n] for n in names]
+
     def import_schedule_file(self, fileName, fileData):
         """
         Handles file import request from the view.
@@ -239,27 +313,23 @@ class ScheduleController:
                         for course in model:
                             line = course.as_csv()
                             f.write(line + "\n")
-                            print(line)  # Also show in terminal
                         f.write("\n")
-                        print()  # Blank line between schedules
                 else:
                     # JSON format - save JSON, display CSV
                     import json
 
-                    scheduleList = []
-                    jsonSchedule = []
+                    schedule_list = []
+                    json_schedule = []
                     for model in schedules:
                         for course in model:
                             json_data = (
                                 course.model_dump()
                             )  # dict instead of JSON string
-                            jsonSchedule.append(json_data)
-                            print(course.as_csv())  # Always show CSV in terminal
-                        scheduleList.append(jsonSchedule)
-                        jsonSchedule = []
-                        print()  # Blank line between schedules
+                            json_schedule.append(json_data)
+                        schedule_list.append(json_schedule)
+                        json_schedule = []
                     # Write all schedules as structured JSON
-                    json.dump({"generatedSchedules": scheduleList}, f, indent=4)
+                    json.dump({"generatedSchedules": schedule_list}, f, indent=4)
 
             self.view.display_message(
                 f"Schedules successfully written to {output_file}"

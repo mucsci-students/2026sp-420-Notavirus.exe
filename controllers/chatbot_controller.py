@@ -35,13 +35,17 @@ You can:
 - List all labs, rooms, courses, faculty, and conflicts
 
 Rules:
-- Always use a tool to fulfill a request. Do not make up results.
+- For greetings or casual conversation (e.g. "hello", "hey", "how are you"), respond naturally in one sentence without calling any tools.
+- Always use a tool to fulfill a data request. Do not make up results.
 - Always relay the tool's exact output to the user — never paraphrase or summarize it.
 - Be brief outside of tool output. Confirm success in one sentence or explain failure simply.
-- Any request to list or show faculty must call the get_faculty tool, which shows names only and asks if the user wants details.
-- Only call get_faculty_details when the user explicitly asks for more info about a specific faculty member.
-- Any request to list or show courses must call the get_courses tool, which shows course IDs only and asks if the user wants details.
-- Only call get_course_details when the user explicitly asks for more info about a specific course.
+- Never ask the user for permission before calling a read-only tool. Just call it.
+- Call any combination of get_* tools silently whenever needed to answer a question — including get_faculty_details and get_course_details.
+- Any request to list, show, or view labs must call get_labs.
+- Any request to list, show, or view rooms must call get_rooms.
+- Any request to list, show, or view faculty must call get_faculty first, then get_faculty_details for each member if more detail is needed.
+- Any request to list, show, or view courses must call get_courses first, then get_course_details for each course if more detail is needed.
+- Any request to list, show, or view conflicts must call get_conflicts.
 - When adding a course, ask the user for: course ID, credits, acceptable rooms (comma-separated), acceptable labs (comma-separated, can be empty), and faculty (comma-separated, can be empty).
 - When adding faculty, ask for: name, position (full time or adjunct), max days (default 5), and availability times in the format "MON:08:00-17:00,WED:08:00-17:00".
 - When modifying faculty, ask for their name, then ask which fields to change: position (full time or adjunct), availability times (format 'MON:08:00-17:00'), course preferences (comma-separated course IDs with optional weights like 'CMSC 161:8'), room preferences (comma-separated room names with optional weights), or lab preferences (comma-separated lab names with optional weights). Only pass the fields the user wants to change.
@@ -200,6 +204,47 @@ class ChatbotController:
     def _no_config(self) -> bool:
         return self.lab_model is None
 
+    def _trigger_save(self, success: bool) -> bool:
+        if success:
+            from views.gui_view import GUIView
+
+            if GUIView.controller:
+                GUIView.controller.temp_save()
+        return success
+
+    # ── Shared location (lab/room) CRUD helpers ──────────────────────────────
+
+    def _location_add(self, add_fn, entity: str, name: str) -> str:
+        return (
+            f"{entity.capitalize()} '{name}' added."
+            if self._trigger_save(add_fn(name))
+            else f"Failed to add {entity} '{name}' (may already exist)."
+        )
+
+    def _location_delete(
+        self, delete_fn, entity: str, name: str, fail_suffix: str = ""
+    ) -> str:
+        if self._trigger_save(delete_fn(name)):
+            return f"{entity.capitalize()} '{name}' deleted."
+        return f"Failed to delete {entity} '{name}'.{fail_suffix}"
+
+    def _location_rename(
+        self, modify_fn, entity: str, old: str, new: str, fail_suffix: str = ""
+    ) -> str:
+        return (
+            f"{entity.capitalize()} renamed from '{old}' to '{new}'."
+            if self._trigger_save(modify_fn(old, new))
+            else f"Failed to rename {entity} '{old}'.{fail_suffix}"
+        )
+
+    def _location_get_all(self, get_all_fn, entity: str) -> str:
+        items = get_all_fn()
+        return (
+            (f"{entity.capitalize()}s: " + ", ".join(items))
+            if items
+            else f"No {entity}s configured."
+        )
+
     def save_config(self) -> bool:
         """Persist all in-memory changes to the config file on disk."""
         try:
@@ -212,33 +257,21 @@ class ChatbotController:
 
     @requires_config
     def _add_lab(self, name: str) -> str:
-        result = (
-            f"Lab '{name}' added."
-            if self.lab_model.add_lab(name)
-            else f"Failed to add lab '{name}' (may already exist)."
-        )
-        return result
+        return self._location_add(self.lab_model.add_lab, "lab", name)
 
     @requires_config
     def _delete_lab(self, name: str) -> str:
-        return (
-            f"Lab '{name}' deleted."
-            if self.lab_model.delete_lab(name)
-            else f"Failed to delete lab '{name}'."
-        )
+        return self._location_delete(self.lab_model.delete_lab, "lab", name)
 
     @requires_config
     def _rename_lab(self, old_name: str, new_name: str) -> str:
-        return (
-            f"Lab renamed from '{old_name}' to '{new_name}'."
-            if self.lab_model.modify_lab(old_name, new_name)
-            else f"Failed to rename lab '{old_name}'."
+        return self._location_rename(
+            self.lab_model.modify_lab, "lab", old_name, new_name
         )
 
     @requires_config
     def _get_labs(self) -> str:
-        labs = self.lab_model.get_all_labs()
-        return ("Labs: " + ", ".join(labs)) if labs else "No labs configured."
+        return self._location_get_all(self.lab_model.get_all_labs, "lab")
 
     # ── Room tools ───────────────────────────────────────────────────────────
 
@@ -252,30 +285,23 @@ class ChatbotController:
 
     @requires_config
     def _add_room(self, name: str) -> str:
-        return (
-            f"Room '{name}' added."
-            if self.room_model.add_room(name)
-            else f"Failed to add room '{name}' (may already exist)."
-        )
+        return self._location_add(self.room_model.add_room, "room", name)
 
     @requires_config
     def _delete_room(self, name: str) -> str:
-        if self.room_model.delete_room(name):
+        if self._trigger_save(self.room_model.delete_room(name)):
             return f"Room '{name}' deleted"
         return f"Failed to delete room '{name}' (not found).{self._suggest_room(name)}"
 
     @requires_config
     def _rename_room(self, old_name: str, new_name: str) -> str:
-        return (
-            f"Room renamed from '{old_name}' to '{new_name}'."
-            if self.room_model.modify_room(old_name, new_name)
-            else f"Failed to rename room '{old_name}' (not found).{self._suggest_room(old_name)}."
-        )
+        if self._trigger_save(self.room_model.modify_room(old_name, new_name)):
+            return f"Room renamed from '{old_name}' to '{new_name}'."
+        return f"Failed to rename room '{old_name}' (not found).{self._suggest_room(old_name)}."
 
     @requires_config
     def _get_rooms(self) -> str:
-        rooms = self.room_model.get_all_rooms()
-        return ("Rooms: " + ", ".join(rooms)) if rooms else "No rooms configured."
+        return self._location_get_all(self.room_model.get_all_rooms, "room")
 
     # ── Course tools ─────────────────────────────────────────────────────────
 
@@ -320,7 +346,7 @@ class ChatbotController:
                 conflicts=[],
                 faculty=faculty_list,
             )
-            self.course_model.add_course(course)
+            self._trigger_save(self.course_model.add_course(course))
             return f"Course '{course_id}' added."
         except Exception as e:
             return f"Failed to add course '{course_id}': {e}"
@@ -329,7 +355,7 @@ class ChatbotController:
     def _delete_course(self, course_id: str) -> str:
         return (
             f"Course '{course_id}' deleted."
-            if self.course_model.delete_course(course_id)
+            if self._trigger_save(self.course_model.delete_course(course_id))
             else f"Failed to delete course '{course_id}' (not found)."
         )
 
@@ -343,7 +369,9 @@ class ChatbotController:
                 update = {"credits": int(value)}
             else:
                 update = {field: [v.strip() for v in value.split(",") if v.strip()]}
-            ok = self.course_model.modify_course(course_id, **update)
+            ok = self._trigger_save(
+                self.course_model.modify_course(course_id, **update)
+            )
             if ok:
                 return f"Course '{course_id}' field '{field}' updated."
             return f"Failed to modify course '{course_id}' (not found)."
@@ -356,9 +384,7 @@ class ChatbotController:
         if not courses:
             return "No courses configured."
         ids = ", ".join(dict.fromkeys(c.course_id for c in courses))
-        return (
-            f"Courses: {ids}\n\nWould you like detailed information about any of them?"
-        )
+        return f"Courses: {ids}"
 
     @requires_config
     def _get_course_details(self, course_id: str) -> str:
@@ -437,7 +463,7 @@ class ChatbotController:
                 maximum_days=max_days,
                 times=times_dict,
             )
-            ok = self.faculty_model.add_faculty(faculty)
+            ok = self._trigger_save(self.faculty_model.add_faculty(faculty))
             if ok:
                 return f"Faculty '{name}' added."
             return f"Failed to add faculty '{name}' (may already exist)."
@@ -446,7 +472,7 @@ class ChatbotController:
 
     @requires_config
     def _delete_faculty(self, name: str) -> str:
-        if self.faculty_model.delete_faculty(name):
+        if self._trigger_save(self.faculty_model.delete_faculty(name)):
             return f"Faculty '{name}' deleted"
         return f"Failed to delete faculty '{name}' (not found).{self._suggest_faculty(name)}"
 
@@ -484,7 +510,9 @@ class ChatbotController:
         updated = []
 
         if is_full_time is not None:
-            ok = self.faculty_model.set_position_type(name, is_full_time)
+            ok = self._trigger_save(
+                self.faculty_model.set_position_type(name, is_full_time)
+            )
             if ok:
                 updated.append("full time" if is_full_time else "adjunct")
 
@@ -492,22 +520,30 @@ class ChatbotController:
             times_dict = self._parse_times(times)
             if not times_dict:
                 return "Failed: times string is invalid. Use format 'MON:08:00-17:00,WED:09:00-18:00'."
-            self.faculty_model.modify_faculty(name, "times", times_dict)
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "times", times_dict)
+            )
             updated.append("availability times")
 
         if course_preferences is not None:
             prefs = self._parse_preferences(course_preferences)
-            self.faculty_model.modify_faculty(name, "course_preferences", prefs)
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "course_preferences", prefs)
+            )
             updated.append("course preferences")
 
         if room_preferences is not None:
             prefs = self._parse_preferences(room_preferences)
-            self.faculty_model.modify_faculty(name, "room_preferences", prefs)
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "room_preferences", prefs)
+            )
             updated.append("room preferences")
 
         if lab_preferences is not None:
             prefs = self._parse_preferences(lab_preferences)
-            self.faculty_model.modify_faculty(name, "lab_preferences", prefs)
+            self._trigger_save(
+                self.faculty_model.modify_faculty(name, "lab_preferences", prefs)
+            )
             updated.append("lab preferences")
 
         if not updated:
@@ -538,7 +574,9 @@ class ChatbotController:
 
     @requires_config
     def _add_conflict(self, course_id_1: str, course_id_2: str) -> str:
-        ok = self.conflict_model.add_conflict(course_id_1, course_id_2)
+        ok = self._trigger_save(
+            self.conflict_model.add_conflict(course_id_1, course_id_2)
+        )
         if ok:
             return f"Conflict added between '{course_id_1}' and '{course_id_2}'."
         return (
@@ -547,7 +585,9 @@ class ChatbotController:
 
     @requires_config
     def _delete_conflict(self, course_id_1: str, course_id_2: str) -> str:
-        ok = self.conflict_model.delete_conflict(course_id_1, course_id_2)
+        ok = self._trigger_save(
+            self.conflict_model.delete_conflict(course_id_1, course_id_2)
+        )
         if ok:
             return f"Conflict removed between '{course_id_1}' and '{course_id_2}'."
         return "Failed to remove conflict (may not exist)."
@@ -560,8 +600,10 @@ class ChatbotController:
         new_course_id_1: str,
         new_course_id_2: str,
     ) -> str:
-        ok = self.conflict_model.modify_conflict_by_ids(
-            old_course_id_1, old_course_id_2, new_course_id_1, new_course_id_2
+        ok = self._trigger_save(
+            self.conflict_model.modify_conflict_by_ids(
+                old_course_id_1, old_course_id_2, new_course_id_1, new_course_id_2
+            )
         )
         if ok:
             return f"Conflict updated: '{new_course_id_1}' <-> '{new_course_id_2}'."

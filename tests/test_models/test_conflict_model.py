@@ -678,3 +678,155 @@ def test_conflict_exists_false(conflict_model, course_model):
 
     # Test
     assert not conflict_model.conflict_exists("NOEXIST A", "NOEXIST B")
+
+
+# ================================================================
+# TESTS: modify_conflict with missing course (line 182)
+# ================================================================
+
+
+def test_modify_conflict_missing_course_returns_false(conflict_model, course_model):
+    """
+    Test modify_conflict returns False when one of the courses doesn't exist
+    in the config (covers the not selected_list/conflict_list/new_list guard).
+    """
+    course_a = build_test_course("MISS A")
+    course_b = build_test_course("MISS B")
+    course_model.add_course(course_a)
+    course_model.add_course(course_b)
+    conflict_model.add_conflict("MISS A", "MISS B")
+
+    ghost = build_test_course("GHOST X")  # not added to config
+
+    selected = course_model.get_course_by_id("MISS A")
+    partner = course_model.get_course_by_id("MISS B")
+
+    result = conflict_model.modify_conflict(selected, partner, ghost, modify_mode=1)
+    assert not result
+
+
+# ================================================================
+# TESTS: get_course_by_id (line 301)
+# ================================================================
+
+
+def test_get_course_by_id_found(conflict_model, course_model):
+    """
+    Test get_course_by_id returns matching courses.
+    """
+    course_model.add_course(build_test_course("GCB 101"))
+
+    results = conflict_model.get_course_by_id("GCB 101")
+
+    assert len(results) >= 1
+    assert all(c.course_id == "GCB 101" for c in results)
+
+
+def test_get_course_by_id_not_found(conflict_model):
+    """
+    Test get_course_by_id returns an empty list when course doesn't exist.
+    """
+    results = conflict_model.get_course_by_id("FAKE 999")
+    assert results == []
+
+
+# ================================================================
+# TESTS: modify_conflict_by_ids (lines 228-248)
+# ================================================================
+
+
+def test_modify_conflict_by_ids_no_change(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids returns True immediately when nothing changed.
+    """
+    course_model.add_course(build_test_course("BYID A"))
+    course_model.add_course(build_test_course("BYID B"))
+    conflict_model.add_conflict("BYID A", "BYID B")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "BYID A", "BYID B", "BYID A", "BYID B"
+    )
+    assert result
+
+
+def test_modify_conflict_by_ids_same_new_courses_fails(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids returns False when new_c1 == new_c2.
+    """
+    course_model.add_course(build_test_course("SAME X"))
+    course_model.add_course(build_test_course("SAME Y"))
+    conflict_model.add_conflict("SAME X", "SAME Y")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "SAME X", "SAME Y", "SAME X", "SAME X"
+    )
+    assert not result
+
+
+def test_modify_conflict_by_ids_missing_course_fails(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids returns False when a course doesn't exist.
+    """
+    course_model.add_course(build_test_course("BIDMISS A"))
+    course_model.add_course(build_test_course("BIDMISS B"))
+    conflict_model.add_conflict("BIDMISS A", "BIDMISS B")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "BIDMISS A", "BIDMISS B", "BIDMISS A", "GHOST 999"
+    )
+    assert not result
+
+
+def test_modify_conflict_by_ids_replace_left(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids mode 1 path: only old_c1 changes (A-B -> C-B).
+    """
+    course_model.add_course(build_test_course("BID1 A"))
+    course_model.add_course(build_test_course("BID1 B"))
+    course_model.add_course(build_test_course("BID1 C"))
+    conflict_model.add_conflict("BID1 A", "BID1 B")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "BID1 A", "BID1 B", "BID1 C", "BID1 B"
+    )
+
+    assert result
+    assert conflict_model.conflict_exists("BID1 C", "BID1 B")
+    assert not conflict_model.conflict_exists("BID1 A", "BID1 B")
+
+
+def test_modify_conflict_by_ids_replace_right(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids mode 2 path: only old_c2 changes (A-B -> A-C).
+    """
+    course_model.add_course(build_test_course("BID2 A"))
+    course_model.add_course(build_test_course("BID2 B"))
+    course_model.add_course(build_test_course("BID2 C"))
+    conflict_model.add_conflict("BID2 A", "BID2 B")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "BID2 A", "BID2 B", "BID2 A", "BID2 C"
+    )
+
+    assert result
+    assert conflict_model.conflict_exists("BID2 A", "BID2 C")
+    assert not conflict_model.conflict_exists("BID2 A", "BID2 B")
+
+
+def test_modify_conflict_by_ids_replace_both(conflict_model, course_model):
+    """
+    Test modify_conflict_by_ids else path: both IDs change (A-B -> C-D).
+    """
+    course_model.add_course(build_test_course("BIDB A"))
+    course_model.add_course(build_test_course("BIDB B"))
+    course_model.add_course(build_test_course("BIDB C"))
+    course_model.add_course(build_test_course("BIDB D"))
+    conflict_model.add_conflict("BIDB A", "BIDB B")
+
+    result = conflict_model.modify_conflict_by_ids(
+        "BIDB A", "BIDB B", "BIDB C", "BIDB D"
+    )
+
+    assert result
+    assert conflict_model.conflict_exists("BIDB C", "BIDB D")
+    assert not conflict_model.conflict_exists("BIDB A", "BIDB B")

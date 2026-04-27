@@ -112,7 +112,7 @@ class CourseController:
             if not course:
                 return False, f"No course '{course_id}' found."
 
-            updates, error_msg = self._parse_modifications(modifications, course)
+            updates, error_msg = self._parse_modifications(modifications)
             if updates is None:
                 return False, error_msg
 
@@ -168,7 +168,6 @@ class CourseController:
     def _parse_modifications(
         self,
         modifications: dict,
-        current_course,
     ) -> tuple[dict | None, str]:
         """
         Parse and validate modification inputs.

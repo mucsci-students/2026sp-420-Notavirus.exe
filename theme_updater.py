@@ -47,6 +47,4 @@ def update_file(filepath):
 
 
 for filepath in files:
-    print(f"Updating {filepath}")
     update_file(filepath)
-    print(f"Done {filepath}")

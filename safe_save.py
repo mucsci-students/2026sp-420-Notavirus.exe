@@ -109,6 +109,15 @@ def save_configuration(
         else:
             update_feature(feature)
 
+        # BEFORE WRITING: Validate the merged data against the model
+        # Every save must be valid CombinedConfig
+        try:
+            from scheduler import CombinedConfig
+
+            CombinedConfig(**target_data)
+        except Exception:
+            return False
+
         dir_name = os.path.dirname(os.path.abspath(config_path))
 
         # Write to a proper safe temporary file first
@@ -122,7 +131,6 @@ def save_configuration(
             # Move our safe tmp file to the .temp accumulator file
             shutil.copy(safe_tmp_path, temp_path)
             os.remove(safe_tmp_path)
-            print(f"Temporary changes for '{feature}' saved successfully.")
 
         elif save_type == "config":
             # This is a master commit save.
@@ -134,12 +142,9 @@ def save_configuration(
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
-            print("Configuration committed successfully.")
-
         return True
 
-    except Exception as e:
-        print(f"Error during save: {e}")
+    except Exception:
         if "safe_tmp_path" in locals() and os.path.exists(safe_tmp_path):
             os.remove(safe_tmp_path)
         return False

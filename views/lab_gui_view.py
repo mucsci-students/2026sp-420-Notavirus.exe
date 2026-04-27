@@ -7,12 +7,38 @@ LabGUIView - Graphical-user interface for lab interactions
     - No Model methods are called directly (.model. removed everywhere).
     - All data operations go through GUIView.controller.lab_controller.
     - Save orchestration is delegated to GUIView.controller methods.
+
+  Design pattern: Observer
+    - LabChangeListener subscribes to lab configuration changes
+    - Notified when labs are added, modified, or deleted
 """
 
+import sys
+from pathlib import Path
 from typing import Any
+
+# Add parent directory to path to import config_observer from root
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import ConfigChangeListener, get_config_observer
+
 from nicegui import ui
 from views.gui_theme import GUITheme
-from views.gui_utils import require_config
+from views.gui_utils import require_config, hub_page_buttons
+
+
+class LabChangeListener(ConfigChangeListener):
+    """Listener for lab configuration changes in the GUI."""
+
+    def on_config_change(self, change_type: str, affected_item: str, **kwargs):
+        """Handle lab configuration changes."""
+        if affected_item == "lab":
+            # Lab change detected - view can refresh here if needed
+            pass
+
+
+# Subscribe to lab changes when module loads
+_lab_listener = LabChangeListener()
+get_config_observer().subscribe(_lab_listener)
 
 
 class LabGUIView:
@@ -37,32 +63,7 @@ class LabGUIView:
             return
         with ui.column().classes("w-full items-center pt-12 pb-12 font-sans"):
             ui.label("Lab").classes("text-4xl mb-10 !text-black dark:!text-white")
-            ui.button("Add Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/add"))
-            ui.button("Modify Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/modify"))
-            ui.button("Delete Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/delete"))
-            ui.button("View Lab").props("rounded text-color=white no-caps").classes(
-                "w-80 h-16 text-xl"
-            ).style(
-                "background: linear-gradient(135deg, var(--q-labBegin), var(--q-labEnd)) !important;"
-            ).on("click", lambda: ui.navigate.to("/lab/view"))
-            ui.space()
-            ui.button("Back").props(
-                "rounded color=backbtn text-color=white no-caps"
-            ).classes(
-                "w-80 h-16 text-xl transition-colors duration-300 hover:!bg-[var(--q-backHover)]"
-            ).on("click", lambda: ui.navigate.to("/"))
+            hub_page_buttons("Lab", "lab", "/lab")
 
     @ui.page("/lab/add")
     @staticmethod
@@ -166,7 +167,7 @@ class LabGUIView:
         )
 
         labs = (
-            LabGUIView._lab_controller.model.get_all_labs()
+            LabGUIView._lab_controller.get_all_labs()
             if LabGUIView._lab_controller
             else []
         )
@@ -201,7 +202,7 @@ class LabGUIView:
                     result_label.set_text(message)
                     if success:
                         existing_lab.set_options(
-                            LabGUIView._lab_controller.model.get_all_labs()
+                            LabGUIView._lab_controller.get_all_labs()
                         )
                         modified_lab.set_value("")
                 except Exception as e:

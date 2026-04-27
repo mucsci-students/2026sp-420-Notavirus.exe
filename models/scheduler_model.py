@@ -172,8 +172,7 @@ class SchedulerModel:
 
             for idx, t in enumerate(time_strings):
                 # Check if this is the lab time
-                is_lab = t.endswith("^")
-                if is_lab:
+                if t.endswith("^"):
                     t = t.rstrip("^")
                     lab_index = idx  # mark the lab index
                 # Example format: "MON 09:00-09:50"
@@ -249,16 +248,13 @@ class SchedulerModel:
             schedule = []
 
             for ci_data in schedule_data:
-                print("building time instances")
                 # times is the days + duration + start time
                 times = [self._build_time_instance(t) for t in ci_data.get("times", [])]
 
                 course_str = ci_data.get("course_str")
-                print("building dummy course instances")
                 dummy_course = self._build_dummy_course(
                     course_str, faculty=ci_data.get("faculty")
                 )
-                print("building instances done")
                 # need to make course instances for EVERY time in times[]
 
                 ci = CourseInstance(
@@ -271,7 +267,6 @@ class SchedulerModel:
                 schedule.append(ci)
 
             schedules.append(schedule)
-        print("returning schedules as list[list[CourseInstance]]")
         return schedules
 
     def export_to_json(self, schedules: list[list]):

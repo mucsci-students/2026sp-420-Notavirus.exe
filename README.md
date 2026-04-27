@@ -57,8 +57,8 @@ Ashton Kunkle, Phinehas Maina, Keller Emswiler.
 ├── scheduler/               # Core scheduling engine
 │   └── config.py            # Configuration data models
 └── tests/                   # Test suite
-    ├── test_models/         # 114 model tests
-    ├── test_controllers/    # 22 controller tests
+    ├── test_models/         # Model tests
+    ├── test_controllers/    # Controller tests
     └── test_safe_save.py    # 1 safe_save test
 ```
 
@@ -250,7 +250,6 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 #### Scheduler Config Editor
 - **Save Configuration** — Save the current configuration to a JSON file from within the GUI.
 - **Load Configuration** — Load a JSON configuration file from within the GUI without restarting.
-- Sometimes you may see changes in sections that you did not make because of the JSON reloading after modifications.
 
 #### Schedule Generator
 - **Limit Override** — Input field to override the schedule generation limit from the configuration file.
@@ -269,6 +268,45 @@ Conflicts indicate pairs of courses that cannot be scheduled at the same time
 - **uv tooling** — Full `uv` support for dependency management and virtual environments.
 - **pytest** — Test suite runs via `pytest` with coverage reporting.
 
+### Sprint 3
+#### AI Chat Tool
+- **Config Management** - AI can be used to add, modify, delete, and view any rooms, labs, courses, conflicts, or faculty
+- **Secret Key** - AI requires an API key added to a .env file
+#### Time Slot Config Editor
+-**Time Slots** - Add/remove/modify start time, end time, and spacing of different time slots
+-**Class Meeting Patterns** - Add/remove/modify the credits, days, duration, and start times of class meeting patterns, be able to disable meeting patterns
+
+#### Progress Bar
+- **View Progress of Generations as Percentage** - During schedule generation a progress bar will appear
+
+### Sprint 4
+#### Undo and Redo Support
+-**Traditional undo/redo Stacks** - Supported across entire gui as a back and forward arrow
+
+#### Export Schedules to PDF/HTML
+-**By room/lab** - Export the schedules to be posted outside of rooms
+-**By faculty** - Export the schedules to be posted outside of faculty's offices
+
+## Design Patterns
+MVC Design Pattern
+Implemented throughout all files in the views, models, and controllers folders
+
+Decorator Design Pattern
+Found in controllers/chatbot_controller.py and uses a function `requires_config` that wraps around other functions
+
+Facade Design Pattern
+Found in scheduler_facade.py and wraps all schedule generation methods into one method called generate().
+
+Proxy Design Pattern
+Found in time_config_data_class and holds information to limit modification to the actual object
+
+Memento Design Pattern
+Found in undoRedo_controller.py, Used by saving the state of the config for undo/redo capabilities
+
+Observer Design Pattern
+Found in config_observer.py and implements a publish-subscribe mechanism. Active integration in controllers/lab_controller.py (broadcasts changes) and views/lab_gui_view.py (subscribes to changes).
+
+
 ---
 
 
@@ -281,45 +319,21 @@ and time slots.
 ---
 
 
-## GUI Navigation 
-
-The main GUI presents a menu with buttons for each feature:
-┌─────────────────────────────┐
-│                [Light/Dark] │
-│         Scheduler           │
-├─────────────────────────────┤
-│    Faculty   │    Room      │
-│    Course    │  Conflict    │
-│             Lab             │
-├─────────────────────────────┤
-│         Print Config        │
-│         Run Scheduler       │
-│       Display Schedules     │
-├─────────────────────────────┤
-│ [AI]                        │
-└─────────────────────────────┘
-Click any button to access that feature's interface. Each feature page includes forms for input and displays results in a user-friendly format. There is a light/dark toggle mode
-in the top right corner and an AI tool to use in the bottom
-left corner. 
-
----
-
-
 ## Testing
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (296 tests total)
+# Run all tests (334 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
-# Run only model tests (137 tests)
+# Run only model tests (162 tests)
 pytest tests/test_models/ -v
 
-# Run only controller tests (109 tests)
+# Run only controller tests (117 tests)
 pytest tests/test_controllers/ -v
 
-# Run only views tests (12 tests)
+# Run only views tests (13 tests)
 pytest tests/test_views/ -v 
 
 # Run only safe_save.py test (1 test)
@@ -331,20 +345,30 @@ pytest tests/test_data_class.py -v
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
-# Run only chatbot/integration tests (1 tests)
-# These tests will NOT pass unless you have an API key entered
+# Run only observer design pattern tests (16 tests)
+pytest tests/test_observer_pattern.py -v
+
+# Run only chatbot/integration tests (4 test)
+# One test will NOT pass unless you have an API key entered
 #    Follow the instructions to adding an API key found in the Setup section
 pytest tests/test_integration/ -v 
 
-# Run with coverage (need to first install pytest-cov if not already installed)
+# Run with coverage on MVC (need to first install pytest-cov if not already installed)
 #   Install pytest-cov with 'pip3 install pytest-cov' or 'python3 -m pip install pytest-cov'
-pytest tests/ --cov=models --cov=controllers
+pytest tests/ --cov=models --cov=controllers --cov=views
+
+# Run with coverage on all source files
+pytest tests/ --cov=models --cov=controllers --cov=views --cov=safe_save --cov=scheduler_facade --cov=config_observer --cov=time_config_data_class
+
 ```
 Test Coverage:
 
-✅ 137 model tests - Data operations and business logic
-✅ 109 controller tests - Integration and workflow
-✅ 12 view tests - Calendar view of generated schedules
+✅ 162 model tests - Data operations and business logic
+✅ 117 controller tests - Integration and workflow
+✅ 13 view tests - Calendar view of generated schedules and lab listener integration
+✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
+✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
+✅ 14 observer pattern tests - ConfigObserver (observer pattern) for publish-subscribe: subscriptions, notifications, change history, error handling, and integration scenarios
 ✅ 1 safe_save test - The save feature used by save and save to config 
 ✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
 
@@ -429,6 +453,9 @@ When accessing the app via 127.0.0.1:8080, Safari automatically requests apple-t
 
 AI Assistant / Chatbot Tests Not Working
 Both require a valid OpenAI API key. See **Setup step 4** for instructions on adding your key to `.env`. Without it, the AI Assistant panel will be non-functional and `tests/test_integration/` tests will fail.
+
+Receiving erros from runnig uv commands
+Delete virtual environment and follow steps found above in setup section to reactivate your environment.
 
 ---
 

@@ -195,3 +195,22 @@ def test_config_model_nonexistent_file():
     """
     with pytest.raises(FileNotFoundError):
         ConfigModel("nonexistent_file.json")
+
+
+def test_reload_skips_on_validation_error(test_config):
+    """
+    Test that reload silently skips when load_config_from_file raises an exception
+    (covers the except branch at lines 77-78).
+    """
+    from unittest.mock import patch
+
+    config_model = ConfigModel(test_config)
+    original_config = config_model.config
+
+    with patch(
+        "models.config_model.load_config_from_file", side_effect=Exception("bad config")
+    ):
+        config_model.reload()
+
+    # Config should be unchanged since reload was skipped
+    assert config_model.config is original_config

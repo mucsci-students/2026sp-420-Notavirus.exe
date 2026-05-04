@@ -88,10 +88,8 @@ UV is a fast Python package manager. Install it with:
 
 3. Install dependencies
   ```bash
-    # Initialize UV environment
-    uv init
-
     # Sync environment (installs all dependencies from pyproject.toml)
+    # Note: uv init is NOT needed - this project already has pyproject.toml configured
     uv sync
 
     # Activate virtual environment

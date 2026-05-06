@@ -1,0 +1,493 @@
+{
+    "config": {
+        "rooms": [
+            "4th Grade",
+            "3rd Grade",
+            "Stark's Pond Annex"
+        ],
+        "labs": [
+            "Computer Lab",
+            "Science Lab"
+        ],
+        "courses": [
+            {
+                "course_id": "COON 101",
+                "credits": 3,
+                "room": [
+                    "4th Grade",
+                    "3rd Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [],
+                "conflicts": [
+                    "COON 102"
+                ],
+                "faculty": [
+                    "Stan",
+                    "Kyle",
+                    "Butters",
+                    "PC Principal"
+                ]
+            },
+            {
+                "course_id": "COON 102",
+                "credits": 3,
+                "room": [
+                    "4th Grade",
+                    "3rd Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [],
+                "conflicts": [
+                    "COON 101"
+                ],
+                "faculty": [
+                    "Cartman"
+                ]
+            },
+            {
+                "course_id": "CHAOS 201",
+                "credits": 4,
+                "room": [
+                    "4th Grade",
+                    "3rd Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [
+                    "Computer Lab"
+                ],
+                "conflicts": [
+                    "CHAOS 202"
+                ],
+                "faculty": [
+                    "Kyle",
+                    "Stan"
+                ]
+            },
+            {
+                "course_id": "CHAOS 202",
+                "credits": 4,
+                "room": [
+                    "4th Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [
+                    "Science Lab"
+                ],
+                "conflicts": [
+                    "CHAOS 201"
+                ],
+                "faculty": [
+                    "Kenny",
+                    "Tweek"
+                ]
+            },
+            {
+                "course_id": "TGRDY 301",
+                "credits": 3,
+                "room": [
+                    "4th Grade",
+                    "3rd Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [],
+                "conflicts": [],
+                "faculty": [
+                    "Butters",
+                    "Stan",
+                    "Cartman"
+                ]
+            },
+            {
+                "course_id": "TGRDY 302",
+                "credits": 4,
+                "room": [
+                    "4th Grade",
+                    "3rd Grade",
+                    "Stark's Pond Annex"
+                ],
+                "lab": [
+                    "Science Lab"
+                ],
+                "conflicts": [],
+                "faculty": [
+                    "Tweek",
+                    "Kenny",
+                    "Kyle"
+                ]
+            }
+        ],
+        "faculty": [
+            {
+                "name": "Stan",
+                "maximum_credits": 12,
+                "minimum_credits": 3,
+                "unique_course_limit": 3,
+                "maximum_days": 5,
+                "times": {
+                    "MON": [
+                        "08:00-16:00"
+                    ],
+                    "TUE": [
+                        "08:00-16:00"
+                    ],
+                    "WED": [
+                        "08:00-16:00"
+                    ],
+                    "THU": [
+                        "08:00-16:00"
+                    ],
+                    "FRI": [
+                        "08:00-16:00"
+                    ]
+                },
+                "course_preferences": {
+                    "COON 101": 5,
+                    "TGRDY 301": 4,
+                    "CHAOS 201": 3
+                },
+                "room_preferences": {
+                    "4th Grade": 5,
+                    "3rd Grade": 3,
+                    "Stark's Pond Annex": 4
+                },
+                "lab_preferences": {
+                    "Computer Lab": 3,
+                    "Science Lab": 3
+                }
+            },
+            {
+                "name": "Kyle",
+                "maximum_credits": 12,
+                "minimum_credits": 3,
+                "unique_course_limit": 3,
+                "maximum_days": 5,
+                "times": {
+                    "MON": [
+                        "08:00-17:00"
+                    ],
+                    "TUE": [
+                        "08:00-17:00"
+                    ],
+                    "WED": [
+                        "08:00-17:00"
+                    ],
+                    "THU": [
+                        "08:00-17:00"
+                    ],
+                    "FRI": [
+                        "08:00-17:00"
+                    ]
+                },
+                "course_preferences": {
+                    "CHAOS 201": 5,
+                    "COON 101": 4,
+                    "TGRDY 302": 3
+                },
+                "room_preferences": {
+                    "4th Grade": 4,
+                    "3rd Grade": 4,
+                    "Stark's Pond Annex": 2
+                },
+                "lab_preferences": {
+                    "Computer Lab": 5,
+                    "Science Lab": 2
+                }
+            },
+            {
+                "name": "Cartman",
+                "maximum_credits": 12,
+                "minimum_credits": 3,
+                "unique_course_limit": 2,
+                "maximum_days": 4,
+                "mandatory_days": [
+                    "MON",
+                    "WED"
+                ],
+                "times": {
+                    "MON": [
+                        "10:00-14:00"
+                    ],
+                    "TUE": [],
+                    "WED": [
+                        "10:00-14:00"
+                    ],
+                    "THU": [
+                        "10:00-14:00"
+                    ],
+                    "FRI": [
+                        "10:00-14:00"
+                    ]
+                },
+                "course_preferences": {
+                    "COON 102": 5,
+                    "TGRDY 301": 3
+                },
+                "room_preferences": {
+                    "4th Grade": 5,
+                    "3rd Grade": 1,
+                    "Stark's Pond Annex": 1
+                },
+                "lab_preferences": {
+                    "Computer Lab": 2,
+                    "Science Lab": 1
+                }
+            },
+            {
+                "name": "Kenny",
+                "maximum_credits": 8,
+                "minimum_credits": 4,
+                "unique_course_limit": 2,
+                "maximum_days": 3,
+                "mandatory_days": [
+                    "MON",
+                    "WED"
+                ],
+                "times": {
+                    "MON": [
+                        "09:00-15:00"
+                    ],
+                    "TUE": [],
+                    "WED": [
+                        "09:00-15:00"
+                    ],
+                    "THU": [],
+                    "FRI": [
+                        "09:00-15:00"
+                    ]
+                },
+                "course_preferences": {
+                    "CHAOS 202": 5,
+                    "TGRDY 302": 4
+                },
+                "room_preferences": {
+                    "Stark's Pond Annex": 5,
+                    "3rd Grade": 3,
+                    "4th Grade": 1
+                },
+                "lab_preferences": {
+                    "Science Lab": 5,
+                    "Computer Lab": 2
+                }
+            },
+            {
+                "name": "Butters",
+                "maximum_credits": 8,
+                "minimum_credits": 3,
+                "unique_course_limit": 2,
+                "maximum_days": 5,
+                "times": {
+                    "MON": [
+                        "08:00-17:00"
+                    ],
+                    "TUE": [
+                        "08:00-17:00"
+                    ],
+                    "WED": [
+                        "08:00-17:00"
+                    ],
+                    "THU": [
+                        "08:00-17:00"
+                    ],
+                    "FRI": [
+                        "08:00-17:00"
+                    ]
+                },
+                "course_preferences": {
+                    "TGRDY 301": 5,
+                    "COON 101": 4
+                },
+                "room_preferences": {
+                    "3rd Grade": 5,
+                    "4th Grade": 4,
+                    "Stark's Pond Annex": 4
+                },
+                "lab_preferences": {
+                    "Computer Lab": 4,
+                    "Science Lab": 4
+                }
+            },
+            {
+                "name": "Tweek",
+                "maximum_credits": 8,
+                "minimum_credits": 4,
+                "unique_course_limit": 2,
+                "maximum_days": 5,
+                "times": {
+                    "MON": [
+                        "06:00-22:00"
+                    ],
+                    "TUE": [
+                        "06:00-22:00"
+                    ],
+                    "WED": [
+                        "06:00-22:00"
+                    ],
+                    "THU": [
+                        "06:00-22:00"
+                    ],
+                    "FRI": [
+                        "06:00-22:00"
+                    ]
+                },
+                "course_preferences": {
+                    "TGRDY 302": 5,
+                    "CHAOS 202": 4
+                },
+                "room_preferences": {
+                    "3rd Grade": 3,
+                    "4th Grade": 3,
+                    "Stark's Pond Annex": 3
+                },
+                "lab_preferences": {
+                    "Science Lab": 5,
+                    "Computer Lab": 4
+                }
+            },
+            {
+                "name": "PC Principal",
+                "maximum_credits": 4,
+                "minimum_credits": 0,
+                "unique_course_limit": 1,
+                "times": {
+                    "MON": [
+                        "16:00-20:00"
+                    ],
+                    "TUE": [
+                        "16:00-20:00"
+                    ],
+                    "WED": [
+                        "16:00-20:00"
+                    ],
+                    "THU": [
+                        "16:00-20:00"
+                    ],
+                    "FRI": []
+                },
+                "course_preferences": {
+                    "COON 101": 5
+                },
+                "room_preferences": {
+                    "4th Grade": 5,
+                    "3rd Grade": 3,
+                    "Stark's Pond Annex": 1
+                },
+                "lab_preferences": {
+                    "Computer Lab": 3,
+                    "Science Lab": 1
+                }
+            }
+        ]
+    },
+    "time_slot_config": {
+        "times": {
+            "MON": [
+                {
+                    "start": "08:00",
+                    "spacing": 60,
+                    "end": "20:00"
+                }
+            ],
+            "TUE": [
+                {
+                    "start": "08:00",
+                    "spacing": 60,
+                    "end": "20:00"
+                }
+            ],
+            "WED": [
+                {
+                    "start": "08:00",
+                    "spacing": 60,
+                    "end": "20:00"
+                }
+            ],
+            "THU": [
+                {
+                    "start": "08:00",
+                    "spacing": 60,
+                    "end": "20:00"
+                }
+            ],
+            "FRI": [
+                {
+                    "start": "08:00",
+                    "spacing": 60,
+                    "end": "17:00"
+                }
+            ]
+        },
+        "classes": [
+            {
+                "credits": 3,
+                "meetings": [
+                    {
+                        "day": "MON",
+                        "duration": 50
+                    },
+                    {
+                        "day": "WED",
+                        "duration": 50
+                    },
+                    {
+                        "day": "FRI",
+                        "duration": 50
+                    }
+                ]
+            },
+            {
+                "credits": 3,
+                "meetings": [
+                    {
+                        "day": "TUE",
+                        "duration": 75
+                    },
+                    {
+                        "day": "THU",
+                        "duration": 75
+                    }
+                ]
+            },
+            {
+                "credits": 4,
+                "meetings": [
+                    {
+                        "day": "TUE",
+                        "duration": 110,
+                        "lab": true
+                    },
+                    {
+                        "day": "THU",
+                        "duration": 110
+                    }
+                ]
+            },
+            {
+                "credits": 4,
+                "meetings": [
+                    {
+                        "day": "MON",
+                        "duration": 50
+                    },
+                    {
+                        "day": "WED",
+                        "duration": 110,
+                        "lab": true
+                    },
+                    {
+                        "day": "FRI",
+                        "duration": 50
+                    }
+                ]
+            }
+        ]
+    },
+    "limit": 10,
+    "optimizer_flags": [
+        "faculty_course",
+        "faculty_room",
+        "faculty_lab",
+        "same_room",
+        "pack_rooms"
+    ]
+}

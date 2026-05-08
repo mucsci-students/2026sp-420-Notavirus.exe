@@ -525,7 +525,7 @@ class FacultyGUIView:
                     ui.notify(f"Error saving: {e}", type="negative")
 
             with ui.row().classes("w-full max-w-6xl justify-between items-end mt-16"):
-                ui.button("Cancel").props(
+                ui.button("Back").props(
                     "rounded color=black text-color=white no-caps"
                 ).classes(
                     "w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black"

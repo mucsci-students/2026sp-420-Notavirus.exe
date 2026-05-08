@@ -66,6 +66,12 @@ class ConfigObserver:
             [] if track_history else None
         )
         self._track_history = track_history
+        self._change_count: int = 0
+
+    @property
+    def change_count(self) -> int:
+        """Monotonically increasing counter incremented on every notify_change call."""
+        return self._change_count
 
     def subscribe(self, listener: ConfigChangeListener) -> None:
         """
@@ -113,6 +119,8 @@ class ConfigObserver:
         Returns:
             None
         """
+        self._change_count += 1
+
         # Record change if history tracking is enabled
         if self._track_history and self._change_history is not None:
             self._change_history.append(

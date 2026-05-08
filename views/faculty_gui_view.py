@@ -11,6 +11,11 @@ FacultyGUIView - Graphical-user interface for faculty interactions
 """
 
 from typing import Any
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import get_config_observer
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config, hub_page_buttons
@@ -410,12 +415,13 @@ class FacultyGUIView:
                     ).style("border-bottom: 2px solid black;")
                     scroll_area = ui.scroll_area().classes("w-full h-full pr-4")
 
-                    def refresh_faculty_list():
-                        scroll_area.clear()
-                        with scroll_area:
-                            faculty_list = controller.get_all_faculty()
-                            if faculty_list:
-                                for f in faculty_list:
+                    with scroll_area:
+
+                        @ui.refreshable
+                        def faculty_list_display():
+                            flist = controller.get_all_faculty()
+                            if flist:
+                                for f in flist:
                                     ui.label(f.name).classes(
                                         "text-xl !text-black mb-2 py-2 w-full"
                                     ).style("border-bottom: 1px solid #e5e7eb;")
@@ -424,7 +430,20 @@ class FacultyGUIView:
                                     "text-xl text-gray-500 italic"
                                 )
 
-                    refresh_faculty_list()
+                        faculty_list_display()
+
+                    def refresh_faculty_list():
+                        faculty_list_display.refresh()
+
+                    _last_chatbot_refresh = [get_config_observer().change_count]
+
+                    def _chatbot_refresh():
+                        current = get_config_observer().change_count
+                        if current != _last_chatbot_refresh[0]:
+                            _last_chatbot_refresh[0] = current
+                            faculty_list_display.refresh()
+
+                    ui.timer(0.5, _chatbot_refresh)
 
             def _collect_faculty_data():
                 """Collect form data into a dict. Returns None and notifies if invalid."""
@@ -493,22 +512,20 @@ class FacultyGUIView:
                         ui.notify("System not initialized properly.", type="negative")
                         return
                     controller = GUIView.controller.faculty_controller
-                    if controller.add_faculty(faculty_data):
+                    success, message = controller.add_faculty(faculty_data)
+                    if success:
                         ui.notify(
                             f"Faculty '{faculty_data['name']}' added.", type="positive"
                         )
                         name_input.value = ""
                         refresh_faculty_list()
                     else:
-                        ui.notify(
-                            "Failed to add faculty. Maybe they already exist?",
-                            type="negative",
-                        )
+                        ui.notify(message, type="negative")
                 except Exception as e:
                     ui.notify(f"Error saving: {e}", type="negative")
 
             with ui.row().classes("w-full max-w-6xl justify-between items-end mt-16"):
-                ui.button("Cancel").props(
+                ui.button("Back").props(
                     "rounded color=black text-color=white no-caps"
                 ).classes(
                     "w-48 h-16 text-2xl font-bold dark:!bg-white dark:!text-black"
@@ -885,12 +902,32 @@ class FacultyGUIView:
                 form_card.set_visibility(True)
                 build_form(f)
 
-            ui.select(
-                options=list(faculty_options.keys()),
-                label="Select Faculty Member",
-                on_change=on_select,
-            ).props("label-color=grey-7").classes("w-full max-w-2xl text-xl")
+            faculty_select = (
+                ui.select(
+                    options=list(faculty_options.keys()),
+                    label="Select Faculty Member",
+                    on_change=on_select,
+                )
+                .props("label-color=grey-7")
+                .classes("w-full max-w-2xl text-xl")
+            )
             form_card
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    updated = controller.get_all_faculty()
+                    new_options = {f.name: f for f in updated}
+                    faculty_options.clear()
+                    faculty_options.update(new_options)
+                    faculty_select.set_options(list(faculty_options.keys()))
+                    reload_form()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -1007,6 +1044,16 @@ class FacultyGUIView:
 
             build(container)
 
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh_delete():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    build(container)
+
+            ui.timer(0.5, _chatbot_refresh_delete)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(
@@ -1039,7 +1086,6 @@ class FacultyGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.faculty_controller
-        faculty_list = controller.get_all_faculty()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
             with ui.row().classes("w-full max-w-2xl justify-start"):
@@ -1051,34 +1097,59 @@ class FacultyGUIView:
             ui.label("View Faculty").classes(
                 "text-4xl mb-6 !text-black dark:!text-white"
             )
-            with ui.column().classes("w-full max-w-lg gap-3"):
-                if not faculty_list:
-                    ui.label("No faculty on file.").classes("text-gray-600")
-                else:
-                    for faculty in faculty_list:
-                        is_ft = faculty.maximum_credits >= 12
-                        with ui.expansion(faculty.name, icon="person").classes(
-                            "w-full"
-                        ):
-                            with ui.element("div").classes(
-                                "grid grid-cols-2 gap-x-8 gap-y-2 text-sm pt-2 pb-2"
+
+            @ui.refreshable
+            def render_view():
+                faculty_list = controller.get_all_faculty()
+                with ui.column().classes("w-full max-w-lg gap-3"):
+                    if not faculty_list:
+                        ui.label("No faculty on file.").classes("text-gray-600")
+                    else:
+                        for faculty in faculty_list:
+                            is_ft = faculty.maximum_credits >= 12
+                            with ui.expansion(faculty.name, icon="person").classes(
+                                "w-full"
                             ):
-                                for lbl, val in [
-                                    ("Position", "Full Time" if is_ft else "Adjunct"),
-                                    ("Max Credits", str(faculty.maximum_credits)),
-                                    ("Min Credits", str(faculty.minimum_credits)),
-                                    ("Course Limit", str(faculty.unique_course_limit)),
-                                    ("Max Days", str(faculty.maximum_days)),
-                                ]:
-                                    ui.label(lbl).classes("text-gray-500 font-medium")
-                                    ui.label(val)
-                                if faculty.course_preferences:
-                                    ui.label("Course Prefs").classes(
-                                        "text-gray-500 font-medium"
-                                    )
-                                    ui.label(
-                                        ", ".join(faculty.course_preferences.keys())
-                                    )
+                                with ui.element("div").classes(
+                                    "grid grid-cols-2 gap-x-8 gap-y-2 text-sm pt-2 pb-2"
+                                ):
+                                    for lbl, val in [
+                                        (
+                                            "Position",
+                                            "Full Time" if is_ft else "Adjunct",
+                                        ),
+                                        ("Max Credits", str(faculty.maximum_credits)),
+                                        ("Min Credits", str(faculty.minimum_credits)),
+                                        (
+                                            "Course Limit",
+                                            str(faculty.unique_course_limit),
+                                        ),
+                                        ("Max Days", str(faculty.maximum_days)),
+                                    ]:
+                                        ui.label(lbl).classes(
+                                            "text-gray-500 font-medium"
+                                        )
+                                        ui.label(val)
+                                    if faculty.course_preferences:
+                                        ui.label("Course Prefs").classes(
+                                            "text-gray-500 font-medium"
+                                        )
+                                        ui.label(
+                                            ", ".join(faculty.course_preferences.keys())
+                                        )
+
+            render_view()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    render_view.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

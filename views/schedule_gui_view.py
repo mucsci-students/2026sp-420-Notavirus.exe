@@ -1364,6 +1364,10 @@ class ScheduleGUIView:
             min_hour = max(0, min_hour - 1)
             max_hour = min(24, max_hour + 1)
 
+            _is_dark = bool(app.storage.user.get("dark_mode", False))
+            grid_line_color = "#4b5563" if _is_dark else "#d1d5db"
+            border_line_color = "#6b7280" if _is_dark else "#d1d5db"
+
             for location in sorted(calendar_data.keys()):
                 with calendar_room_container:
                     with ui.card().classes("w-full p-2 mb-4"):
@@ -1396,7 +1400,7 @@ class ScheduleGUIView:
                                 ui.column()
                                 .classes("gap-0")
                                 .style(
-                                    "width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                                    f"width: 50px; flex-shrink: 0; border-right: 1px solid {border_line_color};"
                                 )
                             )
                             with time_col:
@@ -1405,16 +1409,16 @@ class ScheduleGUIView:
                                     ui.label(hour_str).classes(
                                         "text-xs font-semibold p-1 text-center"
                                     ).style(
-                                        f"height: {hour_height}px; border-b border-gray-300 dark:border-gray-600;"
+                                        f"height: {hour_height}px; border-b: 1px solid {grid_line_color};"
                                     )
 
                             for day in days:
                                 day_col = (
                                     ui.column()
-                                    .classes(
-                                        "flex-1 border-r border-gray-300 dark:border-gray-600"
+                                    .classes("flex-1")
+                                    .style(
+                                        f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};"
                                     )
-                                    .style("position: relative; overflow: visible;")
                                 )
 
                                 with day_col:
@@ -1422,8 +1426,8 @@ class ScheduleGUIView:
                                     svg_html = f'<svg style="position: absolute; top: 0; left: 0; width: 100%; height: {total_height}px; pointer-events: none; z-index: 1;">'
                                     for i in range(1, total_hours):
                                         y = i * hour_height
-                                        svg_html += f'<line x1="0" y1="{y}" x2="100%" y2="{y}" stroke="#d1d5db" stroke-width="1"/>'
-                                    svg_html += f'<line x1="100%" y1="0" x2="100%" y2="{total_height}" stroke="#d1d5db" stroke-width="1"/>'
+                                        svg_html += f'<line x1="0" y1="{y}" x2="100%" y2="{y}" stroke="{grid_line_color}" stroke-width="1"/>'
+                                    svg_html += f'<line x1="0" y1="0" x2="0" y2="{total_height}" stroke="{border_line_color}" stroke-width="2"/>'
                                     svg_html += "</svg>"
                                     ui.html(svg_html).style("width: 100%;")
 
@@ -1548,6 +1552,10 @@ class ScheduleGUIView:
             min_hour = max(0, min_hour - 1)
             max_hour = min(24, max_hour + 1)
 
+            _is_dark = bool(app.storage.user.get("dark_mode", False))
+            grid_line_color = "#4b5563" if _is_dark else "#d1d5db"
+            border_line_color = "#6b7280" if _is_dark else "#d1d5db"
+
             for faculty in sorted(calendar_data.keys()):
                 with calendar_faculty_container:
                     with ui.card().classes("w-full p-2 mb-4"):
@@ -1580,7 +1588,7 @@ class ScheduleGUIView:
                                 ui.column()
                                 .classes("gap-0")
                                 .style(
-                                    "width: 50px; flex-shrink: 0; border-r border-gray-300 dark:border-gray-600;"
+                                    f"width: 50px; flex-shrink: 0; border-right: 1px solid {border_line_color};"
                                 )
                             )
                             with time_col:
@@ -1589,16 +1597,16 @@ class ScheduleGUIView:
                                     ui.label(hour_str).classes(
                                         "text-xs font-semibold p-1 text-center"
                                     ).style(
-                                        f"height: {hour_height}px; border-b border-gray-300 dark:border-gray-600;"
+                                        f"height: {hour_height}px; border-b: 1px solid {grid_line_color};"
                                     )
 
                             for day in days:
                                 day_col = (
                                     ui.column()
-                                    .classes(
-                                        "flex-1 border-r border-gray-300 dark:border-gray-600"
+                                    .classes("flex-1")
+                                    .style(
+                                        f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};"
                                     )
-                                    .style("position: relative; overflow: visible;")
                                 )
 
                                 with day_col:
@@ -1606,8 +1614,8 @@ class ScheduleGUIView:
                                     svg_html = f'<svg style="position: absolute; top: 0; left: 0; width: 100%; height: {total_height}px; pointer-events: none; z-index: 1;">'
                                     for i in range(1, total_hours):
                                         y = i * hour_height
-                                        svg_html += f'<line x1="0" y1="{y}" x2="100%" y2="{y}" stroke="#d1d5db" stroke-width="1"/>'
-                                    svg_html += f'<line x1="100%" y1="0" x2="100%" y2="{total_height}" stroke="#d1d5db" stroke-width="1"/>'
+                                        svg_html += f'<line x1="0" y1="{y}" x2="100%" y2="{y}" stroke="{grid_line_color}" stroke-width="1"/>'
+                                    svg_html += f'<line x1="0" y1="0" x2="0" y2="{total_height}" stroke="{border_line_color}" stroke-width="2"/>'
                                     svg_html += "</svg>"
                                     ui.html(svg_html).style("width: 100%;")
 

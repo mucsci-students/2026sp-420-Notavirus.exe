@@ -19,6 +19,11 @@ MVC rules followed in this file:
 """
 
 from typing import Any
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import get_config_observer
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config, hub_page_buttons
@@ -196,6 +201,16 @@ class CourseGUIView:
                     )
                     course_table()
 
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    course_table.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
+
     @ui.page("/course/modify")
     @staticmethod
     def course_modify():
@@ -369,6 +384,17 @@ class CourseGUIView:
                 )
 
             status
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    refresh_info()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(
@@ -500,6 +526,22 @@ class CourseGUIView:
             ui.button("Delete Course").props(
                 "rounded color=red text-color=white no-caps"
             ).classes("w-80 h-16 text-xl").on("click", handle_delete)
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    updated = controller.get_courses_with_sections()
+                    new_options = {lbl: (c.course_id, i) for lbl, i, c in updated}
+                    section_options.clear()
+                    section_options.update(new_options)
+                    select.options = list(new_options.keys())
+                    select.update()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -541,28 +583,51 @@ class CourseGUIView:
             ui.label("View Courses").classes(
                 "text-4xl mb-6 !text-black dark:!text-white"
             )
-            with ui.column().classes("w-full max-w-lg gap-3"):
+
+            @ui.refreshable
+            def render_view():
                 sections = controller.get_courses_with_sections()
-                if not sections:
-                    ui.label("No courses on file.").classes("text-gray-600")
-                else:
-                    for label, _, course in sections:
-                        with ui.expansion(label, icon="menu_book").classes("w-full"):
-                            with ui.element("div").classes(
-                                "grid grid-cols-2 gap-x-8 gap-y-2 text-sm pt-2 pb-2"
+                with ui.column().classes("w-full max-w-lg gap-3"):
+                    if not sections:
+                        ui.label("No courses on file.").classes("text-gray-600")
+                    else:
+                        for label, _, course in sections:
+                            with ui.expansion(label, icon="menu_book").classes(
+                                "w-full"
                             ):
-                                for lbl, val in [
-                                    ("Credits", str(course.credits)),
-                                    ("Rooms", ", ".join(course.room or []) or "—"),
-                                    ("Labs", ", ".join(course.lab or []) or "—"),
-                                    ("Faculty", ", ".join(course.faculty or []) or "—"),
-                                    (
-                                        "Conflicts",
-                                        ", ".join(course.conflicts or []) or "—",
-                                    ),
-                                ]:
-                                    ui.label(lbl).classes("text-gray-500 font-medium")
-                                    ui.label(val)
+                                with ui.element("div").classes(
+                                    "grid grid-cols-2 gap-x-8 gap-y-2 text-sm pt-2 pb-2"
+                                ):
+                                    for lbl, val in [
+                                        ("Credits", str(course.credits)),
+                                        ("Rooms", ", ".join(course.room or []) or "—"),
+                                        ("Labs", ", ".join(course.lab or []) or "—"),
+                                        (
+                                            "Faculty",
+                                            ", ".join(course.faculty or []) or "—",
+                                        ),
+                                        (
+                                            "Conflicts",
+                                            ", ".join(course.conflicts or []) or "—",
+                                        ),
+                                    ]:
+                                        ui.label(lbl).classes(
+                                            "text-gray-500 font-medium"
+                                        )
+                                        ui.label(val)
+
+            render_view()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    render_view.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

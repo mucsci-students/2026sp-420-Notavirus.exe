@@ -207,9 +207,11 @@ class ChatbotController:
     def _trigger_save(self, success: bool) -> bool:
         if success:
             from views.gui_view import GUIView
+            from config_observer import get_config_observer
 
             if GUIView.controller:
                 GUIView.controller.temp_save()
+                get_config_observer().notify_change("modified", "all")
         return success
 
     # ── Shared location (lab/room) CRUD helpers ──────────────────────────────

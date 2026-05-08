@@ -121,6 +121,16 @@ class LabGUIView:
 
             refresh_list()
 
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    refresh_list()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             def add():
                 """Add lab and save to config immediately."""
                 try:
@@ -213,6 +223,21 @@ class LabGUIView:
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
                 "click", save
             )
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    if LabGUIView._lab_controller:
+                        existing_lab.set_options(
+                            LabGUIView._lab_controller.get_all_labs()
+                        )
+                        existing_lab.set_value(None)
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -291,6 +316,16 @@ class LabGUIView:
 
             update_lab_list()
 
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    update_lab_list()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             def on_delete():
                 """Delete selected labs and save to config immediately."""
                 if not selected_labs:
@@ -337,7 +372,6 @@ class LabGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.lab_controller
-        labs = controller.get_all_labs()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
             with ui.row().classes("w-full max-w-2xl justify-start"):
@@ -347,13 +381,30 @@ class LabGUIView:
                     "click", lambda: ui.navigate.to("/")
                 )
             ui.label("View Labs").classes("text-4xl mb-6 !text-black dark:!text-white")
-            if not labs:
-                ui.label("No labs in configuration.").classes("text-gray-600")
-            else:
-                with ui.column().classes("w-full max-w-2xl gap-3"):
-                    for lab in labs:
-                        with ui.card().classes("w-full px-5 py-4"):
-                            ui.label(lab).classes("text-base font-semibold")
+
+            @ui.refreshable
+            def render_view():
+                labs = controller.get_all_labs()
+                if not labs:
+                    ui.label("No labs in configuration.").classes("text-gray-600")
+                else:
+                    with ui.column().classes("w-full max-w-2xl gap-3"):
+                        for lab in labs:
+                            with ui.card().classes("w-full px-5 py-4"):
+                                ui.label(lab).classes("text-base font-semibold")
+
+            render_view()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    render_view.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

@@ -320,7 +320,7 @@ and time slots.
 
 The project includes a comprehensive test suite:
 ```bash
-# Run all tests (334 tests total)
+# Run all tests (348 tests total)
 # Most tests will pass without using an API key, some tests require an API key is added
 pytest tests/ -v
 
@@ -336,13 +336,13 @@ pytest tests/test_views/ -v
 # Run only safe_save.py test (1 test)
 pytest tests/test_safe_save.py -v
 
-# Run only time slot config tests (22 test)
+# Run only time slot config tests (23 test)
 pytest tests/test_data_class.py -v
 
 # Run only facade design pattern tests (14 test)
 pytest tests/test_scheduler_facade.py -v
 
-# Run only observer design pattern tests (16 tests)
+# Run only observer design pattern tests (14 tests)
 pytest tests/test_observer_pattern.py -v
 
 # Run only chatbot/integration tests (4 test)
@@ -363,11 +363,13 @@ Test Coverage:
 ✅ 162 model tests - Data operations and business logic
 ✅ 117 controller tests - Integration and workflow
 ✅ 13 view tests - Calendar view of generated schedules and lab listener integration
-✅ 22 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
+✅ 23 time slot config tests - Time slot configuration data class operations: adding/removing days, managing time blocks per day, and handling class patterns used to build faculty availability
 ✅ 14 facade tests - SchedulerFacade (facade pattern) wrapping SchedulerModel: schedule generation with progress callbacks, limit configuration, error propagation, and result collection
 ✅ 14 observer pattern tests - ConfigObserver (observer pattern) for publish-subscribe: subscriptions, notifications, change history, error handling, and integration scenarios
 ✅ 1 safe_save test - The save feature used by save and save to config 
-✅ 1 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
+✅ 2 AI Chatbot test - Checks that the AI chatbot is running and can print out existing information
+✅ 2 undo/redo test 
+
 
 ---
 

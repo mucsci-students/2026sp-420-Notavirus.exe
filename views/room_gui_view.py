@@ -10,6 +10,11 @@ RoomGUIView - Graphical-user interface for room interactions
 """
 
 from typing import Any
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import get_config_observer
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config, hub_page_buttons
@@ -96,6 +101,16 @@ class RoomGUIView:
                             ui.item(r).classes("!text-black dark:!text-white")
 
             refresh_rooms()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    refresh_rooms()
+
+            ui.timer(0.5, _chatbot_refresh)
 
             room_input = ui.input("Room name and number")
             result_label = ui.label().classes("!text-black dark:!text-white")
@@ -198,6 +213,17 @@ class RoomGUIView:
             ui.button("Save").on("click", handle_save).props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black")
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    refresh_select()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -284,6 +310,20 @@ class RoomGUIView:
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
                 "click", delete
             )
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    if RoomGUIView.room_controller:
+                        updated = RoomGUIView.room_controller.get_all_rooms()
+                        selected_room.set_options(updated)
+                        selected_room.set_value(None)
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl dark:!bg-white dark:!text-black").on(
@@ -312,7 +352,6 @@ class RoomGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.room_controller
-        rooms = controller.get_all_rooms()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
             with ui.row().classes("w-full max-w-2xl justify-start"):
@@ -322,17 +361,34 @@ class RoomGUIView:
                     "click", lambda: ui.navigate.to("/")
                 )
             ui.label("View Rooms").classes("text-4xl mb-6 !text-black dark:!text-white")
-            if not rooms:
-                ui.label("No rooms in configuration.").classes(
-                    "text-gray-600 dark:!text-gray-300"
-                )
-            else:
-                with ui.column().classes("w-full max-w-2xl gap-3"):
-                    for room in rooms:
-                        with ui.card().classes("w-full px-5 py-4"):
-                            ui.label(room).classes(
-                                "text-base font-semibold !text-black dark:!text-white"
-                            )
+
+            @ui.refreshable
+            def render_view():
+                rooms = controller.get_all_rooms()
+                if not rooms:
+                    ui.label("No rooms in configuration.").classes(
+                        "text-gray-600 dark:!text-gray-300"
+                    )
+                else:
+                    with ui.column().classes("w-full max-w-2xl gap-3"):
+                        for room in rooms:
+                            with ui.card().classes("w-full px-5 py-4"):
+                                ui.label(room).classes(
+                                    "text-base font-semibold !text-black dark:!text-white"
+                                )
+
+            render_view()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    render_view.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
+
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"
             ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(

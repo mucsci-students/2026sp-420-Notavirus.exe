@@ -1416,7 +1416,9 @@ class ScheduleGUIView:
                                 day_col = (
                                     ui.column()
                                     .classes("flex-1")
-                                    .style(f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};")
+                                    .style(
+                                        f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};"
+                                    )
                                 )
 
                                 with day_col:
@@ -1602,7 +1604,9 @@ class ScheduleGUIView:
                                 day_col = (
                                     ui.column()
                                     .classes("flex-1")
-                                    .style(f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};")
+                                    .style(
+                                        f"position: relative; overflow: visible; border-right: 2px solid {border_line_color};"
+                                    )
                                 )
 
                                 with day_col:

@@ -11,6 +11,11 @@ This view class handles all GUI pages related to conflict management:
 """
 
 from typing import Any
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config_observer import get_config_observer
 from nicegui import ui
 from views.gui_theme import GUITheme
 from views.gui_utils import require_config, hub_page_buttons
@@ -628,7 +633,6 @@ class ConflictGUIView:
         if GUIView.controller is None:
             return
         controller = GUIView.controller.conflict_controller
-        all_courses = controller.get_all_courses()
 
         with ui.column().classes("w-full items-center pt-12 pb-12 gap-4"):
             with ui.row().classes("w-full max-w-2xl justify-start"):
@@ -641,63 +645,71 @@ class ConflictGUIView:
                 "text-4xl mb-6 !text-black dark:!text-white"
             )
 
-            if not all_courses:
-                ui.label("No courses available.")
-                ui.button("Back").props(
-                    "rounded color=black text-color=white no-caps"
-                ).classes("w-80 h-16 text-xl mt-4 dark:!bg-white dark:!text-black").on(
-                    "click", lambda: ui.navigate.to("/conflict")
-                )
-                return
+            @ui.refreshable
+            def render_view():
+                all_courses = controller.get_all_courses()
+                if not all_courses:
+                    ui.label("No courses available.")
+                    return
 
-            # Build label maps: each course object gets a unique section label
-            # (e.g. CMSC 161.01, CMSC 161.02) keyed by object identity.
-            course_label_map = {}
-            course_counts = {}
-            for c in all_courses:
-                cid = c.course_id
-                course_counts[cid] = course_counts.get(cid, 0) + 1
-                course_label_map[id(c)] = f"{cid}.{course_counts[cid]:02d}"
+                course_label_map = {}
+                course_counts = {}
+                for c in all_courses:
+                    cid = c.course_id
+                    course_counts[cid] = course_counts.get(cid, 0) + 1
+                    course_label_map[id(c)] = f"{cid}.{course_counts[cid]:02d}"
 
-            course_id_to_labels: dict[str, list[str]] = {}
-            for c in all_courses:
-                course_id_to_labels.setdefault(c.course_id, []).append(
-                    course_label_map[id(c)]
-                )
+                course_id_to_labels: dict[str, list[str]] = {}
+                for c in all_courses:
+                    course_id_to_labels.setdefault(c.course_id, []).append(
+                        course_label_map[id(c)]
+                    )
 
-            # Group courses by their conflict set so each unique conflict
-            # relationship is shown once rather than duplicated per section.
-            groups: dict = {}
-            for course in all_courses:
-                if not course.conflicts:
-                    continue
-                key = frozenset(course.conflicts)
-                if key not in groups:
-                    resolved_conflicts = [
-                        ", ".join(course_id_to_labels.get(cid, [cid]))
-                        for cid in sorted(course.conflicts)
-                    ]
-                    groups[key] = {"labels": [], "conflicts": resolved_conflicts}
-                groups[key]["labels"].append(course_label_map[id(course)])
+                groups: dict = {}
+                for course in all_courses:
+                    if not course.conflicts:
+                        continue
+                    key = frozenset(course.conflicts)
+                    if key not in groups:
+                        resolved_conflicts = [
+                            ", ".join(course_id_to_labels.get(cid, [cid]))
+                            for cid in sorted(course.conflicts)
+                        ]
+                        groups[key] = {"labels": [], "conflicts": resolved_conflicts}
+                    groups[key]["labels"].append(course_label_map[id(course)])
 
-            if not groups:
-                ui.label("No conflicts defined.").classes("text-gray-600")
-            else:
-                with ui.column().classes("w-full max-w-2xl gap-3"):
-                    for key, group in groups.items():
-                        with ui.card().classes(
-                            "w-full px-5 py-4 !bg-white dark:!bg-white"
-                        ):
-                            ui.label(", ".join(group["labels"])).classes(
-                                "font-semibold text-base !text-black"
-                            )
-                            ui.label("conflicts with:").classes("text-xs text-gray-500")
-                            for conflict_display in group["conflicts"]:
-                                with ui.row().classes("items-center gap-2 ml-2"):
-                                    ui.label("↔").classes("text-gray-500 text-xs")
-                                    ui.label(conflict_display).classes(
-                                        "text-sm !text-black"
-                                    )
+                if not groups:
+                    ui.label("No conflicts defined.").classes("text-gray-600")
+                else:
+                    with ui.column().classes("w-full max-w-2xl gap-3"):
+                        for key, group in groups.items():
+                            with ui.card().classes(
+                                "w-full px-5 py-4 !bg-white dark:!bg-white"
+                            ):
+                                ui.label(", ".join(group["labels"])).classes(
+                                    "font-semibold text-base !text-black"
+                                )
+                                ui.label("conflicts with:").classes(
+                                    "text-xs text-gray-500"
+                                )
+                                for conflict_display in group["conflicts"]:
+                                    with ui.row().classes("items-center gap-2 ml-2"):
+                                        ui.label("↔").classes("text-gray-500 text-xs")
+                                        ui.label(conflict_display).classes(
+                                            "text-sm !text-black"
+                                        )
+
+            render_view()
+
+            _last_chatbot_refresh = [get_config_observer().change_count]
+
+            def _chatbot_refresh():
+                current = get_config_observer().change_count
+                if current != _last_chatbot_refresh[0]:
+                    _last_chatbot_refresh[0] = current
+                    render_view.refresh()
+
+            ui.timer(0.5, _chatbot_refresh)
 
             ui.button("Back").props(
                 "rounded color=black text-color=white no-caps"

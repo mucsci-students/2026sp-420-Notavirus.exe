@@ -109,6 +109,13 @@ class ChatbotGUIView:
         </style>
         """)
 
+        # If the server was restarted, clear the previous session's chat state.
+        current_instance = app.storage.general.get("server_instance", "")
+        if app.storage.user.get("chat_server_instance") != current_instance:
+            app.storage.user["chat_history"] = []
+            app.storage.user["chat_open"] = False
+            app.storage.user["chat_server_instance"] = current_instance
+
         with (
             ui.left_drawer(
                 value=app.storage.user.get("chat_open", False),

@@ -155,7 +155,9 @@ class GUIView:
                         ctrl = GUIView.controller
                         success, error_msg = ctrl.load_config(file_path)
                         if not success:
-                            raise Exception(error_msg or "Failed to load configuration.")
+                            raise Exception(
+                                error_msg or "Failed to load configuration."
+                            )
 
                         # Always reset the undo/redo baseline to the freshly loaded
                         # config so the very first edit is undoable regardless of
